@@ -40,8 +40,11 @@ export default function Footer() {
             <Logo />
           </div>
           <nav className="flex gap-6 flex-wrap">
-            <Link href="#portfolio" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
-              Portfolio
+            <Link href="#properties" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+              Properties
+            </Link>
+            <Link href="/blog" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+              Blog
             </Link>
             <Link href="#services" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
               Services

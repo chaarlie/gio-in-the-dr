@@ -24,7 +24,7 @@
   --color-whatsapp: #25d366;
 
   /* Type — real fonts wired in layout.tsx (graceful serif/sans fallbacks) */
-  --font-display: var(--font-playfair, Georgia, "Times New Roman", serif);
+  --font-display: var(--font-heading, Georgia, "Times New Roman", serif);
   --font-body: var(--font-hanken, system-ui, -apple-system, sans-serif);
 }
 

@@ -5,7 +5,7 @@ const SERVICES = [
   {
     title: "Property Listings",
     body: "Curated homes, land and commercial spaces around Cabarete and the north coast — vetted before you ever see them.",
-    href: "#portfolio",
+    href: "#properties",
     dark: false,
   },
   {

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Hanken_Grotesk } from "next/font/google";
+import { Source_Serif_4, Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-// Display serif (headings) + body sans — matching the design direction.
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+// Heading serif — simpler / lower-contrast than Playfair ("menos fairy, mas simple").
+const heading = Source_Serif_4({
+  variable: "--font-heading",
   subsets: ["latin"],
   display: "swap",
 });
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${playfair.variable} ${hanken.variable} h-full antialiased`}
+      className={`${heading.variable} ${hanken.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-cream text-ink font-body">
         {children}

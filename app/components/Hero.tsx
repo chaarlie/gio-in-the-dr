@@ -22,10 +22,10 @@ export default function Hero() {
 
           <div className="flex flex-wrap items-center gap-5 mt-8">
             <Link
-              href="#portfolio"
+              href="#properties"
               className="bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
             >
-              View portfolio
+              View properties
             </Link>
             <a
               href={WA.general}
