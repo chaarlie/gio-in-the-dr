@@ -1,15 +1,15 @@
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Stats from "./components/Stats";
+import RealEstate360 from "./components/RealEstate360";
 import Featured from "./components/Featured";
 import Services from "./components/Services";
-import Portfolio from "./components/Portfolio";
+import Properties from "./components/Properties";
 import About from "./components/About";
+import ContactForm from "./components/ContactForm";
 import Footer from "./components/Footer";
 import WhatsAppLauncher from "./components/WhatsAppLauncher";
 
-// Real React build (replaces the standalone-HTML iframe preview).
-// The old bundle stays at /gio-in-the-dr.html for reference.
 export default function Home() {
   return (
     <>
@@ -17,10 +17,12 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <Stats />
+        <RealEstate360 />
         <Featured />
         <Services />
-        <Portfolio />
+        <Properties />
         <About />
+        <ContactForm />
       </main>
       <Footer />
       <WhatsAppLauncher />

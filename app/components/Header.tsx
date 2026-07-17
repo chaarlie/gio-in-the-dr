@@ -2,10 +2,11 @@ import Link from "next/link";
 import Logo from "./Logo";
 
 const NAV = [
-  { label: "Properties", href: "#properties" },
-  { label: "Services", href: "#services" },
+  { label: "Properties", href: "/#properties" },
+  { label: "Services", href: "/#services" },
   { label: "Blog", href: "/blog" },
-  { label: "About", href: "#about" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export default function Header() {
