@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Stats from "./components/Stats";
@@ -16,11 +17,16 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <Hero />
-        <Stats />
+        {/* Properties reads ?q=/?city=/?category= from the URL → needs Suspense */}
+        <Suspense
+          fallback={<div className="max-w-7xl mx-auto px-6 md:px-8 py-16" />}
+        >
+          <Properties />
+        </Suspense>
         <RealEstate360 />
         <Featured />
         <Services />
-        <Properties />
+        <Stats />
         <About />
         <ContactForm />
       </main>

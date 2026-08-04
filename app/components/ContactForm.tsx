@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import SectionHeading from "./SectionHeading";
 
 const INTERESTS = [
   "Buying a home",
@@ -30,18 +31,12 @@ export default function ContactForm() {
   return (
     <section id="contact" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-16 pb-4">
       <div className="grid lg:grid-cols-2 gap-10 items-start bg-card border border-line rounded-3xl p-8 md:p-12">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.22em] uppercase text-muted mb-4">
-            Get in touch
-          </p>
-          <h2 className="font-display font-bold text-ink text-3xl md:text-5xl leading-tight text-balance">
-            Tell me what you&apos;re looking for.
-          </h2>
+        <SectionHeading eyebrow="Get in touch" title="Tell me what you're looking for.">
           <p className="text-muted text-lg leading-relaxed max-w-md mt-5">
             Share a few details and I&apos;ll get back to you — in English, Spanish or
             Italian. Prefer to chat now? Message me on WhatsApp any time.
           </p>
-        </div>
+        </SectionHeading>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
