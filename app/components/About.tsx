@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { WA } from "../lib/whatsapp";
+import SectionHeading from "./SectionHeading";
 
 const STATS = [
   { big: "4+", label: "Years in DR real estate" },
@@ -21,20 +22,18 @@ export default function About() {
           />
         </div>
         <div>
-          <p className="text-xs font-semibold tracking-[0.22em] uppercase text-muted mb-4">
-            About Gio
-          </p>
-          <h2 className="font-display font-bold text-ink text-3xl md:text-5xl leading-tight text-balance">
-            An Italian who chose the Dominican Republic.
-          </h2>
+          <SectionHeading
+            eyebrow="About Gio"
+            title="An Italian who chose the Dominican Republic."
+          />
           <p className="text-muted text-lg leading-relaxed max-w-xl mt-5">
             I moved to the Dominican Republic from Italy and made Cabarete home. For the
-            past four years I've helped foreigners buy property here — from first questions
-            to the day they get the keys.
+            past four years I&apos;ve helped foreigners buy property here — from first
+            questions to the day they get the keys.
           </p>
           <p className="text-muted text-lg leading-relaxed max-w-xl mt-4">
             Because I speak English, Spanish and Italian — and made the move myself — I
-            understand exactly what you're navigating, from choosing the right area to
+            understand exactly what you&apos;re navigating, from choosing the right area to
             residency and closing.
           </p>
           <div className="flex flex-wrap gap-10 mt-8">

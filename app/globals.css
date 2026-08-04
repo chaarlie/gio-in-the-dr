@@ -32,6 +32,11 @@
   color-scheme: light;
 }
 
+html {
+  /* Single-page anchor nav (Header → #properties, #services…) glides instead of jumping. */
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--color-cream);
   color: var(--color-ink);
@@ -42,4 +47,34 @@ body {
 ::selection {
   background: var(--color-ink);
   color: var(--color-cream);
+}
+
+/*
+  Visible keyboard focus for every interactive element. Components use `outline-none`
+  on inputs/selects and only style `hover:`, so without this, tab/keyboard users get no
+  focus cue. `:focus-visible` keeps it keyboard-only (no ring on mouse click).
+*/
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respect users who ask for less motion — kill transitions, animations & smooth scroll. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

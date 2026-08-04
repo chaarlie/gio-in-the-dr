@@ -1,3 +1,5 @@
+import StatCard from "./StatCard";
+
 const STATS = [
   { big: "4+", label: "Years helping foreigners buy in the DR" },
   { big: "3", label: "Languages spoken — English, Spanish, Italian" },
@@ -16,13 +18,7 @@ export default function Stats() {
           </p>
         </div>
         {STATS.map((s) => (
-          <div
-            key={s.big}
-            className="bg-card border border-line rounded-3xl p-6 flex flex-col justify-center"
-          >
-            <div className="font-display text-4xl font-bold leading-none">{s.big}</div>
-            <div className="text-muted text-sm leading-snug mt-3">{s.label}</div>
-          </div>
+          <StatCard key={s.big} big={s.big} label={s.label} />
         ))}
       </div>
     </section>
