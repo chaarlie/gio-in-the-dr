@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import SectionHeading from "./SectionHeading";
+import WhatsAppIcon from "./WhatsAppIcon";
+import { WA, WHATSAPP_DISPLAY } from "../lib/whatsapp";
 
 const INTERESTS = [
   "Buying a home",
@@ -36,6 +38,21 @@ export default function ContactForm() {
             Share a few details and I&apos;ll get back to you — in English, Spanish or
             Italian. Prefer to chat now? Message me on WhatsApp any time.
           </p>
+
+          {/* The one place the design system allows a vivid colour: WhatsApp green,
+              contact-only. Serif + display scale so it reads at heading weight. */}
+          <a
+            href={WA.general}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Message Gio on WhatsApp at ${WHATSAPP_DISPLAY}`}
+            className="group inline-flex items-center gap-3 mt-6 text-whatsapp no-underline"
+          >
+            <WhatsAppIcon size={28} className="shrink-0" />
+            <span className="font-display text-2xl md:text-3xl font-bold tracking-tight border-b-2 border-transparent group-hover:border-whatsapp transition-colors">
+              {WHATSAPP_DISPLAY}
+            </span>
+          </a>
         </SectionHeading>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

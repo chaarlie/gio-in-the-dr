@@ -14,11 +14,11 @@ export default function About() {
       <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-10 items-center">
         <div className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-accent">
           <Image
-            src="/gio-portrait.jpg"
+            src="/gio-portrait-2026.jpg"
             alt="Gio, real estate agent in Cabarete, Dominican Republic"
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
-            className="object-cover object-[center_20%]"
+            className="object-cover object-center"
           />
         </div>
         <div>

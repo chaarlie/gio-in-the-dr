@@ -13,7 +13,11 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-cream/80 backdrop-blur-md border-b border-line">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
-        <Link href="/" aria-label="Gio In The DR — home" className="text-ink no-underline">
+        <Link
+          href="/"
+          aria-label="Gio In The DR — home"
+          className="text-ink no-underline shrink-0"
+        >
           <Logo />
         </Link>
 

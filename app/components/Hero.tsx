@@ -15,9 +15,9 @@ export default function Hero() {
             Buy property &amp; build a life in the Dominican Republic.
           </h1>
           <p className="text-muted text-lg leading-relaxed max-w-md mt-6">
-            I help foreigners find their place on the north coast — homes, land &amp;
-            investments around Cabarete, guided from first viewing to closing, in your
-            language.
+            I help you find your place on the north coast: homes, land &amp;
+            investments around Cabarete, guided from first viewing to closing,
+            in your language.
           </p>
 
           <div className="flex flex-wrap items-center gap-5 mt-8">
@@ -38,12 +38,14 @@ export default function Hero() {
           </div>
 
           <div className="flex items-center gap-3 mt-10">
+            {/* Separate face-cropped file: the portrait is square, so a square avatar
+                container crops nothing and the face would render tiny. */}
             <Image
-              src="/gio-portrait.jpg"
+              src="/gio-avatar.jpg"
               alt="Gio, real estate agent in Cabarete"
               width={52}
               height={52}
-              className="w-[52px] h-[52px] rounded-full object-cover object-[center_20%]"
+              className="w-[52px] h-[52px] rounded-full object-cover"
             />
             <div>
               <div className="font-semibold text-sm text-ink">Gio</div>
@@ -57,12 +59,12 @@ export default function Hero() {
         {/* Portrait */}
         <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5] lg:aspect-auto lg:h-[600px]">
           <Image
-            src="/gio-portrait.jpg"
-            alt="Gio at her office in Cabarete, Dominican Republic"
+            src="/gio-portrait-2026.jpg"
+            alt="Gio, real estate agent, at a beachfront property in Cabarete, Dominican Republic"
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover object-[center_25%]"
+            className="object-cover object-center"
           />
         </div>
       </div>
