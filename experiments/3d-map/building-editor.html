@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coccoloba — building editor</title>
+<link href="https://unpkg.com/mapbox-gl@3/dist/mapbox-gl.css" rel="stylesheet" />
+<link href="https://unpkg.com/@mapbox/mapbox-gl-draw@1/dist/mapbox-gl-draw.css" rel="stylesheet" />
+<style>
+  :root{
+    --cream:#f1e8df; --surface:#e8dfd3; --card:#fbf8f2; --line:#e2d9cc;
+    --ink:#1b1917; --muted:#8a8175; --accent:#141414;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:"Hanken Grotesk",system-ui,-apple-system,sans-serif;background:var(--cream);color:var(--ink);overflow:hidden}
+  #map{position:absolute;inset:0}
+
+  .panel{
+    position:absolute;top:16px;left:16px;width:340px;max-width:calc(100vw - 32px);
+    max-height:calc(100vh - 32px);overflow-y:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;z-index:5;
+  }
+  .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:23px;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 14px;line-height:1.55}
+  ol{margin:0 0 14px;padding-left:18px;font-size:13.5px;line-height:1.7;color:var(--muted)}
+  ol b{color:var(--ink)}
+
+  .vol{border-top:1px solid var(--line);padding:12px 0}
+  .vol-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+  .vol-head .rm{font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;background:none;border:0;padding:4px}
+  .vol-head .rm:hover{color:#b3261e}
+  .fields{display:flex;gap:8px;margin-top:8px}
+  .fields label{flex:1;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .fields input{width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:var(--cream);color:var(--ink);outline:none}
+  .fields input:focus{border-color:rgba(27,25,23,.4)}
+  .meta{font-size:12px;color:var(--muted);margin-top:7px;font-variant-numeric:tabular-nums}
+
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  button{
+    font:inherit;font-size:13px;font-weight:600;border-radius:999px;padding:10px 18px;cursor:pointer;
+    background:var(--card);color:var(--ink);border:1px solid var(--line);
+    transition:background 150ms ease,border-color 150ms ease;
+  }
+  button:hover{border-color:rgba(27,25,23,.3)}
+  button.primary{background:var(--accent);color:var(--cream);border-color:transparent}
+  button.primary:hover{background:#2c2a27}
+
+  .out{margin-top:12px;width:100%;height:120px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.5;background:var(--surface);color:var(--ink);resize:vertical}
+
+  .topright{position:absolute;top:16px;right:16px;z-index:5;display:flex;gap:8px;flex-direction:column;align-items:flex-end}
+  .mapboxgl-ctrl-group{border-radius:12px!important}
+
+  .gate{position:absolute;inset:0;display:grid;place-items:center;background:var(--cream);z-index:20;padding:24px}
+  .gate-card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;max-width:460px;width:100%}
+  .gate input{width:100%;margin-top:14px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:14px;background:var(--cream);color:var(--ink);outline:none}
+  .gate button{margin-top:14px;width:100%}
+  .err{color:#b3261e;font-size:13px;margin-top:10px;min-height:18px}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <p class="eyebrow">Building editor</p>
+    <h1>Paste your public token</h1>
+    <p class="sub">Starts with <code>pk.</code>. Kept in this tab only — nothing written to disk.</p>
+    <input id="token" type="password" placeholder="pk.eyJ1..." autocomplete="off" spellcheck="false" />
+    <div class="err" id="err"></div>
+    <button class="primary" id="go">Open the editor</button>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div class="panel">
+  <p class="eyebrow">Coccoloba · Cabarete</p>
+  <h1>Trace your building</h1>
+  <p class="sub">Satellite imagery is on, centred on your pin. Draw the roof outline you can actually see.</p>
+  <ol>
+    <li>Hit <b>Draw volume</b>, click each corner, then click the first corner again to close.</li>
+    <li>Drag any vertex to nudge it. Corners snap nothing — trust your eyes.</li>
+    <li>Set <b>floors</b>, and <b>starts at</b> for stacked parts (a rooftop starts at 4).</li>
+    <li>Draw more volumes for wings and setbacks — that's what stops it looking like a box.</li>
+  </ol>
+
+  <div id="vols"></div>
+
+  <div class="actions">
+    <button class="primary" id="guess">Load my guess</button>
+    <button id="draw">Draw volume</button>
+    <button id="sat">Satellite off</button>
+    <button id="flat">Flat</button>
+    <button id="tilt">3D</button>
+  </div>
+
+  <textarea class="out" id="out" readonly placeholder="GeoJSON appears here as you draw…"></textarea>
+  <div class="actions">
+    <button id="copy">Copy GeoJSON</button>
+    <button id="clear">Clear all</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/mapbox-gl@3/dist/mapbox-gl.js"></script>
+<script src="https://unpkg.com/@mapbox/mapbox-gl-draw@1/dist/mapbox-gl-draw.js"></script>
+<script src="coccoloba-guess.js"></script>
+<script>
+const PIN = [-70.413289, 19.750918];
+const LEVEL_M = 3;
+
+// floors / base per drawn polygon, keyed by the draw feature id
+const meta = new Map();
+
+function areaOf(ring) {
+  // rough planar area in m² — fine at this scale
+  let a = 0;
+  for (let i = 0, n = ring.length - 1; i < n; i++) {
+    const [x1, y1] = ring[i], [x2, y2] = ring[i + 1];
+    a += (x1 * 104600) * (y2 * 110900) - (x2 * 104600) * (y1 * 110900);
+  }
+  return Math.abs(a / 2);
+}
+
+function init(token) {
+  mapboxgl.accessToken = token;
+
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/satellite-streets-v12",
+    center: PIN,
+    zoom: 19,
+    pitch: 0,
+    bearing: 0,
+    antialias: true,
+  });
+  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "bottom-right");
+
+  const draw = new MapboxDraw({
+    displayControlsDefault: false,
+    defaultMode: "simple_select",
+  });
+  map.addControl(draw);
+
+  const dot = document.createElement("div");
+  dot.style.cssText = "width:14px;height:14px;border-radius:50%;background:#e0393e;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)";
+  new mapboxgl.Marker({ element: dot }).setLngLat(PIN).addTo(map);
+
+  map.on("load", () => {
+    map.addSource("massing", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    map.addLayer({
+      id: "massing-3d",
+      type: "fill-extrusion",
+      source: "massing",
+      paint: {
+        "fill-extrusion-height": ["*", ["get", "floors"], LEVEL_M],
+        "fill-extrusion-base": ["*", ["get", "base"], LEVEL_M],
+        "fill-extrusion-color": "#d8cfc2",
+        "fill-extrusion-opacity": 0.95,
+        // These three are what stop a prism reading as flat cardboard.
+        "fill-extrusion-vertical-gradient": true,
+        "fill-extrusion-ambient-occlusion-intensity": 0.35,
+        "fill-extrusion-ambient-occlusion-radius": 4,
+      },
+    });
+
+    // Low sun angle: long shadows and clearly differentiated faces.
+    map.setLight({ anchor: "map", position: [1.4, 210, 32], intensity: 0.42, color: "#fff6e8" });
+
+    refresh();
+  });
+
+  function features() {
+    return draw.getAll().features.map((f) => {
+      const m = meta.get(f.id) || { floors: 4, base: 0 };
+      return {
+        type: "Feature",
+        properties: { floors: m.floors, base: m.base, levels: m.floors },
+        geometry: f.geometry,
+      };
+    });
+  }
+
+  function refresh() {
+    const feats = features();
+    const src = map.getSource("massing");
+    if (src) src.setData({ type: "FeatureCollection", features: feats });
+    renderPanel();
+    document.getElementById("out").value = feats.length
+      ? JSON.stringify({ type: "FeatureCollection", features: feats }, null, 1)
+      : "";
+  }
+
+  function renderPanel() {
+    const all = draw.getAll().features;
+    const host = document.getElementById("vols");
+    host.innerHTML = "";
+    all.forEach((f, i) => {
+      const m = meta.get(f.id) || { floors: 4, base: 0 };
+      const ring = f.geometry.coordinates[0] || [];
+      const area = ring.length > 3 ? Math.round(areaOf(ring)) : 0;
+
+      const el = document.createElement("div");
+      el.className = "vol";
+      el.innerHTML = `
+        <div class="vol-head">
+          <span>Volume ${i + 1}</span>
+          <button class="rm" data-id="${f.id}">Remove</button>
+        </div>
+        <div class="fields">
+          <label>Floors<input type="number" min="1" max="60" value="${m.floors}" data-k="floors" data-id="${f.id}"></label>
+          <label>Starts at<input type="number" min="0" max="60" value="${m.base}" data-k="base" data-id="${f.id}"></label>
+        </div>
+        <div class="meta">${area} m² footprint · ${(m.base * LEVEL_M)}–${((m.base + m.floors) * LEVEL_M)} m</div>`;
+      host.appendChild(el);
+    });
+
+    host.querySelectorAll("input").forEach((inp) => {
+      inp.oninput = () => {
+        const id = inp.dataset.id;
+        const m = meta.get(id) || { floors: 4, base: 0 };
+        m[inp.dataset.k] = Math.max(0, parseInt(inp.value || "0", 10));
+        meta.set(id, m);
+        const src = map.getSource("massing");
+        if (src) src.setData({ type: "FeatureCollection", features: features() });
+        document.getElementById("out").value = JSON.stringify(
+          { type: "FeatureCollection", features: features() }, null, 1);
+        const box = inp.closest(".vol").querySelector(".meta");
+        const ring = draw.get(id).geometry.coordinates[0] || [];
+        box.textContent = `${Math.round(areaOf(ring))} m² footprint · ${m.base * LEVEL_M}–${(m.base + m.floors) * LEVEL_M} m`;
+      };
+    });
+    host.querySelectorAll(".rm").forEach((b) => {
+      b.onclick = () => { draw.delete(b.dataset.id); meta.delete(b.dataset.id); refresh(); };
+    });
+  }
+
+  map.on("draw.create", (e) => {
+    e.features.forEach((f) => meta.set(f.id, { floors: 4, base: 0 }));
+    refresh();
+    map.easeTo({ pitch: 55, duration: 700 });
+  });
+  map.on("draw.update", refresh);
+  map.on("draw.delete", refresh);
+
+  // Estimated massing traced off the drone aerial — a starting point to drag, not truth.
+  document.getElementById("guess").onclick = () => {
+    draw.deleteAll();
+    meta.clear();
+    GUESS.features.forEach((f) => {
+      const [id] = draw.add(f);
+      meta.set(id, { floors: f.properties.floors, base: f.properties.base });
+    });
+    refresh();
+    map.easeTo({ pitch: 58, bearing: -20, zoom: 18.4, duration: 800 });
+  };
+
+  document.getElementById("draw").onclick = () => draw.changeMode("draw_polygon");
+  document.getElementById("clear").onclick = () => { draw.deleteAll(); meta.clear(); refresh(); };
+  document.getElementById("tilt").onclick = () => map.easeTo({ pitch: 60, bearing: -20, duration: 700 });
+  document.getElementById("flat").onclick = () => map.easeTo({ pitch: 0, bearing: 0, duration: 700 });
+
+  let sat = true;
+  document.getElementById("sat").onclick = (ev) => {
+    sat = !sat;
+    ev.target.textContent = sat ? "Satellite off" : "Satellite on";
+    // Restyling drops custom layers, so re-add them once the new style settles.
+    map.once("styledata", () => {
+      if (!map.getSource("massing")) {
+        map.addSource("massing", { type: "geojson", data: { type: "FeatureCollection", features: features() } });
+        map.addLayer({
+          id: "massing-3d", type: "fill-extrusion", source: "massing",
+          paint: {
+            "fill-extrusion-height": ["*", ["get", "floors"], LEVEL_M],
+            "fill-extrusion-base": ["*", ["get", "base"], LEVEL_M],
+            "fill-extrusion-color": sat ? "#d8cfc2" : "#141414",
+            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-vertical-gradient": true,
+            "fill-extrusion-ambient-occlusion-intensity": 0.35,
+            "fill-extrusion-ambient-occlusion-radius": 4,
+          },
+        });
+        map.setLight({ anchor: "map", position: [1.4, 210, 32], intensity: 0.42, color: "#fff6e8" });
+      }
+      refresh();
+    });
+    map.setStyle(sat ? "mapbox://styles/mapbox/satellite-streets-v12" : "mapbox://styles/mapbox/light-v11");
+  };
+
+  document.getElementById("copy").onclick = async () => {
+    const t = document.getElementById("out");
+    if (!t.value) return;
+    await navigator.clipboard.writeText(t.value);
+    const b = document.getElementById("copy");
+    b.textContent = "Copied";
+    setTimeout(() => (b.textContent = "Copy GeoJSON"), 1200);
+  };
+
+  map.on("error", (e) => {
+    document.getElementById("err").textContent = (e && e.error && e.error.message) || "Map failed to load.";
+    document.getElementById("gate").style.display = "grid";
+  });
+}
+
+const input = document.getElementById("token");
+function start() {
+  const t = input.value.trim();
+  if (!t.startsWith("pk.")) {
+    document.getElementById("err").textContent = "That should start with “pk.” — a public token.";
+    return;
+  }
+  document.getElementById("gate").style.display = "none";
+  init(t);
+}
+document.getElementById("go").onclick = start;
+input.addEventListener("keydown", (e) => { if (e.key === "Enter") start(); });
+input.focus();
+</script>
+</body>
+</html>

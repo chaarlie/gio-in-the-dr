@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cabarete in 3D — 1,055 buildings</title>
+<link href="https://unpkg.com/mapbox-gl@3/dist/mapbox-gl.css" rel="stylesheet" />
+<style>
+  :root{
+    --cream:#f1e8df; --surface:#e8dfd3; --card:#fbf8f2; --line:#e2d9cc;
+    --ink:#1b1917; --muted:#8a8175; --accent:#141414;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:"Hanken Grotesk",system-ui,-apple-system,sans-serif;background:var(--cream);color:var(--ink);overflow:hidden}
+  #map{position:absolute;inset:0}
+
+  .panel{
+    position:absolute;top:16px;left:16px;width:320px;max-width:calc(100vw - 32px);
+    max-height:calc(100vh - 32px);overflow-y:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;z-index:5;
+  }
+  .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-size:23px;line-height:1.15;margin:0 0 8px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 6px;line-height:1.55}
+  .grp{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+  .grp>p{margin:0 0 9px;font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .actions{display:flex;gap:7px;flex-wrap:wrap}
+  button{
+    font:inherit;font-size:12.5px;font-weight:600;border-radius:999px;padding:9px 15px;cursor:pointer;
+    background:var(--card);color:var(--ink);border:1px solid var(--line);
+    transition:background 150ms ease,border-color 150ms ease;
+  }
+  button:hover{border-color:rgba(27,25,23,.3)}
+  button.on{background:var(--accent);color:var(--cream);border-color:transparent}
+  .legend{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+  .note{font-size:12px;color:var(--muted);line-height:1.55;margin-top:12px}
+
+  .gate{position:absolute;inset:0;display:grid;place-items:center;background:var(--cream);z-index:20;padding:24px}
+  .gate-card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px;max-width:460px;width:100%}
+  .gate input{width:100%;margin-top:14px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:14px;background:var(--cream);color:var(--ink);outline:none}
+  .gate button{margin-top:14px;width:100%}
+  .err{color:#b3261e;font-size:13px;margin-top:10px;min-height:18px}
+  .mapboxgl-popup-content{background:var(--accent);color:var(--cream);border-radius:14px;padding:12px 15px;font-size:13px}
+  .mapboxgl-popup-tip{border-top-color:var(--accent)!important}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <p class="eyebrow">Cabarete · 3D</p>
+    <h1>Paste your public token</h1>
+    <p class="sub">Starts with <code>pk.</code>. Kept in this tab only.</p>
+    <input id="token" type="password" placeholder="pk.eyJ1..." autocomplete="off" spellcheck="false" />
+    <div class="err" id="err"></div>
+    <button class="on" id="go">Fly to Cabarete</button>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<div class="panel">
+  <p class="eyebrow">1,055 buildings</p>
+  <h1>Cabarete in 3D</h1>
+  <p class="sub">Every OSM footprint in town, extruded at once. Nothing here was drawn by hand.</p>
+
+  <div class="grp">
+    <p>Colour</p>
+    <div class="actions">
+      <button class="on" data-c="brand">Brand</button>
+      <button data-c="height">By height</button>
+      <button data-c="listings">Listings</button>
+      <button data-c="confidence">Data quality</button>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="grp">
+    <p>View</p>
+    <div class="actions">
+      <button id="v-town">Whole town</button>
+      <button id="v-cocco">Coccoloba</button>
+      <button id="v-beach">Beachfront</button>
+      <button id="v-flat">Flat</button>
+    </div>
+  </div>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script src="https://unpkg.com/mapbox-gl@3/dist/mapbox-gl.js"></script>
+<script src="town.js"></script>
+<script src="coccoloba-guess.js"></script>
+<script>
+const COCCO = [-70.413289, 19.750918];
+const LEVEL_M = 3;
+
+// Four ways to paint the same geometry — colour is just an expression.
+const PALETTES = {
+  brand: {
+    expr: "#d5cabb",
+    legend: [["#d5cabb", "All buildings — one flat brand tone"]],
+    note: "Monochrome massing. Closest to the site's palette; the town reads as texture, not data.",
+  },
+  height: {
+    expr: ["interpolate", ["linear"], ["*", ["get", "floors"], LEVEL_M],
+            3, "#efe6da", 6, "#d9c9ae", 9, "#b99f78", 15, "#6f5a3e"],
+    legend: [["#efe6da","1 floor"],["#d9c9ae","2 floors"],["#b99f78","3 floors"],["#6f5a3e","5+ floors"]],
+    note: "Colour interpolated from height. Same trick works for price per m² once listings are in Sanity.",
+  },
+  listings: {
+    expr: ["case", ["==", ["get", "listing"], 1], "#141414", "#ded5c8"],
+    legend: [["#141414","Gio's listing"],["#ded5c8","Everything else"]],
+    note: "What the real map does: your inventory in brand black, the town receding behind it.",
+  },
+  confidence: {
+    expr: ["case", ["==", ["get", "est"], 1], "#e8dcc8", "#25d366"],
+    legend: [["#25d366","Real OSM height (7 buildings)"],["#e8dcc8","Height estimated from footprint"]],
+    note: "Honest view: only 7 of 1,055 buildings have a surveyed height. The rest are my guess from footprint size.",
+  },
+};
+
+function init(token) {
+  mapboxgl.accessToken = token;
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/light-v11",
+    center: COCCO, zoom: 15.2, pitch: 62, bearing: -24, antialias: true,
+  });
+  map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "bottom-right");
+
+  map.on("load", () => {
+    // Tag the guessed Coccoloba volumes so they can be coloured separately.
+    GUESS.features.forEach((f) => { f.properties.listing = 1; f.properties.est = 1; });
+    const all = {
+      type: "FeatureCollection",
+      features: TOWN.features.concat(GUESS.features.filter((f) => f.properties.base === 0)),
+    };
+
+    map.addSource("town", { type: "geojson", data: all });
+    map.addLayer({
+      id: "town-3d",
+      type: "fill-extrusion",
+      source: "town",
+      paint: {
+        "fill-extrusion-height": ["*", ["get", "floors"], LEVEL_M],
+        "fill-extrusion-base": ["*", ["coalesce", ["get", "base"], 0], LEVEL_M],
+        "fill-extrusion-color": PALETTES.brand.expr,
+        "fill-extrusion-opacity": 0.96,
+        "fill-extrusion-vertical-gradient": true,
+        "fill-extrusion-ambient-occlusion-intensity": 0.3,
+        "fill-extrusion-ambient-occlusion-radius": 3.5,
+      },
+    });
+    map.setLight({ anchor: "map", position: [1.4, 200, 30], intensity: 0.4, color: "#fff4e4" });
+
+    function paint(key) {
+      const p = PALETTES[key];
+      map.setPaintProperty("town-3d", "fill-extrusion-color", p.expr);
+      document.getElementById("legend").innerHTML = p.legend
+        .map(([c, l]) => `<div><i style="background:${c}"></i>${l}</div>`).join("");
+      document.getElementById("note").textContent = p.note;
+      document.querySelectorAll("[data-c]").forEach((b) =>
+        b.classList.toggle("on", b.dataset.c === key));
+    }
+    document.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => paint(b.dataset.c)));
+    paint("brand");
+
+    map.on("click", "town-3d", (e) => {
+      const p = e.features[0].properties;
+      const label = p.listing ? "Coccoloba Residence" : (p.name || p.kind || "Building");
+      new mapboxgl.Popup({ offset: 12, closeButton: false })
+        .setLngLat(e.lngLat)
+        .setHTML(`<b>${label}</b><br>${p.floors} floors · ${p.area || "?"} m²${p.est ? " · height estimated" : " · surveyed height"}`)
+        .addTo(map);
+    });
+    map.on("mouseenter", "town-3d", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "town-3d", () => (map.getCanvas().style.cursor = ""));
+
+    document.getElementById("v-town").onclick  = () => map.easeTo({ center: [-70.4135, 19.7495], zoom: 14.6, pitch: 60, bearing: -24, duration: 1400 });
+    document.getElementById("v-cocco").onclick = () => map.easeTo({ center: COCCO, zoom: 18.2, pitch: 62, bearing: -20, duration: 1400 });
+    document.getElementById("v-beach").onclick = () => map.easeTo({ center: [-70.4145, 19.7525], zoom: 16.4, pitch: 72, bearing: 10, duration: 1400 });
+    document.getElementById("v-flat").onclick  = () => map.easeTo({ pitch: 0, bearing: 0, zoom: 15.4, duration: 900 });
+  });
+
+  map.on("error", (e) => {
+    document.getElementById("err").textContent = (e && e.error && e.error.message) || "Map failed to load.";
+    document.getElementById("gate").style.display = "grid";
+  });
+}
+
+const input = document.getElementById("token");
+function start() {
+  const t = input.value.trim();
+  if (!t.startsWith("pk.")) { document.getElementById("err").textContent = "That should start with “pk.”"; return; }
+  document.getElementById("gate").style.display = "none";
+  init(t);
+}
+document.getElementById("go").onclick = start;
+input.addEventListener("keydown", (e) => { if (e.key === "Enter") start(); });
+input.focus();
+</script>
+</body>
+</html>
