@@ -15,9 +15,9 @@ export default function Hero() {
             Buy property &amp; build a life in the Dominican Republic.
           </h1>
           <p className="text-muted text-lg leading-relaxed max-w-md mt-6">
-            I help foreigners find their place on the north coast — homes, land &amp;
-            investments around Cabarete, guided from first viewing to closing, in your
-            language.
+            I help you find your place on the north coast: homes, land &amp;
+            investments around Cabarete, guided from first viewing to closing,
+            in your language.
           </p>
 
           <div className="flex flex-wrap items-center gap-5 mt-8">
@@ -39,11 +39,11 @@ export default function Hero() {
 
           <div className="flex items-center gap-3 mt-10">
             <Image
-              src="/gio-portrait.jpg"
+              src="/gio-avatar-1x1.jpg"
               alt="Gio, real estate agent in Cabarete"
               width={52}
               height={52}
-              className="w-[52px] h-[52px] rounded-full object-cover object-[center_20%]"
+              className="w-[52px] h-[52px] rounded-full object-cover"
             />
             <div>
               <div className="font-semibold text-sm text-ink">Gio</div>
@@ -55,14 +55,17 @@ export default function Hero() {
         </div>
 
         {/* Portrait */}
-        <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5] lg:aspect-auto lg:h-[600px]">
+        {/* 4:5 at every width. The old fixed lg:h-[600px] made the frame ~0.97,
+            which suited the square photo that used to live here but crops 130px
+            off a 4:5 portrait — straight through the top of her head. */}
+        <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5]">
           <Image
-            src="/gio-portrait.jpg"
-            alt="Gio at her office in Cabarete, Dominican Republic"
+            src="/gio-portrait-4x5.jpg"
+            alt="Gio, real estate agent, at a beachfront property in Cabarete, Dominican Republic"
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover object-[center_25%]"
+            className="object-cover object-center"
           />
         </div>
       </div>

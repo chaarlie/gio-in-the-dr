@@ -13,12 +13,14 @@ export default function About() {
     <section id="about" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-14 sm:pt-20 pb-4">
       <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-10 items-center">
         <div className="relative rounded-3xl overflow-hidden aspect-[4/5] bg-accent">
+          {/* Headshot here; the hero keeps the wider beachfront portrait, so the
+              two sections don't repeat the same image. */}
           <Image
-            src="/gio-portrait.jpg"
+            src="/gio-headshot.jpg"
             alt="Gio, real estate agent in Cabarete, Dominican Republic"
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
-            className="object-cover object-[center_20%]"
+            className="object-cover object-[center_30%]"
           />
         </div>
         <div>

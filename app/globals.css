@@ -32,6 +32,64 @@
   color-scheme: light;
 }
 
+/*
+  Map markers for listings. Built in plain CSS because mapbox-gl markers are raw
+  DOM created outside React, so Tailwind's classes aren't available to them.
+*/
+.gio-pin {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-card);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.16);
+  cursor: pointer;
+  font-family: var(--font-body);
+  line-height: 1;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
+}
+.gio-pin:hover,
+.gio-pin:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.22);
+  /* Dimmed markers (outside the selected area) come back up on hover, so you can
+     still read a price without clearing the filter. */
+  opacity: 1 !important;
+}
+.gio-pin-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background-size: cover;
+  background-position: center;
+  flex: none;
+}
+.gio-pin-img--empty {
+  opacity: 0.55;
+}
+.gio-pin-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+.gio-pin-price {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+.gio-pin-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+
 html {
   /* Single-page anchor nav (Header → #properties, #services…) glides instead of jumping. */
   scroll-behavior: smooth;

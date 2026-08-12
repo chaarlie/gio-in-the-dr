@@ -76,9 +76,10 @@ export default function ThemePreview() {
         </div>
       </section>
 
-      {/* Property-card mock */}
+      {/* Card styling reference — deliberately unnamed placeholders, so nothing here
+          reads as a listing. The real cards come from Sanity via PropertyCard. */}
       <section className="grid sm:grid-cols-3 gap-5">
-        {["Sunrise Villa", "Cabarete Beachfront", "North Coast Land"].map((t, i) => (
+        {["Sample villa", "Sample beachfront", "Sample land"].map((t, i) => (
           <div
             key={t}
             className="rounded-2xl overflow-hidden border border-line bg-surface aspect-[5/6] relative flex flex-col justify-end p-5"

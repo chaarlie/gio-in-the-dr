@@ -2,6 +2,9 @@
 // In the Sanity build this number moves to a `siteSettings` field.
 export const WHATSAPP_NUMBER = "18092994917";
 
+/** Same number, formatted for display. Keep in sync with WHATSAPP_NUMBER above. */
+export const WHATSAPP_DISPLAY = "+1 809 299 4917";
+
 export function waLink(message: string): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
