@@ -4,10 +4,15 @@ import SectionHeading from "./SectionHeading";
 import PropertyCard from "./PropertyCard";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { SearchFieldGrid, SearchQueryRow, SearchActionsRow } from "./PropertySearchFields";
+import { WA } from "../lib/whatsapp";
 
 /*
-  The in-page search. Same fields as the overlay and the same state — change something
-  here and the hero bar's summary updates too, because both read one provider.
+  The in-page search, over whatever is published in Sanity.
+
+  Two different empty states, because they mean different things: no listings at all is
+  Gio between listings, and the only useful thing to offer is a conversation. No matches
+  is the visitor's filters, and the only useful thing to offer is clearing them. Showing
+  "clear your filters" to someone who never set one is the version that reads broken.
 */
 export default function Properties() {
   const { state, actions } = usePropertySearch();
@@ -43,8 +48,27 @@ export default function Properties() {
 
       <div id="property-results" className="scroll-mt-28 mt-6" />
 
-      {state.results.length === 0 ? (
-        <div className="py-16 text-center text-muted">
+      {/* Reserve a row's worth of height so filtering to nothing doesn't collapse
+          the grid and yank the rest of the page — including the map below — up by
+          the better part of a screen. */}
+      <div className="min-h-[420px] sm:min-h-[520px]">
+      {state.all.length === 0 ? (
+        <div className="min-h-[420px] sm:min-h-[520px] flex flex-col items-center justify-center text-center text-muted">
+          <p className="max-w-sm">
+            Nothing is listed publicly right now — a lot of what Gio sells never gets that
+            far. Message her and she&apos;ll tell you what&apos;s actually available.
+          </p>
+          <a
+            href={WA.general}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-3.5 rounded-full transition-colors no-underline"
+          >
+            Ask Gio what&apos;s available
+          </a>
+        </div>
+      ) : state.results.length === 0 ? (
+        <div className="min-h-[420px] sm:min-h-[520px] flex flex-col items-center justify-center text-center text-muted">
           <p>No properties match your search.</p>
           <button
             type="button"
@@ -57,10 +81,11 @@ export default function Properties() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {state.results.map((property) => (
-            <PropertyCard key={property.id} property={property} />
+            <PropertyCard key={property.slug} property={property} />
           ))}
         </div>
       )}
+      </div>
     </section>
   );
 }

@@ -2,15 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { usePropertySearch } from "./PropertySearchProvider";
-import {
-  CATEGORIES,
-  CITIES,
-  listOptions,
-  priceOptions,
-  roomOptions,
-  type Filters,
-  type SearchOption,
-} from "../lib/properties";
 
 // Hoisted: these re-render on every keystroke, and there's no React Compiler here.
 const SEARCH_ICON = (
@@ -35,14 +26,6 @@ const FIELD_CARET = (
     ▼
   </span>
 );
-
-// Option lists are constant — build them once, not per render.
-const FIELDS: { key: keyof Filters; label: string; options: SearchOption[] }[] = [
-  { key: "city", label: "Location", options: listOptions(CITIES, "Any location") },
-  { key: "category", label: "Property type", options: listOptions(CATEGORIES, "Any type") },
-  { key: "rooms", label: "Rooms", options: roomOptions() },
-  { key: "maxPrice", label: "Max price", options: priceOptions("No maximum") },
-];
 
 /** Free-text row, with "/" as a page-wide shortcut that jumps here and focuses it. */
 export function SearchQueryRow() {
@@ -99,12 +82,18 @@ export function SearchQueryRow() {
   );
 }
 
-/** The four selects. Hairlines are 1px grid gaps showing the `line` backdrop through. */
+/*
+  The four selects. Hairlines are 1px grid gaps showing the `line` backdrop through.
+
+  The field list comes from the provider rather than a const up here: Location and
+  Property type are built from whatever Gio has listed, so they can't be known at module
+  scope. The provider memoises them, so this still maps a stable array on every keystroke.
+*/
 export function SearchFieldGrid() {
   const { state, actions } = usePropertySearch();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-y border-line">
-      {FIELDS.map((field) => (
+      {state.fields.map((field) => (
         <div key={field.key} className="relative bg-card px-5 sm:px-6 py-4">
           <label className="block">
             <span className="block text-xs font-semibold uppercase tracking-[0.22em] text-muted">

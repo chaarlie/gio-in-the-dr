@@ -5,33 +5,45 @@ import {
   startTransition,
   use,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  ALL,
   ANY,
   EMPTY_FILTERS,
   countLabel,
+  facetOptions,
   filterProperties,
   hasActiveFilters,
+  priceOptions,
+  roomOptions,
   type Filters,
   type Property,
+  type SearchOption,
 } from "../lib/properties";
 
 /*
   Filter state for the property search, lifted out of the section that renders it so the
   fields, the result count and the grid can each read it without prop-threading.
 
-  Lives in layout.tsx, above every page. Server components stay server components: they're
-  passed through as `children`, which the RSC payload renders on the server even though
-  this provider is a client component.
+  Mounted on the home page, which fetches the listings from Sanity on the server and hands
+  them down — the only page that renders the search. Its children stay server components:
+  they're passed through as `children`, which the RSC payload renders on the server even
+  though this provider is a client component.
 */
+
+type SearchField = { key: keyof Filters; label: string; options: SearchOption[] };
 
 type PropertySearchValue = {
   state: {
     filters: Filters;
+    /** Everything Sanity returned, before filtering — an empty grid needs to know why. */
+    all: Property[];
     results: Property[];
+    fields: SearchField[];
     hasFilters: boolean;
     resultLabel: string;
   };
@@ -51,11 +63,34 @@ export function usePropertySearch(): PropertySearchValue {
   return value;
 }
 
-export default function PropertySearchProvider({ children }: { children: ReactNode }) {
+export default function PropertySearchProvider({
+  properties,
+  children,
+}: {
+  properties: Property[];
+  children: ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  /*
+    Location and Property type are built from the listings, so the option lists can't
+    offer a value that matches nothing. Memoised on `properties`, which is a stable
+    reference for the life of the page: the fields re-render on every keystroke, and
+    rebuilding four option arrays each time is exactly what the hoisted const this
+    replaced was avoiding.
+  */
+  const fields = useMemo<SearchField[]>(() => {
+    const facets = facetOptions(properties);
+    return [
+      { key: "area", label: "Location", options: facets.area },
+      { key: "category", label: "Property type", options: facets.category },
+      { key: "rooms", label: "Bedrooms", options: roomOptions() },
+      { key: "maxPrice", label: "Max price", options: priceOptions("No maximum") },
+    ];
+  }, [properties]);
 
   /*
     Subscribe to the URL — deliberately not with useSearchParams().
@@ -75,7 +110,7 @@ export default function PropertySearchProvider({ children }: { children: ReactNo
       const params = new URLSearchParams(window.location.search);
       const next: Filters = {
         q: params.get("q") ?? EMPTY_FILTERS.q,
-        city: params.get("city") ?? EMPTY_FILTERS.city,
+        area: params.get("area") ?? EMPTY_FILTERS.area,
         category: params.get("category") ?? EMPTY_FILTERS.category,
         rooms: params.get("rooms") ?? EMPTY_FILTERS.rooms,
         maxPrice: params.get("max") ?? EMPTY_FILTERS.maxPrice,
@@ -95,8 +130,8 @@ export default function PropertySearchProvider({ children }: { children: ReactNo
   function syncUrl(next: Filters) {
     const params = new URLSearchParams();
     if (next.q.trim()) params.set("q", next.q.trim());
-    if (next.city !== "All") params.set("city", next.city);
-    if (next.category !== "All") params.set("category", next.category);
+    if (next.area !== ALL) params.set("area", next.area);
+    if (next.category !== ALL) params.set("category", next.category);
     if (next.rooms !== ANY) params.set("rooms", next.rooms);
     if (next.maxPrice !== ANY) params.set("max", next.maxPrice);
     const query = params.toString();
@@ -121,7 +156,7 @@ export default function PropertySearchProvider({ children }: { children: ReactNo
   }
 
   // Derived during render — no effects, no state drift.
-  const results = filterProperties(filters);
+  const results = filterProperties(properties, filters);
   const hasFilters = hasActiveFilters(filters);
 
   return (
@@ -129,7 +164,9 @@ export default function PropertySearchProvider({ children }: { children: ReactNo
       value={{
         state: {
           filters,
+          all: properties,
           results,
+          fields,
           hasFilters,
           resultLabel: countLabel(results.length, hasFilters),
         },

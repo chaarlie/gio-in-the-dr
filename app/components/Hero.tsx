@@ -38,10 +38,8 @@ export default function Hero() {
           </div>
 
           <div className="flex items-center gap-3 mt-10">
-            {/* Separate face-cropped file: the portrait is square, so a square avatar
-                container crops nothing and the face would render tiny. */}
             <Image
-              src="/gio-avatar.jpg"
+              src="/gio-avatar-1x1.jpg"
               alt="Gio, real estate agent in Cabarete"
               width={52}
               height={52}
@@ -57,9 +55,12 @@ export default function Hero() {
         </div>
 
         {/* Portrait */}
-        <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5] lg:aspect-auto lg:h-[600px]">
+        {/* 4:5 at every width. The old fixed lg:h-[600px] made the frame ~0.97,
+            which suited the square photo that used to live here but crops 130px
+            off a 4:5 portrait — straight through the top of her head. */}
+        <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5]">
           <Image
-            src="/gio-portrait-2026.jpg"
+            src="/gio-portrait-4x5.jpg"
             alt="Gio, real estate agent, at a beachfront property in Cabarete, Dominican Republic"
             fill
             priority

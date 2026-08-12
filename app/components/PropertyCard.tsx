@@ -1,4 +1,5 @@
-import { waLink } from "../lib/whatsapp";
+import Image from "next/image";
+import Link from "next/link";
 import Badge from "./Badge";
 import type { Property } from "../lib/properties";
 
@@ -13,27 +14,47 @@ const CARD_GLYPH = (
   </div>
 );
 
-// Links to WhatsApp for now; becomes /properties/[slug] once the CMS drives the listings.
 export default function PropertyCard({ property }: { property: Property }) {
   return (
-    <a
-      href={waLink(`Hi Gio, I'm interested in ${property.name} in ${property.city}.`)}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      href={`/properties/${property.slug}`}
       className="group relative rounded-2xl overflow-hidden aspect-[5/6] bg-accent no-underline flex flex-col justify-end p-5"
     >
-      {CARD_GLYPH}
+      {/* The glyph is the normal case, not the edge case — most listings have no photo
+          yet, and a tinted tile reads better than a broken frame. */}
+      {property.image ? (
+        <Image
+          src={property.image}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          placeholder={property.lqip ? "blur" : undefined}
+          blurDataURL={property.lqip ?? undefined}
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        CARD_GLYPH
+      )}
+      {/* Scrim only when there's a photo underneath the text to fight. */}
+      {property.image ? (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/20 to-ink/25"
+        />
+      ) : null}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
         <Badge variant="glass">{property.category}</Badge>
-        <Badge variant="solid">{property.price}</Badge>
+        <Badge variant="solid">{property.price ?? "Price on request"}</Badge>
       </div>
       <div className="relative text-cream">
-        <div className="font-display text-xl font-semibold leading-snug">{property.name}</div>
-        <div className="text-cream/80 text-sm mt-1">{property.city}, Dominican Republic</div>
-        <div className="text-cream/60 text-xs mt-2 pt-2.5 border-t border-cream/20">
-          {property.spec}
-        </div>
+        <div className="font-display text-xl font-semibold leading-snug">{property.title}</div>
+        <div className="text-cream/80 text-sm mt-1">{property.area}, Dominican Republic</div>
+        {property.spec ? (
+          <div className="text-cream/60 text-xs mt-2 pt-2.5 border-t border-cream/20">
+            {property.spec}
+          </div>
+        ) : null}
       </div>
-    </a>
+    </Link>
   );
 }
