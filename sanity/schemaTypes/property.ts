@@ -1,4 +1,5 @@
-import { defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType } from "sanity";
+import { geopointInRange } from "../lib/geopoint";
 
 /*
   A listing.
@@ -59,6 +60,7 @@ export const property = defineType({
       title: "Map pin",
       type: "geopoint",
       description: "Drop the pin on the building. Shows as a dot on the area map.",
+      validation: geopointInRange,
     }),
     defineField({
       name: "category",
@@ -127,10 +129,39 @@ export const property = defineType({
       type: "number",
       description: "Only used by the 3D map experiment. Safe to leave blank.",
     }),
+    /*
+      Photo gallery. `layout: "grid"` is what turns this from a stacked list into
+      a thumbnail grid you can drag files onto and reorder — the list layout has
+      no drop target of its own, which is most of why dropping several files at
+      once behaved badly here.
+
+      `alt` is deliberately optional. Making it required would mean every file
+      dropped in a batch lands invalid, and a gallery that goes red the moment
+      you fill it teaches people to ignore the warning.
+    */
     defineField({
       name: "images",
+      title: "Photos",
       type: "array",
-      of: [{ type: "image", options: { hotspot: true } }],
+      options: { layout: "grid" },
+      description:
+        "Drag several photos in at once, or use Add item ▸ Upload and multi-select. First photo is the one on the card.",
+      of: [
+        defineArrayMember({
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            defineField({
+              name: "alt",
+              title: "Alt text",
+              type: "string",
+              description: "What the photo shows — for screen readers and image search.",
+              validation: (Rule) =>
+                Rule.warning("Worth adding: it's what image search reads."),
+            }),
+          ],
+        }),
+      ],
     }),
     defineField({
       name: "spec",

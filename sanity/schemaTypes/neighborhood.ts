@@ -1,6 +1,7 @@
 import { defineField, defineType } from "sanity";
 
 import { findPolygon } from "../lib/geojson";
+import { geopointInRange } from "../lib/geopoint";
 
 /*
   A Cabarete micro-neighbourhood: Kite Beach, Cabarete Center, ProCab…
@@ -38,7 +39,9 @@ export const neighborhood = defineType({
       name: "pin",
       title: "Map pin",
       type: "geopoint",
-      description: "Roughly the centre. Used to label and zoom the map.",
+      description:
+        "Roughly the centre. Also where a listing in this area shows when it has no pin of its own.",
+      validation: geopointInRange,
     }),
     defineField({
       name: "boundary",
