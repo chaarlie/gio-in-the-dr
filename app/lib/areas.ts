@@ -11,6 +11,12 @@ import { AREA_TONES, NEIGHBORHOODS } from "./neighborhoods";
   wholesale between two sources.
 */
 
+export type ListingImage = {
+  url: string | null;
+  lqip: string | null;
+  aspectRatio: number | null;
+};
+
 export type AreaListing = {
   slug: string | null;
   title: string;
@@ -22,7 +28,10 @@ export type AreaListing = {
   category: string | null;
   location: { lat: number; lng: number } | null;
   sourceUrl: string | null;
-  image: string | null;
+  hoaAmount: number | null;
+  hoaUnit: string | null;
+  walkToBeachMin: number | null;
+  images: ListingImage[] | null;
 };
 
 export type Area = {

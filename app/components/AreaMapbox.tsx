@@ -76,15 +76,19 @@ export default function AreaMapbox({
   areas,
   selected,
   onSelect,
+  onOpenListing,
 }: {
   areas: Area[];
   selected?: string | null;
   onSelect?: (slug: string) => void;
+  /** Called with a listing slug when a pin resolves to exactly one property. */
+  onOpenListing?: (slug: string) => void;
 }) {
   const mapRef = useRef<MapboxMap | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const made = useRef(false);
   const onSelectRef = useRef(onSelect);
+  const onOpenListingRef = useRef(onOpenListing);
   const glRef = useRef<typeof import("mapbox-gl")["default"] | null>(null);
   const markersRef = useRef<import("mapbox-gl").Marker[]>([]);
 
@@ -100,10 +104,11 @@ export default function AreaMapbox({
   */
   const [ready, setReady] = useState(false);
 
-  // Keep the latest callback without re-running the map's init effect.
+  // Keep the latest callbacks without re-running the map's init effect.
   useEffect(() => {
     onSelectRef.current = onSelect;
-  }, [onSelect]);
+    onOpenListingRef.current = onOpenListing;
+  }, [onSelect, onOpenListing]);
 
   useEffect(() => {
     if (!TOKEN || made.current || !holder.current) return;
@@ -384,7 +389,22 @@ export default function AreaMapbox({
             : `<circle class="gio-pin-dot" cx="13" cy="12.6" r="4" />`}
         </svg>`;
 
-      el.onclick = () => onSelectRef.current?.(pin.slug);
+      /*
+        A pin is a property, so tapping one opens that property.
+
+        This used to pass `pin.slug` — the *area's* slug — so every pin click
+        selected the neighbourhood and the listing itself was unreachable: no
+        price, no HOA, no photos, which is the bug this fixes.
+
+        Pins that stack (Coccoloba's two units share a coordinate) can't resolve
+        to one property, so those still select the area and let the panel list
+        them — picking one arbitrarily would hide the other.
+      */
+      const only = pin.items.length === 1 ? pin.items[0] : null;
+      el.onclick = () =>
+        only?.slug
+          ? onOpenListingRef.current?.(only.slug)
+          : onSelectRef.current?.(pin.slug);
 
       markersRef.current.push(
         new gl.Marker({ element: el, anchor: "bottom" }).setLngLat([pin.lng, pin.lat]).addTo(m),

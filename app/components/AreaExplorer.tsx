@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import AreaMapbox from "./AreaMapbox";
 import ExplorerTabs, { type ExplorerView } from "./explorer/ExplorerTabs";
 import AreaRow from "./explorer/AreaRow";
 import AreaDetail from "./explorer/AreaDetail";
 import ListingCard from "./explorer/ListingCard";
+import ListingDetail from "./explorer/ListingDetail";
 import type { Area } from "../lib/areas";
 
 /*
@@ -25,14 +26,42 @@ import type { Area } from "../lib/areas";
 export default function AreaExplorer({ areas }: { areas: Area[] }) {
   const [view, setView] = useState<ExplorerView>("listings");
   const [selected, setSelected] = useState<string | null>(null);
+  /** Slug of the listing whose details fill the panel. Null = browsing the lists. */
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const current = areas.find((a) => a.slug === selected) ?? null;
   const visible = current ? [current] : areas;
   const listings = visible.flatMap((a) => a.listings.map((l) => ({ listing: l, area: a })));
 
+  // Searched across every area, not just the visible ones: a map pin can open a
+  // listing in an area the list is currently filtered away from.
+  const opened =
+    openSlug === null
+      ? null
+      : areas
+          .flatMap((a) => a.listings.map((l) => ({ listing: l, area: a })))
+          .find(({ listing }) => listing.slug === openSlug) ?? null;
+
   function selectArea(slug: string | null) {
     setSelected(slug);
+    setOpenSlug(null);
     if (slug) setView("listings");
+  }
+
+  function openListing(slug: string) {
+    setOpenSlug(slug);
+    /*
+      On a phone the map is pinned near full height with the panel below it, so a
+      pin tap opened details entirely off-screen. Pull the panel up to meet it.
+      Harmless on desktop, where the panel is already beside the map and this
+      resolves to no movement.
+    */
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    panelRef.current?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
   }
 
   return (
@@ -57,7 +86,27 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
         map's z-0; the -mx/-mt pair is undone at lg, where the two go back to
         being side-by-side panes.
       */}
-      <div className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 -mt-10 lg:mt-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px]">
+      <div
+        ref={panelRef}
+        className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 -mt-10 lg:mt-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px] scroll-mt-[88px] lg:scroll-mt-0"
+      >
+        {/*
+          One listing takes over the whole panel rather than expanding in place.
+          At 390px there isn't room for a gallery, a facts table and a list of
+          other properties at once, and the half-and-half version made both
+          halves too small to use.
+        */}
+        {opened ? (
+          <div className="lg:overflow-y-auto lg:overscroll-contain flex-1 -mx-1 px-1">
+            <ListingDetail
+              listing={opened.listing}
+              color={opened.area.color}
+              areaName={opened.area.name}
+              onBack={() => setOpenSlug(null)}
+            />
+          </div>
+        ) : (
+        <>
         <ExplorerTabs
           view={view}
           onChange={setView}
@@ -130,6 +179,7 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
                     color={area.color}
                     areaName={area.name}
                     showArea={!current}
+                    onOpen={openListing}
                   />
                 ))}
               </ul>
@@ -142,6 +192,8 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/*
@@ -162,7 +214,12 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
         z-0 against the list's z-10 — the list slides up over the pinned map.
       */}
       <div className="order-1 lg:order-none min-w-0 -mx-6 md:-mx-8 lg:mx-0 sticky top-[88px] z-0 lg:static lg:z-auto">
-        <AreaMapbox areas={areas} selected={selected} onSelect={selectArea} />
+        <AreaMapbox
+          areas={areas}
+          selected={selected}
+          onSelect={selectArea}
+          onOpenListing={openListing}
+        />
       </div>
     </div>
   );
