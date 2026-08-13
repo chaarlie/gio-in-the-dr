@@ -33,6 +33,8 @@ type PropertyRow = {
 };
 
 export type PropertyImage = {
+  /** Sanity's array-member key — unique even when the same asset repeats. */
+  key: string | null;
   url: string;
   lqip: string | null;
   aspectRatio: number | null;

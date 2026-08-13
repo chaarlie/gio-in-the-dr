@@ -107,7 +107,7 @@ export default function ListingDetail({
             <Image
               loader={sanityLoader}
               src={photos[0].url as string}
-              alt={listing.title}
+              alt={photos[0].alt ?? listing.title}
               fill
               sizes="(min-width: 1024px) 390px, 100vw"
               placeholder={photos[0].lqip ? "blur" : undefined}
@@ -125,7 +125,12 @@ export default function ListingDetail({
             <div className="flex gap-2 mt-2 overflow-x-auto -mx-1 px-1 pb-1">
               {photos.slice(1).map((photo, i) => (
                 <button
-                  key={photo.url}
+                  /* Not photo.url: the same asset can appear twice in a gallery,
+                     and duplicate keys make React drop or duplicate thumbnails.
+                     Sanity's _key is per array member, so repeats stay distinct;
+                     the index only covers documents saved before the query
+                     started asking for it. */
+                  key={photo.key ?? `${photo.url}-${i}`}
                   type="button"
                   onClick={() => setLightboxAt(i + 1)}
                   aria-label={`View photo ${i + 2} of ${listing.title} full screen`}

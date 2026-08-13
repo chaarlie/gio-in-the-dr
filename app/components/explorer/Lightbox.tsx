@@ -179,13 +179,15 @@ export default function Lightbox({
         preview during the fetch rather than a black hole.
       */}
       <div className="relative flex-1 min-h-0 flex items-center justify-center px-4 pb-4 sm:px-6 sm:pb-6 pointer-events-none">
+        {/* Keyed on the index, not the URL: stepping between two copies of the
+            same photo has to remount, and on the URL the key would not change. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          key={current.url}
+          key={index}
           src={sizedImage(current.url, 1600)}
           srcSet={sizedSrcSet(current.url)}
           sizes="100vw"
-          alt={`${title} — photo ${index + 1}`}
+          alt={current.alt ?? `${title} — photo ${index + 1}`}
           decoding="async"
           fetchPriority="high"
           style={
