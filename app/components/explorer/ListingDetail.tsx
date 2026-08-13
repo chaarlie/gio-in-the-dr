@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { preload } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import Lightbox from "./Lightbox";
+import { sanityLoader, sizedImage, sizedSrcSet } from "../../lib/sanity-image";
 import { formatExactPrice } from "../../lib/format";
 import { monthlyHoa } from "../../lib/properties";
 import { waLink } from "../../lib/whatsapp";
@@ -46,6 +48,33 @@ export default function ListingDetail({
   const [lightboxAt, setLightboxAt] = useState<number | null>(null);
 
   const photos = (listing.images ?? []).filter((i) => i.url);
+
+  /*
+    Fetch every photo at full-screen size as soon as the property opens, rather
+    than when someone taps one. Opening a listing is the strong signal that the
+    photos are about to be wanted, and by the time a hand reaches the image the
+    bytes are already in the browser cache — so the lightbox paints instantly
+    instead of showing the delay you noticed.
+
+    `preload` emits the same srcSet the lightbox's <img> uses, so the browser
+    picks one candidate and reuses it. A preload of a URL the img never requests
+    is just wasted bandwidth, which is why both go through sizedSrcSet.
+
+    Keyed on the slug: switching properties preloads the new set, and React
+    dedupes repeat calls for a URL it has already seen.
+  */
+  useEffect(() => {
+    for (const photo of photos) {
+      if (!photo.url) continue;
+      preload(sizedImage(photo.url, 1600), {
+        as: "image",
+        imageSrcSet: sizedSrcSet(photo.url),
+        imageSizes: "100vw",
+      });
+    }
+    // photos is rebuilt each render; the slug is what actually identifies the set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.slug]);
   const price = formatExactPrice(listing.priceUsd);
   const hoa = monthlyHoa(listing.hoaAmount, listing.hoaUnit, listing.areaM2);
   const perM2 =
@@ -76,6 +105,7 @@ export default function ListingDetail({
             className="relative block w-full aspect-[4/3] rounded-2xl overflow-hidden bg-accent cursor-zoom-in group"
           >
             <Image
+              loader={sanityLoader}
               src={photos[0].url as string}
               alt={listing.title}
               fill
@@ -102,6 +132,7 @@ export default function ListingDetail({
                   className="relative w-20 h-16 shrink-0 rounded-xl overflow-hidden bg-accent cursor-zoom-in"
                 >
                   <Image
+                    loader={sanityLoader}
                     src={photo.url as string}
                     alt=""
                     fill

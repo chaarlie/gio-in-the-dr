@@ -88,7 +88,7 @@ export default function PropertySearchProvider({
       { key: "area", label: "Location", options: facets.area },
       { key: "category", label: "Property type", options: facets.category },
       { key: "rooms", label: "Bedrooms", options: roomOptions() },
-      { key: "maxPrice", label: "Max price", options: priceOptions("No maximum") },
+      { key: "maxPrice", label: "Max price", options: priceOptions(properties, "No maximum") },
     ];
   }, [properties]);
 
