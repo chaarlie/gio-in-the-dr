@@ -12,9 +12,12 @@ import { AREA_TONES, NEIGHBORHOODS } from "./neighborhoods";
 */
 
 export type ListingImage = {
+  /** Sanity's array-member key — unique even when the same asset repeats. */
+  key: string | null;
   url: string | null;
   lqip: string | null;
   aspectRatio: number | null;
+  alt: string | null;
 };
 
 export type AreaListing = {
@@ -114,6 +117,41 @@ function ringCentre(boundary: number[][][] | undefined): { lat: number; lng: num
   return { lng: lng / (3 * twiceArea), lat: lat / (3 * twiceArea) };
 }
 
+/*
+  A geopoint Sanity stores happily but the map cannot plot.
+
+  Sanity's geopoint takes two numbers and does not range-check them, so a
+  coordinate typed with the decimal point missing (-70403404) or pasted as
+  degrees-minutes-seconds with the separators stripped (194544.7 for 19°45'44.7")
+  saves without complaint. Mapbox then throws on the first marker it builds, and
+  because that happens during render, one mistyped field in the Studio takes out
+  the entire page rather than one pin.
+
+  Dropping the point degrades instead: the listing falls back to its area, or the
+  area simply has no pin. The warning names the culprit so it can be found in the
+  Studio, since a silently missing pin is its own kind of confusing.
+*/
+function validPoint(
+  point: { lat: number; lng: number } | null | undefined,
+  label: string,
+): { lat: number; lng: number } | null {
+  if (!point) return null;
+  const { lat, lng } = point;
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    console.warn(
+      `[areas] ${label}: coordinate out of range (lat ${lat}, lng ${lng}) — ignored. ` +
+        `Expected decimal degrees, e.g. 19.762417 / -70.488999.`,
+    );
+    return null;
+  }
+  return { lat, lng };
+}
+
 /** The committed fallback — used until a neighbourhood exists in Sanity. */
 function staticAreas(): Area[] {
   return NEIGHBORHOODS.map((n) => ({
@@ -153,7 +191,7 @@ export async function getAreas(): Promise<Area[]> {
       blurb: r.blurb ?? base?.blurb ?? "",
       tone,
       boundary: parseBoundary(r.boundary) ?? base?.boundary ?? null,
-      pin: r.pin ?? base?.pin ?? null,
+      pin: validPoint(r.pin, `neighbourhood "${r.name}"`) ?? base?.pin ?? null,
       // Gio's colour wins when set; the validated ramp is the default.
       color: r.color ?? AREA_TONES[Math.min(tone, AREA_TONES.length - 1)],
       listingCount: r.listingCount ?? 0,
@@ -164,7 +202,12 @@ export async function getAreas(): Promise<Area[]> {
       driveToBeach: r.driveToBeach ?? base?.driveToBeach ?? null,
       hoa: r.hoaNote ?? base?.hoa ?? null,
       activities: r.activities?.length ? r.activities : (base?.activities ?? []),
-      listings: r.listings ?? [],
+      // Same check on every listing: a bad coordinate here drops that one pin to
+      // its area's, rather than throwing while the map builds its markers.
+      listings: (r.listings ?? []).map((l) => ({
+        ...l,
+        location: validPoint(l.location, `listing "${l.title}"`),
+      })),
     };
   });
 }

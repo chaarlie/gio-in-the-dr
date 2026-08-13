@@ -52,9 +52,14 @@ export const AREAS_QUERY = defineQuery(`
         // full-bleed, and a lightbox that can only show one photo isn't one.
         // (GROQ has line comments only — a /* */ block here is a syntax error.)
         "images": images[]{
+          // _key, not the asset URL, identifies a photo in React's list: the
+          // same image can legitimately appear twice in a gallery, and Sanity
+          // gives every array member its own key even when the asset repeats.
+          "key": _key,
           "url": asset->url,
           "lqip": asset->metadata.lqip,
-          "aspectRatio": asset->metadata.dimensions.aspectRatio
+          "aspectRatio": asset->metadata.dimensions.aspectRatio,
+          alt
         }
       }
   }
@@ -102,9 +107,11 @@ export const PROPERTY_QUERY = defineQuery(`
     title, priceUsd, beds, baths, areaM2, spec, category, status,
     hoaAmount, hoaUnit, walkToBeachMin, location, body, sourceUrl,
     "images": images[]{
+      "key": _key,
       "url": asset->url,
       "lqip": asset->metadata.lqip,
-      "aspectRatio": asset->metadata.dimensions.aspectRatio
+      "aspectRatio": asset->metadata.dimensions.aspectRatio,
+      alt
     },
     "area": neighborhood->{ name, "slug": slug.current }
   }

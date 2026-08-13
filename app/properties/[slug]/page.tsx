@@ -100,9 +100,11 @@ function Gallery({ property }: { property: PropertyDetail }) {
       </div>
       {rest.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {rest.map((image) => (
+          {rest.map((image, i) => (
             <div
-              key={image.url}
+              /* Same asset twice in one gallery is legitimate, and a URL key
+                 would collide. Sanity's per-member _key handles repeats. */
+              key={image.key ?? `${image.url}-${i}`}
               className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-accent"
             >
               <Image
