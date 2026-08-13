@@ -36,63 +36,88 @@
   Map markers for listings. Built in plain CSS because mapbox-gl markers are raw
   DOM created outside React, so Tailwind's classes aren't available to them.
 */
+/* Marker: a teardrop, not a price pill. The button is only as big as the drop,
+   so markers around the bay no longer overlap into an unreadable stack. The
+   inline `color` set on each element is its area's ramp colour, which the fill
+   picks up through currentColor. */
 .gio-pin {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 4px 10px 4px 4px;
-  border: 1px solid var(--color-line);
-  border-radius: 999px;
-  background: var(--color-card);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 0.16);
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
-  font-family: var(--font-body);
-  line-height: 1;
+  line-height: 0;
+  filter: drop-shadow(0 3px 5px rgb(0 0 0 / 0.3));
   transition:
     transform 150ms ease,
-    box-shadow 150ms ease,
+    filter 150ms ease,
     opacity 150ms ease;
+  transform-origin: 50% 100%;
 }
 .gio-pin:hover,
 .gio-pin:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgb(0 0 0 / 0.22);
+  transform: scale(1.12);
+  filter: drop-shadow(0 6px 9px rgb(0 0 0 / 0.34));
   /* Dimmed markers (outside the selected area) come back up on hover, so you can
-     still read a price without clearing the filter. */
+     still reach a listing without clearing the filter. */
   opacity: 1 !important;
 }
-.gio-pin-img {
-  width: 26px;
-  height: 26px;
-  border-radius: 999px;
-  background-size: cover;
-  background-position: center;
-  flex: none;
+/* Cream outline, same halo idiom the area labels use — it separates the drop
+   from both the fills underneath and the pale map beyond them. */
+.gio-pin-body {
+  fill: currentColor;
+  stroke: #f4efe6;
+  stroke-width: 1.4;
 }
-.gio-pin-img--empty {
-  opacity: 0.55;
+/* A listing shown at its area's centre because it has no coordinate yet. A
+   dashed outline reads as "not pinned down" without spending a second colour,
+   which the map has none of — the fills already carry the beach-to-inland ramp. */
+.gio-pin--approx .gio-pin-body {
+  /* Hollow, not dashed. The drop's outline is only ~75px round, so any dash
+     period short enough to repeat turns the silhouette into a ring of teeth.
+     Draining the fill keeps the shape crisp and still reads as provisional. */
+  fill-opacity: 0.35;
 }
-.gio-pin-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
+.gio-pin--approx .gio-pin-dot,
+.gio-pin--approx .gio-pin-count {
+  /* The washed fill is pale whatever the area's tone, so the inner mark stops
+     tracking that tone and takes the dark ink that works on all of them. */
+  fill: #2a1e10;
 }
-.gio-pin-price {
-  font-size: 12.5px;
+/* --pin-ink is set per marker: whichever of the two map inks stays readable on
+   that area's fill. Falls back to cream, which suits all but the palest tone. */
+.gio-pin-dot {
+  fill: var(--pin-ink, #f4efe6);
+  opacity: 0.75;
+}
+.gio-pin-count {
+  fill: var(--pin-ink, #f4efe6);
+  font-family: var(--font-body);
+  font-size: 11px;
   font-weight: 700;
-  color: var(--color-ink);
-}
-.gio-pin-sub {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-muted);
 }
 
 
 html {
   /* Single-page anchor nav (Header → #properties, #services…) glides instead of jumping. */
   scroll-behavior: smooth;
+
+  /*
+    Phones read at arm's length on a smaller screen, so the base goes up rather
+    than down. Every Tailwind size is rem-based, so one number lifts the whole
+    scale together — the alternative was hand-raising three dozen text-xs, which
+    drifts the moment anyone adds a component.
+  */
+  font-size: 17px;
+
+  /* Stop iOS inflating text in landscape on its own terms; the scale above is
+     the deliberate version of what that heuristic is trying to do. */
+  -webkit-text-size-adjust: 100%;
+}
+@media (min-width: 640px) {
+  html {
+    font-size: 16px;
+  }
 }
 
 body {
@@ -100,6 +125,21 @@ body {
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  /* Full-bleed sections run to the edge; keep them clear of notches and the
+     home indicator. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* No 300ms double-tap delay, and a tap flash that belongs to this palette
+   rather than Chrome's default blue. */
+a,
+button,
+summary,
+[role="tab"],
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgb(27 25 23 / 0.08);
 }
 
 ::selection {
