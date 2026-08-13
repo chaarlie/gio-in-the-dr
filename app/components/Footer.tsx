@@ -27,10 +27,10 @@ export default function Footer() {
               Chat on WhatsApp
             </a>
             <a
-              href="mailto:hello@giointhedr.com"
+              href="mailto:info@giointhedr.com"
               className="text-cream/80 text-[15px] font-medium border-b border-cream/30 pb-0.5 no-underline hover:text-cream transition-colors"
             >
-              hello@giointhedr.com
+              info@giointhedr.com
             </a>
           </div>
         </div>
@@ -40,23 +40,40 @@ export default function Footer() {
             <Logo />
           </div>
           <nav className="flex gap-6 flex-wrap">
-            <Link href="/#properties" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+            <Link
+              href="/#properties"
+              className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
+            >
               Properties
             </Link>
-            <Link href="/blog" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+            <Link
+              href="/blog"
+              className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
+            >
               Blog
             </Link>
-            <Link href="/#services" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+            <Link
+              href="/#services"
+              className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
+            >
               Services
             </Link>
-            <Link href="/#about" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+            <Link
+              href="/#about"
+              className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
+            >
               About
             </Link>
-            <Link href="/#contact" className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors">
+            <Link
+              href="/#contact"
+              className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
+            >
               Contact
             </Link>
           </nav>
-          <div className="text-cream/50 text-sm">© 2026 Gio In The DR. All rights reserved.</div>
+          <div className="text-cream/50 text-sm">
+            © 2026 Gio In The DR. All rights reserved.
+          </div>
         </div>
       </div>
     </footer>
