@@ -41,18 +41,67 @@ export function roomOptions(): SearchOption[] {
   ];
 }
 
-const PRICE_STEPS = [200_000, 300_000, 400_000, 500_000, 750_000, 1_000_000, 2_000_000];
-
 export type SearchOption = { value: string; label: string };
 
-export function priceOptions(anyLabel: string): SearchOption[] {
-  return [
-    { value: ANY, label: anyLabel },
-    ...PRICE_STEPS.map((amount) => ({
-      value: String(amount),
-      label: amount >= 1_000_000 ? `$${amount / 1_000_000}M` : `$${amount / 1_000}K`,
-    })),
-  ];
+/*
+  Round numbers a buyer would actually think in, from a starter condo to a
+  trophy villa. The ladder the options are drawn from — not the options
+  themselves, which depend on what's for sale.
+*/
+const PRICE_LADDER = [
+  100_000, 150_000, 200_000, 250_000, 300_000, 400_000, 500_000, 600_000, 750_000,
+  1_000_000, 1_500_000, 2_000_000, 3_000_000, 5_000_000, 7_500_000, 10_000_000,
+  15_000_000, 20_000_000, 30_000_000, 50_000_000,
+];
+
+/** Most options to offer, before thinning. More than this is a scroll, not a choice. */
+const MAX_PRICE_STEPS = 7;
+
+function priceLabel(amount: number): string {
+  if (amount >= 1_000_000) {
+    const m = amount / 1_000_000;
+    return `$${m % 1 === 0 ? m : m.toFixed(1)}M`;
+  }
+  return `$${Math.round(amount / 1_000)}K`;
+}
+
+/*
+  Max-price steps derived from the listings, for the reason the fixed ladder had
+  to go: it ran 500K then 750K, and the two properties at 550K and 590K sat in
+  that gap. Anyone reaching for "$500K" — the round number nearest what they
+  cost — watched both disappear and concluded the filter was broken.
+
+  So the steps now bracket the real inventory. Every option matches at least one
+  listing, the top step always clears the most expensive one, and a $30M villa
+  added tomorrow extends the ladder without anyone editing this file.
+*/
+export function priceOptions(properties: Property[], anyLabel: string): SearchOption[] {
+  const any = { value: ANY, label: anyLabel };
+  const prices = properties.map((p) => p.priceUsd).filter((p) => Number.isFinite(p));
+  if (prices.length === 0) return [any];
+
+  const lowest = Math.min(...prices);
+  const highest = Math.max(...prices);
+
+  // Above the cheapest (a step below it would match nothing) and up to and
+  // including the first rung that clears the priciest.
+  let steps = PRICE_LADDER.filter((step) => step >= lowest);
+  const covering = steps.findIndex((step) => step >= highest);
+  steps = covering === -1 ? steps : steps.slice(0, covering + 1);
+
+  // Everything is dearer than the top of the ladder: offer one honest step.
+  if (steps.length === 0) steps = [highest];
+
+  // Thin evenly, always keeping the last — that's the one that shows everything.
+  if (steps.length > MAX_PRICE_STEPS) {
+    const stride = (steps.length - 1) / (MAX_PRICE_STEPS - 1);
+    steps = Array.from(
+      { length: MAX_PRICE_STEPS },
+      (_, i) => steps[Math.round(i * stride)],
+    );
+  }
+
+  return [any, ...steps.map((amount) => ({ value: String(amount), label: priceLabel(amount) }))];
 }
 
 /** Build options for a plain string list, relabelling the "All" sentinel. */

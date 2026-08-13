@@ -93,27 +93,39 @@ export function SearchFieldGrid() {
   const { state, actions } = usePropertySearch();
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-y border-line">
-      {state.fields.map((field) => (
-        <div key={field.key} className="relative bg-card px-5 sm:px-6 py-4">
-          <label className="block">
-            <span className="block text-xs font-semibold uppercase tracking-[0.22em] text-muted">
-              {field.label}
-            </span>
-            <select
-              value={state.filters[field.key]}
-              onChange={(e) => actions.setFilter(field.key, e.target.value)}
-              className="mt-2 w-full appearance-none bg-transparent pr-7 text-[15px] font-semibold text-ink cursor-pointer outline-none"
-            >
-              {field.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {FIELD_CARET}
-        </div>
-      ))}
+      {state.fields.map((field) => {
+        const value = state.filters[field.key];
+        /*
+          The options come from the listings, so a shared link can name one that
+          no longer exists — ?max=750000 after the ladder shifted, or an area
+          with nothing left for sale. A <select> whose value matches no option
+          renders blank, which looks broken while the filter is in fact applied.
+          Carry the orphan as its own option so the field states what it's doing.
+        */
+        const orphan = value && !field.options.some((o) => o.value === value);
+        return (
+          <div key={field.key} className="relative bg-card px-5 sm:px-6 py-4">
+            <label className="block">
+              <span className="block text-xs font-semibold uppercase tracking-[0.22em] text-muted">
+                {field.label}
+              </span>
+              <select
+                value={value}
+                onChange={(e) => actions.setFilter(field.key, e.target.value)}
+                className="mt-2 w-full appearance-none bg-transparent pr-7 text-[15px] font-semibold text-ink cursor-pointer outline-none"
+              >
+                {orphan ? <option value={value}>{value}</option> : null}
+                {field.options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {FIELD_CARET}
+          </div>
+        );
+      })}
     </div>
   );
 }

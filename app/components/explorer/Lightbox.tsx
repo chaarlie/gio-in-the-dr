@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { sizedImage, sizedSrcSet } from "../../lib/sanity-image";
 import type { ListingImage } from "../../lib/areas";
 
 /*
@@ -62,7 +62,9 @@ export default function Lightbox({
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
+      // Escape, and "x" for the same reason the close control is an ✕: it's the
+      // key people reach for when a picture is filling the screen.
+      if (e.key === "Escape" || e.key === "x" || e.key === "X") {
         e.preventDefault();
         onClose();
         return;
@@ -124,7 +126,15 @@ export default function Lightbox({
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="flex items-center justify-between gap-4 p-4 sm:p-5 text-cream shrink-0">
+      {/*
+        relative z-10 is load-bearing. The backdrop below is `absolute`, and a
+        positioned sibling paints over a static one regardless of source order —
+        so without this the backdrop sat on top of the ✕ and swallowed its
+        clicks. It still closed, because the backdrop closes too, but the button
+        was not actually the thing being pressed and could never show a hover
+        state. Same fix on the arrows.
+      */}
+      <div className="relative z-10 flex items-center justify-between gap-4 p-4 sm:p-5 text-cream shrink-0">
         <p className="text-sm font-semibold truncate min-w-0">{title}</p>
         <div className="flex items-center gap-4 shrink-0">
           {count > 1 ? (
@@ -154,20 +164,37 @@ export default function Lightbox({
         className="absolute inset-0 cursor-zoom-out"
       />
 
+      {/*
+        A plain <img> with Sanity's own transforms rather than next/image. The
+        originals are camera-sized (6000×4500, 4 MB); routing those through the
+        Next optimizer meant it had to fetch and re-encode the whole file before
+        the first byte arrived, which is the delay you could watch happen.
+        Sanity's CDN returns 190 KB at 1024px from cache instead.
+
+        It also makes the URL deterministic, which is what lets ListingDetail
+        preload these the moment a property opens — a preload only helps if it
+        requests exactly the URL the <img> will later ask for.
+
+        The LQIP data URI sits underneath as the background, so there's a blurred
+        preview during the fetch rather than a black hole.
+      */}
       <div className="relative flex-1 min-h-0 flex items-center justify-center px-4 pb-4 sm:px-6 sm:pb-6 pointer-events-none">
-        <div className="relative w-full h-full pointer-events-auto">
-          <Image
-            key={current.url}
-            src={current.url}
-            alt={`${title} — photo ${index + 1}`}
-            fill
-            sizes="100vw"
-            placeholder={current.lqip ? "blur" : undefined}
-            blurDataURL={current.lqip ?? undefined}
-            className="object-contain"
-            priority
-          />
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          key={current.url}
+          src={sizedImage(current.url, 1600)}
+          srcSet={sizedSrcSet(current.url)}
+          sizes="100vw"
+          alt={`${title} — photo ${index + 1}`}
+          decoding="async"
+          fetchPriority="high"
+          style={
+            current.lqip
+              ? { backgroundImage: `url(${current.lqip})`, backgroundSize: "cover" }
+              : undefined
+          }
+          className="pointer-events-auto max-w-full max-h-full object-contain"
+        />
       </div>
 
       {count > 1 ? (
@@ -176,7 +203,7 @@ export default function Lightbox({
             type="button"
             onClick={() => go(-1)}
             aria-label="Previous photo"
-            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
+            className="absolute z-10 left-2 sm:left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
           >
             ‹
           </button>
@@ -184,7 +211,7 @@ export default function Lightbox({
             type="button"
             onClick={() => go(1)}
             aria-label="Next photo"
-            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
+            className="absolute z-10 right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
           >
             ›
           </button>
