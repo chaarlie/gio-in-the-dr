@@ -9,10 +9,22 @@ import { defineCliConfig } from "sanity/cli";
 */
 
 export default defineCliConfig({
-  api: { projectId: "fzowppzt", dataset: "production" },
-  /** Where `npx sanity deploy` publishes → gio-in-the-dr.sanity.studio */
-  studioHost: "gio-in-the-dr",
-  /** Pinned so redeploys don't prompt for the application id. */
-  deployment: { appId: "djoj78dd9fcv4qkbutqj6any" },
+  api: { projectId: "walmnvd1", dataset: "production" },
+  /*
+    Where `npx sanity deploy` publishes → giointhedr.sanity.studio
+
+    Not "gio-in-the-dr": a studio host belongs to exactly one project, and that
+    name is still held by the old project (fzowppzt) under a different account.
+    Releasing it needs that account, so this deploys under the domain spelling
+    instead. To switch later: release the name there, change this line, redeploy
+    — the old URL stops resolving, so tell Gio before doing it.
+  */
+  studioHost: "giointhedr",
+  /*
+    Pinned so redeploys don't prompt for the application id. This is the app
+    created under walmnvd1 — the previous id belonged to fzowppzt's Studio and
+    did not carry over, since an application belongs to one project.
+  */
+  deployment: { appId: "v3woxhe0h4tre9bqwphfe97k" },
   vite: (config) => ({ ...config, publicDir: false }),
 });

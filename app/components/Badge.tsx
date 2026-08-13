@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 // `solid` = near-white price chip.
 const VARIANTS = {
   glass:
-    "bg-cream/15 text-cream text-[11px] font-semibold uppercase tracking-wide px-3 py-1.5 backdrop-blur-sm",
+    "bg-cream/15 text-cream text-xs font-semibold uppercase tracking-wide px-3 py-1.5 backdrop-blur-sm",
   solid: "bg-cream text-ink text-base font-bold px-4 py-2 shadow-sm",
 } as const;
 

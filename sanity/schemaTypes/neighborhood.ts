@@ -1,5 +1,7 @@
 import { defineField, defineType } from "sanity";
 
+import { findPolygon } from "../lib/geojson";
+
 /*
   A Cabarete micro-neighbourhood: Kite Beach, Cabarete Center, ProCab…
 
@@ -44,22 +46,13 @@ export const neighborhood = defineType({
       type: "text",
       rows: 4,
       description:
-        "Draw the area at geojson.io, then paste the Polygon here. Leave blank to use the built-in approximate shape.",
+        "Draw the area at geojson.io with the polygon tool, then paste the whole export here. Leave blank to use the built-in approximate shape.",
       validation: (Rule) =>
         Rule.custom((value) => {
           if (!value) return true;
           try {
-            const parsed = JSON.parse(value as string);
-            // geojson.io hands you a FeatureCollection — accept that shape too,
-            // otherwise the obvious copy-paste gets rejected.
-            const g =
-              parsed.type === "FeatureCollection"
-                ? parsed.features?.[0]?.geometry
-                : parsed.type === "Feature"
-                  ? parsed.geometry
-                  : parsed;
-            if (g?.type !== "Polygon" && g?.type !== "MultiPolygon") {
-              return "Needs a Polygon — paste the whole export from geojson.io.";
+            if (!findPolygon(JSON.parse(value as string))) {
+              return "No polygon in there — draw the area with the polygon tool at geojson.io (the pentagon icon), not the line or marker tool.";
             }
             return true;
           } catch {

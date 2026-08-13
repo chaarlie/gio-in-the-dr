@@ -1,4 +1,5 @@
 import { sanityFetch } from "../../sanity/lib/client";
+import { polygonRings } from "../../sanity/lib/geojson";
 import { AREAS_QUERY } from "../../sanity/lib/queries";
 import SHAPES from "./area-shapes.json";
 import { AREA_TONES, NEIGHBORHOODS } from "./neighborhoods";
@@ -31,6 +32,12 @@ export type Area = {
   tone: number;
   /** GeoJSON ring, from Sanity's boundary when drawn, else the built-in shape. */
   boundary: number[][][] | null;
+  /*
+    Roughly the centre of the area. Doubles as the map position for a listing
+    that has no coordinate of its own — better an approximate pin in the right
+    neighbourhood than a house that silently isn't on the map at all.
+  */
+  pin: { lat: number; lng: number } | null;
   color: string;
   listingCount: number;
   priceFrom: number | null;
@@ -50,6 +57,7 @@ type SanityArea = {
   sortOrder: number | null;
   color: string | null;
   boundary: string | null;
+  pin: { lat: number; lng: number } | null;
   marketPricePerM2: number | null;
   walkToBeach: string | null;
   driveToBeach: string | null;
@@ -61,23 +69,40 @@ type SanityArea = {
   listings: AreaListing[] | null;
 };
 
-/** Accepts a bare Polygon, or a Feature/FeatureCollection wrapping one. */
+/** Accepts a bare Polygon, or a Feature/FeatureCollection containing one. */
 function parseBoundary(raw: string | null): number[][][] | null {
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw);
-    const geom =
-      parsed.type === "FeatureCollection"
-        ? parsed.features?.[0]?.geometry
-        : parsed.type === "Feature"
-          ? parsed.geometry
-          : parsed;
-    if (geom?.type === "Polygon") return geom.coordinates;
-    if (geom?.type === "MultiPolygon") return geom.coordinates[0];
-    return null;
+    return polygonRings(JSON.parse(raw));
   } catch {
     return null;
   }
+}
+
+/*
+  Centroid of a ring, so the static fallback has a pin too. Area-weighted
+  (the shoelace formula), not an average of the vertices: the shapes are traced
+  by hand and their points bunch up along the coast, which drags a plain mean
+  off toward whichever edge was clicked most.
+*/
+function ringCentre(boundary: number[][][] | undefined): { lat: number; lng: number } | null {
+  const ring = boundary?.[0];
+  if (!ring || ring.length < 3) return null;
+  let twiceArea = 0;
+  let lng = 0;
+  let lat = 0;
+  for (let i = 0; i < ring.length - 1; i++) {
+    const [x0, y0] = ring[i];
+    const [x1, y1] = ring[i + 1];
+    const cross = x0 * y1 - x1 * y0;
+    twiceArea += cross;
+    lng += (x0 + x1) * cross;
+    lat += (y0 + y1) * cross;
+  }
+  // Degenerate ring (zero area) — fall back to the first point rather than
+  // dividing by zero and pinning the area at NaN, which mapbox renders nowhere.
+  if (twiceArea === 0) return { lng: ring[0][0], lat: ring[0][1] };
+  return { lng: lng / (3 * twiceArea), lat: lat / (3 * twiceArea) };
 }
 
 /** The committed fallback — used until a neighbourhood exists in Sanity. */
@@ -88,6 +113,8 @@ function staticAreas(): Area[] {
     blurb: n.blurb,
     tone: n.tone,
     boundary: (SHAPES as Record<string, number[][][]>)[n.slug] ?? null,
+    // No pin in the committed data; the ring's centre is the same idea.
+    pin: ringCentre((SHAPES as Record<string, number[][][]>)[n.slug]),
     color: AREA_TONES[n.tone],
     listingCount: 0,
     priceFrom: null,
@@ -117,6 +144,7 @@ export async function getAreas(): Promise<Area[]> {
       blurb: r.blurb ?? base?.blurb ?? "",
       tone,
       boundary: parseBoundary(r.boundary) ?? base?.boundary ?? null,
+      pin: r.pin ?? base?.pin ?? null,
       // Gio's colour wins when set; the validated ramp is the default.
       color: r.color ?? AREA_TONES[Math.min(tone, AREA_TONES.length - 1)],
       listingCount: r.listingCount ?? 0,

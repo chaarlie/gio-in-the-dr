@@ -43,3 +43,6 @@ next-env.d.ts
 # sanity studio
 /dist
 /.sanity
+
+# Claude Code local machine settings
+.claude/settings.local.json

@@ -22,7 +22,11 @@ import type { Area } from "../lib/areas";
   Awaiting a prop keeps this a normal server component — the parent never blocks
   on the promise, it just hands it over.
 */
-export default async function AreaMap({ areas: areasPromise }: { areas: Promise<Area[]> }) {
+export default async function AreaMap({
+  areas: areasPromise,
+}: {
+  areas: Promise<Area[]>;
+}) {
   const areas = await areasPromise;
 
   return (
@@ -30,26 +34,41 @@ export default async function AreaMap({ areas: areasPromise }: { areas: Promise<
       id="areas"
       className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4"
     >
-      <SectionHeading align="center" eyebrow="North coast" title="Explore by area" className="mb-8">
+      <SectionHeading
+        align="center"
+        eyebrow="North coast"
+        title="Explore by area"
+        className="mb-8"
+      >
         <p className="text-muted mt-3 max-w-2xl mx-auto">
-          Five neighbourhoods around Cabarete Bay, plus Perla Marina further west — each with
-          its own character, price and walk to the sand.
+          Take a closer look at Cabarete and Sosúa. Use the map to understand
+          where each area is, how the neighborhoods connect, and what makes each
+          one unique: from beaches and local life to restaurants, amenities and
+          atmosphere. Especially if it’s your first time here, the map gives you
+          an easy feel for the area and helps you discover which neighborhood
+          might be the right fit for you.
         </p>
       </SectionHeading>
 
       <AreaExplorer areas={areas} />
 
       <p className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-xs text-muted">
-        <span className="font-semibold uppercase tracking-[0.18em]">Closer to the sand</span>
-        <span className="flex rounded-full overflow-hidden border border-line" aria-hidden="true">
+        <span className="font-semibold uppercase tracking-[0.18em]">
+          Closer to the sand
+        </span>
+        <span
+          className="flex rounded-full overflow-hidden border border-line"
+          aria-hidden="true"
+        >
           {AREA_TONES.map((c) => (
             <span key={c} className="w-7 h-3" style={{ background: c }} />
           ))}
         </span>
-        <span className="font-semibold uppercase tracking-[0.18em]">Further inland</span>
+        <span className="font-semibold uppercase tracking-[0.18em]">
+          Further inland
+        </span>
         <span className="ml-auto italic">Boundaries approximate.</span>
       </p>
-
     </section>
   );
 }

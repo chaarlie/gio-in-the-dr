@@ -18,7 +18,10 @@ import { schemaTypes } from "./sanity/schemaTypes";
 export default defineConfig({
   name: "gio-in-the-dr",
   title: "Gio In The DR",
-  projectId: "fzowppzt",
+  // Gio's own project (org oIn2rIz17). The site previously read fzowppzt, which
+  // was mine — the content there has to be migrated across, it does not follow
+  // the ID change.
+  projectId: "walmnvd1",
   dataset: "production",
   plugins: [structureTool(), colorInput()],
   schema: { types: schemaTypes },

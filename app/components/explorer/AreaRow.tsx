@@ -36,7 +36,7 @@ export default function AreaRow({
         />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-ink truncate">{area.name}</span>
-          <span className="block text-[11px] text-muted tabular-nums">{summary}</span>
+          <span className="block text-xs text-muted tabular-nums">{summary}</span>
         </span>
         <span aria-hidden="true" className="text-muted text-xs shrink-0">
           {selected ? "✕" : "→"}

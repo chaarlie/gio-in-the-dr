@@ -36,7 +36,7 @@ export default function PostCard({ post }: { post: Post }) {
           )}
         </div>
         <div className="p-5">
-          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">
             {post.topic ? <span>{post.topic}</span> : null}
             {post.topic && date ? <span aria-hidden="true">·</span> : null}
             {date ? <span className="tracking-normal normal-case">{date}</span> : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { formatPrice } from "../lib/format";
@@ -26,6 +26,32 @@ const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 /** Compass bearing that puts the NW-running shoreline across the frame. */
 const COAST_BEARING = 241;
+
+/*
+  Which of the two map inks stays readable on a given fill.
+
+  The ramp runs #b59a6e to #3c2611, so a fixed ink is wrong at one end whichever
+  end you pick — and Gio can override any area's colour from the Studio, so the
+  ramp isn't even the full set. Same two inks and the same intent as the
+  AREA_LABEL_INK table, computed instead of hand-kept in step with the ramp.
+
+  sRGB relative luminance, thresholded at the point where the two swap.
+*/
+function readableOn(hex: string) {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = Number.parseInt(full, 16);
+  if (!Number.isFinite(n) || full.length !== 6) return "#f4efe6";
+  const channel = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  const lum =
+    0.2126 * channel((n >> 16) & 255) +
+    0.7152 * channel((n >> 8) & 255) +
+    0.0722 * channel(n & 255);
+  return lum > 0.36 ? "#2a1e10" : "#f4efe6";
+}
 
 function collection(areas: Area[]) {
   return {
@@ -61,6 +87,18 @@ export default function AreaMapbox({
   const onSelectRef = useRef(onSelect);
   const glRef = useRef<typeof import("mapbox-gl")["default"] | null>(null);
   const markersRef = useRef<import("mapbox-gl").Marker[]>([]);
+
+  /*
+    The map is built asynchronously — the import is deferred until the section
+    nears the viewport, then mapbox raises "load" later still. Everything that
+    draws onto the map therefore has to wait for it.
+
+    This is state, not a ref, because a ref changing does not re-run an effect:
+    the markers effect would read a null mapRef on mount, bail, and never be
+    asked again, so no pins appeared until something else happened to change
+    `selected`. State re-renders, which re-runs the effects with the map in hand.
+  */
+  const [ready, setReady] = useState(false);
 
   // Keep the latest callback without re-running the map's init effect.
   useEffect(() => {
@@ -193,6 +231,10 @@ export default function AreaMapbox({
         const f = e.features?.[0] as { properties?: { slug?: string } } | undefined;
         if (f?.properties?.slug) onSelectRef.current?.(f.properties.slug);
       });
+
+      // Last thing in the load handler, so anything keyed on `ready` can assume
+      // the style and the area layers are both there.
+      if (!cancelled) setReady(true);
     });
 
     }
@@ -202,6 +244,7 @@ export default function AreaMapbox({
       begin();
       return () => {
         cancelled = true;
+        setReady(false);
         mapRef.current = null;
         map?.remove();
       };
@@ -220,6 +263,9 @@ export default function AreaMapbox({
     return () => {
       cancelled = true;
       observer.disconnect();
+      // The next map starts unready; leaving this true would let the marker
+      // effect attach to a map that has just been removed.
+      setReady(false);
       mapRef.current = null;
       map?.remove();
     };
@@ -229,7 +275,7 @@ export default function AreaMapbox({
      in step whichever one you clicked. */
   useEffect(() => {
     const m = mapRef.current;
-    if (!m || !m.isStyleLoaded()) return;
+    if (!ready || !m) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const area = areas.find((a) => a.slug === selected);
     if (area?.boundary) {
@@ -245,7 +291,7 @@ export default function AreaMapbox({
       ["==", ["get", "slug"], selected ?? ""], 0.72,
       selected ? 0.2 : 0.42,
     ]);
-  }, [selected, areas]);
+  }, [selected, areas, ready]);
 
   /*
     Listings as thumbnails rather than dots — a price you can read beats a dot you
@@ -256,20 +302,39 @@ export default function AreaMapbox({
   useEffect(() => {
     const m = mapRef.current;
     const gl = glRef.current;
-    if (!m || !gl) return;
+    if (!ready || !m || !gl) return;
 
     markersRef.current.forEach((mk) => mk.remove());
     markersRef.current = [];
 
-    type Pin = { lng: number; lat: number; color: string; slug: string; items: typeof areas[number]["listings"] };
+    type Pin = {
+      lng: number;
+      lat: number;
+      color: string;
+      slug: string;
+      approx: boolean;
+      items: typeof areas[number]["listings"];
+    };
     const byPlace = new Map<string, Pin>();
     areas.forEach((a) =>
       a.listings.forEach((l) => {
-        if (!l.location) return;
-        const key = `${l.location.lng.toFixed(5)},${l.location.lat.toFixed(5)}`;
+        /*
+          A listing with no coordinate of its own falls back to its
+          neighbourhood's pin. Skipping it instead — which is what this used to
+          do — drops the house off the map with nothing to show it is missing,
+          so a half-filled dataset looks like a half-empty market.
+
+          Only when the area has no pin either is there nothing to place.
+        */
+        const at = l.location ?? a.pin;
+        if (!at) return;
+        const approx = !l.location;
+        // Approximate pins key separately, so a listing sitting on the area
+        // centre never merges into an exact pin that happens to be nearby.
+        const key = `${approx ? "~" : ""}${at.lng.toFixed(5)},${at.lat.toFixed(5)}`;
         const pin = byPlace.get(key);
         if (pin) pin.items.push(l);
-        else byPlace.set(key, { lng: l.location.lng, lat: l.location.lat, color: a.color, slug: a.slug, items: [l] });
+        else byPlace.set(key, { lng: at.lng, lat: at.lat, color: a.color, slug: a.slug, approx, items: [l] });
       }),
     );
 
@@ -281,23 +346,43 @@ export default function AreaMapbox({
 
       const el = document.createElement("button");
       el.type = "button";
+      // Say so out loud rather than only in the styling: an approximate pin that
+      // reads as exact is worse than no pin, on a page where the walk to the
+      // beach is the thing being sold.
+      const where = pin.approx ? " — approximate location" : "";
       el.setAttribute(
         "aria-label",
         pin.items.length > 1
-          ? `${pin.items.length} listings here, from ${price ?? "—"}`
-          : `${cheapest.title}${price ? `, ${price}` : ""}`,
+          ? `${pin.items.length} listings here, from ${price ?? "—"}${where}`
+          : `${cheapest.title}${price ? `, ${price}` : ""}${where}`,
       );
-      el.className = "gio-pin";
+      /*
+        The price rides in the tooltip and the label rather than on the map. As
+        a pill it was ~110px wide, and four of them around one bay overlapped
+        into an unreadable stack that hid the very boundaries they sit on. A
+        26px teardrop marks the spot; the price is one hover or one tap away.
+      */
+      const detail = pin.items.length > 1
+        ? `${pin.items.length} listings, from ${price ?? "—"}`
+        : `${cheapest.title}${price ? ` — ${price}` : ""}`;
+      el.title = pin.approx ? `${detail}\nApproximate — shown at the centre of the area` : detail;
+      el.className = pin.approx ? "gio-pin gio-pin--approx" : "gio-pin";
       el.style.opacity = dim ? "0.35" : "1";
+      el.style.color = pin.color;
+      el.style.setProperty("--pin-ink", readableOn(pin.color));
 
-      const thumb = cheapest.image
-        ? `<span class="gio-pin-img" style="background-image:url('${cheapest.image}?w=80&h=80&fit=crop')"></span>`
-        : `<span class="gio-pin-img gio-pin-img--empty" style="background:${pin.color}"></span>`;
-
-      el.innerHTML = `${thumb}<span class="gio-pin-text">
-          <span class="gio-pin-price">${price ?? "—"}</span>
-          ${pin.items.length > 1 ? `<span class="gio-pin-sub">${pin.items.length} units</span>` : ""}
-        </span>`;
+      /*
+        A count still shows when units share a building — two listings that
+        render as one unmarked pin read as one property for sale, which
+        undercounts the inventory on the page meant to show it off.
+      */
+      el.innerHTML = `
+        <svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true">
+          <path class="gio-pin-body" d="M13 33C13 33 24.5 20.4 24.5 12.6A11.5 11.5 0 1 0 1.5 12.6C1.5 20.4 13 33 13 33Z" />
+          ${pin.items.length > 1
+            ? `<text class="gio-pin-count" x="13" y="12.6" text-anchor="middle" dominant-baseline="central">${pin.items.length}</text>`
+            : `<circle class="gio-pin-dot" cx="13" cy="12.6" r="4" />`}
+        </svg>`;
 
       el.onclick = () => onSelectRef.current?.(pin.slug);
 
@@ -310,11 +395,11 @@ export default function AreaMapbox({
       markersRef.current.forEach((mk) => mk.remove());
       markersRef.current = [];
     };
-  }, [areas, selected]);
+  }, [areas, selected, ready]);
 
   if (!TOKEN) {
     return (
-      <div className="rounded-3xl border border-line bg-surface h-[440px] lg:h-[620px] flex items-center justify-center p-8 text-center">
+      <div className="border-y border-line bg-surface h-[calc(100svh-88px)] lg:rounded-3xl lg:border lg:h-[620px] flex items-center justify-center p-8 text-center">
         <p className="text-muted text-sm max-w-sm leading-relaxed">
           Map needs <code className="text-ink">NEXT_PUBLIC_MAPBOX_TOKEN</code> in{" "}
           <code className="text-ink">.env.local</code>. The area details below work without it.
@@ -326,7 +411,7 @@ export default function AreaMapbox({
   return (
     <div
       ref={holder}
-      className="rounded-3xl overflow-hidden border border-line h-[440px] lg:h-[620px]"
+      className="overflow-hidden border-y border-line h-[calc(100svh-88px)] lg:rounded-3xl lg:border lg:h-[620px]"
     />
   );
 }
