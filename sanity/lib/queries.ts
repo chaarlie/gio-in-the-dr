@@ -45,7 +45,17 @@ export const AREAS_QUERY = defineQuery(`
         category,
         location,
         sourceUrl,
-        "image": images[0].asset->url
+        hoaAmount,
+        hoaUnit,
+        walkToBeachMin,
+        // Every image, not just the first: the explorer panel opens these
+        // full-bleed, and a lightbox that can only show one photo isn't one.
+        // (GROQ has line comments only — a /* */ block here is a syntax error.)
+        "images": images[]{
+          "url": asset->url,
+          "lqip": asset->metadata.lqip,
+          "aspectRatio": asset->metadata.dimensions.aspectRatio
+        }
       }
   }
 `);
