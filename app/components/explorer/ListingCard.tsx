@@ -75,7 +75,7 @@ export default function ListingCard({
                 className="w-2 h-2 rounded-[2px] shrink-0"
                 style={{ background: color }}
               />
-              <span className="text-[11px] text-muted truncate">{areaName}</span>
+              <span className="text-xs text-muted truncate">{areaName}</span>
             </span>
           ) : null}
         </span>

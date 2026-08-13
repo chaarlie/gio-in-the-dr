@@ -67,7 +67,7 @@ export default function ExplorerTabs({
           >
             {t.label}
             <span
-              className={`text-[11px] tabular-nums ${active ? "text-cream/70" : "text-muted/70"}`}
+              className={`text-xs tabular-nums ${active ? "text-cream/70" : "text-muted/70"}`}
             >
               {counts[t.id]}
             </span>
