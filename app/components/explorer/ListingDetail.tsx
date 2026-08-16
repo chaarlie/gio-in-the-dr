@@ -54,13 +54,31 @@ export default function ListingDetail({
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink transition-colors touch-manipulation"
-      >
-        ← Back to list
-      </button>
+      {/*
+        Two ways out, because they read differently. The back link says where you
+        land; the ✕ is the shape people reach for to dismiss something that took
+        over the panel, and it sits where a close control is expected — top
+        right, on its own, not at the end of a sentence.
+      */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink transition-colors touch-manipulation"
+        >
+          ← Back to list
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label={`Close ${listing.title}`}
+          className="shrink-0 -mr-1 w-11 h-11 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-ink/5 transition-colors touch-manipulation"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
 
       {/* Shared with /properties/<slug> — same carousel, same lightbox, so the
           two views of a property cannot drift apart again. */}
