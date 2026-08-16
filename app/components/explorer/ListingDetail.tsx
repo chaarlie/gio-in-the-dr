@@ -1,11 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { preload } from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
-import Lightbox from "./Lightbox";
-import { sanityLoader, sizedImage, sizedSrcSet } from "../../lib/sanity-image";
+import PropertyGallery from "../PropertyGallery";
 import { formatExactPrice } from "../../lib/format";
 import { monthlyHoa } from "../../lib/properties";
 import { waLink } from "../../lib/whatsapp";
@@ -45,36 +41,7 @@ export default function ListingDetail({
   areaName: string;
   onBack: () => void;
 }) {
-  const [lightboxAt, setLightboxAt] = useState<number | null>(null);
 
-  const photos = (listing.images ?? []).filter((i) => i.url);
-
-  /*
-    Fetch every photo at full-screen size as soon as the property opens, rather
-    than when someone taps one. Opening a listing is the strong signal that the
-    photos are about to be wanted, and by the time a hand reaches the image the
-    bytes are already in the browser cache — so the lightbox paints instantly
-    instead of showing the delay you noticed.
-
-    `preload` emits the same srcSet the lightbox's <img> uses, so the browser
-    picks one candidate and reuses it. A preload of a URL the img never requests
-    is just wasted bandwidth, which is why both go through sizedSrcSet.
-
-    Keyed on the slug: switching properties preloads the new set, and React
-    dedupes repeat calls for a URL it has already seen.
-  */
-  useEffect(() => {
-    for (const photo of photos) {
-      if (!photo.url) continue;
-      preload(sizedImage(photo.url, 1600), {
-        as: "image",
-        imageSrcSet: sizedSrcSet(photo.url),
-        imageSizes: "100vw",
-      });
-    }
-    // photos is rebuilt each render; the slug is what actually identifies the set.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listing.slug]);
   const price = formatExactPrice(listing.priceUsd);
   const hoa = monthlyHoa(listing.hoaAmount, listing.hoaUnit, listing.areaM2);
   const perM2 =
@@ -96,79 +63,15 @@ export default function ListingDetail({
         ← Back to list
       </button>
 
-      {photos.length > 0 ? (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setLightboxAt(0)}
-            aria-label={`View photos of ${listing.title} full screen`}
-            className="relative block w-full aspect-[4/3] rounded-2xl overflow-hidden bg-accent cursor-zoom-in group"
-          >
-            <Image
-              loader={sanityLoader}
-              src={photos[0].url as string}
-              alt={photos[0].alt ?? listing.title}
-              fill
-              sizes="(min-width: 1024px) 390px, 100vw"
-              placeholder={photos[0].lqip ? "blur" : undefined}
-              blurDataURL={photos[0].lqip ?? undefined}
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            {photos.length > 1 ? (
-              <span className="absolute bottom-2 right-2 rounded-full bg-ink/70 text-cream text-xs font-semibold px-2.5 py-1">
-                {photos.length} photos
-              </span>
-            ) : null}
-          </button>
-
-          {photos.length > 1 ? (
-            <div className="flex gap-2 mt-2 overflow-x-auto -mx-1 px-1 pb-1">
-              {photos.slice(1).map((photo, i) => (
-                <button
-                  /* Not photo.url: the same asset can appear twice in a gallery,
-                     and duplicate keys make React drop or duplicate thumbnails.
-                     Sanity's _key is per array member, so repeats stay distinct;
-                     the index only covers documents saved before the query
-                     started asking for it. */
-                  key={photo.key ?? `${photo.url}-${i}`}
-                  type="button"
-                  onClick={() => setLightboxAt(i + 1)}
-                  aria-label={`View photo ${i + 2} of ${listing.title} full screen`}
-                  className="relative w-20 h-16 shrink-0 rounded-xl overflow-hidden bg-accent cursor-zoom-in"
-                >
-                  <Image
-                    loader={sanityLoader}
-                    src={photo.url as string}
-                    alt=""
-                    fill
-                    sizes="80px"
-                    placeholder={photo.lqip ? "blur" : undefined}
-                    blurDataURL={photo.lqip ?? undefined}
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        /* No photos yet — the same tinted tile the cards use, rather than an
-           empty box that reads as a failed image. */
-        <div
-          className="mt-3 w-full aspect-[4/3] rounded-2xl flex items-center justify-center opacity-55"
-          style={{ background: color }}
-          aria-hidden="true"
-        >
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-cream">
-            <path
-              d="M4 9.5 12 4l8 5.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      )}
+      {/* Shared with /properties/<slug> — same carousel, same lightbox, so the
+          two views of a property cannot drift apart again. */}
+      <PropertyGallery
+        images={listing.images}
+        title={listing.title}
+        sizes="(min-width: 1024px) 390px, 100vw"
+        fallbackColor={color}
+        className="mt-3"
+      />
 
       <div className="mt-4">
         {listing.category ? (
@@ -246,14 +149,6 @@ export default function ListingDetail({
         ) : null}
       </div>
 
-      {lightboxAt !== null ? (
-        <Lightbox
-          images={photos}
-          startIndex={lightboxAt}
-          title={listing.title}
-          onClose={() => setLightboxAt(null)}
-        />
-      ) : null}
     </div>
   );
 }

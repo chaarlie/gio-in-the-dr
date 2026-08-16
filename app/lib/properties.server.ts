@@ -8,6 +8,7 @@ import {
 import { formatPrice } from "./format";
 import type { Property } from "./properties";
 import type { PortableBlocks } from "../components/PortableBody";
+import type { GalleryImage } from "./sanity-image";
 
 /*
   Every read of the listings. Server-only by construction — it imports the Sanity
@@ -32,13 +33,7 @@ type PropertyRow = {
   areaSlug: string | null;
 };
 
-export type PropertyImage = {
-  /** Sanity's array-member key — unique even when the same asset repeats. */
-  key: string | null;
-  url: string;
-  lqip: string | null;
-  aspectRatio: number | null;
-};
+export type PropertyImage = GalleryImage;
 
 export type PropertyDetail = {
   slug: string;

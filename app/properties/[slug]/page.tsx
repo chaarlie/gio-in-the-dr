@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "../../components/Header";
@@ -9,8 +8,9 @@ import PortableBody from "../../components/PortableBody";
 import Badge from "../../components/Badge";
 import { formatExactPrice } from "../../lib/format";
 import { monthlyHoa } from "../../lib/properties";
-import { getProperty, getPropertySlugs, type PropertyDetail } from "../../lib/properties.server";
+import { getProperty, getPropertySlugs } from "../../lib/properties.server";
 import { waLink } from "../../lib/whatsapp";
+import PropertyGallery from "../../components/PropertyGallery";
 
 /*
   A listing's own page — the address the slug field has been promising all along.
@@ -68,62 +68,6 @@ function Fact({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function Gallery({ property }: { property: PropertyDetail }) {
-  const images = property.images?.filter((i) => i.url) ?? [];
-  if (images.length === 0) {
-    // Same tinted tile as the card, so a listing without photos still has a header
-    // instead of the title colliding with the facts table.
-    return (
-      <div className="rounded-3xl bg-accent aspect-[16/9] flex items-center justify-center text-cream/15">
-        <svg width="96" height="96" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M4 9.5 12 4l8 5.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-          <path d="M9.5 20v-6h5v6" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-        </svg>
-      </div>
-    );
-  }
-
-  const [lead, ...rest] = images;
-  return (
-    <div className="grid gap-3">
-      <div className="relative rounded-3xl overflow-hidden aspect-[16/9] bg-accent">
-        <Image
-          src={lead.url}
-          alt={property.title}
-          fill
-          priority
-          sizes="(min-width: 1024px) 900px, 100vw"
-          placeholder={lead.lqip ? "blur" : undefined}
-          blurDataURL={lead.lqip ?? undefined}
-          className="object-cover"
-        />
-      </div>
-      {rest.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {rest.map((image, i) => (
-            <div
-              /* Same asset twice in one gallery is legitimate, and a URL key
-                 would collide. Sanity's per-member _key handles repeats. */
-              key={image.key ?? `${image.url}-${i}`}
-              className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-accent"
-            >
-              <Image
-                src={image.url}
-                alt=""
-                fill
-                sizes="(min-width: 640px) 220px, 45vw"
-                placeholder={image.lqip ? "blur" : undefined}
-                blurDataURL={image.lqip ?? undefined}
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export default async function PropertyPage({ params }: PageProps) {
   const { slug } = await params;
   const property = await getProperty(slug);
@@ -175,7 +119,16 @@ export default async function PropertyPage({ params }: PageProps) {
         </Link>
 
         <div className="mt-6">
-          <Gallery property={property} />
+          {/* Same carousel the explorer panel uses — this page used to render a
+              static grid, so clicking a photo here did nothing at all. */}
+          <PropertyGallery
+            images={property.images}
+            title={property.title}
+            sizes="(min-width: 1024px) 900px, 100vw"
+            priority
+            aspect="aspect-[16/9]"
+            className="rounded-3xl"
+          />
         </div>
 
         <div className="grid lg:grid-cols-[1.6fr_1fr] gap-10 lg:gap-14 mt-8 lg:mt-10">

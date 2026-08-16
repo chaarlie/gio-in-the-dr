@@ -3,6 +3,7 @@ import { polygonRings } from "../../sanity/lib/geojson";
 import { AREAS_QUERY } from "../../sanity/lib/queries";
 import SHAPES from "./area-shapes.json";
 import { AREA_TONES, NEIGHBORHOODS } from "./neighborhoods";
+import type { GalleryImage } from "./sanity-image";
 
 /*
   One shape for the area section, whether the data came from Sanity or the static
@@ -11,14 +12,7 @@ import { AREA_TONES, NEIGHBORHOODS } from "./neighborhoods";
   wholesale between two sources.
 */
 
-export type ListingImage = {
-  /** Sanity's array-member key — unique even when the same asset repeats. */
-  key: string | null;
-  url: string | null;
-  lqip: string | null;
-  aspectRatio: number | null;
-  alt: string | null;
-};
+export type ListingImage = GalleryImage;
 
 export type AreaListing = {
   slug: string | null;
