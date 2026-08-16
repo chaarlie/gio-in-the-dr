@@ -36,6 +36,19 @@
   Map markers for listings. Built in plain CSS because mapbox-gl markers are raw
   DOM created outside React, so Tailwind's classes aren't available to them.
 */
+/*
+  Scroll without a visible scrollbar — for the photo carousel, where the track
+  would cut across the bottom of every image. The content is still scrollable by
+  every means, and the arrows and thumbnails carry the affordance instead, so
+  this hides a control that has replacements rather than removing one.
+*/
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* Marker: a teardrop, not a price pill. The button is only as big as the drop,
    so markers around the bay no longer overlap into an unreadable stack. The
    inline `color` set on each element is its area's ramp colour, which the fill

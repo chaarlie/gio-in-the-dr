@@ -9,6 +9,24 @@
 // Pure and client-safe — it only rewrites a URL we already have, so there's no
 // builder to configure and no project ID to thread through.
 
+/*
+  One photo, in the shape every gallery surface needs.
+
+  Listings (through AREAS_QUERY) and property pages (through PROPERTY_QUERY)
+  project the same fields, and both feed the same carousel and lightbox — so the
+  type lives here rather than being declared twice and drifting. It already had:
+  PropertyImage was missing `alt` even though the query selected it, so the
+  property page could only ever render empty alt text.
+*/
+export type GalleryImage = {
+  /** Sanity's array-member key — unique even when the same asset repeats. */
+  key: string | null;
+  url: string | null;
+  lqip: string | null;
+  aspectRatio: number | null;
+  alt: string | null;
+};
+
 /** Widths the lightbox offers. Covers phones through a 2x desktop display. */
 export const LIGHTBOX_WIDTHS = [1024, 1600, 2400];
 
