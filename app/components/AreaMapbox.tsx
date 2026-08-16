@@ -38,20 +38,89 @@ const COAST_BEARING = 241;
 
   sRGB relative luminance, thresholded at the point where the two swap.
 */
-function readableOn(hex: string) {
+/** #abc or #aabbcc to [r,g,b], or null if it's neither. */
+function rgb(hex: string): [number, number, number] | null {
   const h = hex.replace("#", "");
   const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (full.length !== 6) return null;
   const n = Number.parseInt(full, 16);
-  if (!Number.isFinite(n) || full.length !== 6) return "#f4efe6";
+  if (!Number.isFinite(n)) return null;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function luminance([r, g, b]: [number, number, number]) {
   const channel = (v: number) => {
     const s = v / 255;
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
   };
-  const lum =
-    0.2126 * channel((n >> 16) & 255) +
-    0.7152 * channel((n >> 8) & 255) +
-    0.0722 * channel(n & 255);
-  return lum > 0.36 ? "#2a1e10" : "#f4efe6";
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+}
+
+function hex([r, g, b]: [number, number, number]) {
+  return `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function readableOn(color: string) {
+  const c = rgb(color);
+  if (!c) return "#f4efe6";
+  return luminance(c) > 0.36 ? "#2a1e10" : "#f4efe6";
+}
+
+/*
+  The fill a marker actually gets: the area's colour with a floor under its
+  lightness.
+
+  A 26px teardrop is not a 200px polygon. The ramp's inland end (#56391d,
+  #3c2611) reads as a warm brown across a whole neighbourhood and as a black blob
+  at pin size, so every bay marker looked identical and only Kite Point — which
+  Gio gave a custom blue — showed any colour at all.
+
+  Clamping lightness in HSL rather than mixing toward cream. Mixing inverts the
+  ramp — the darker the input the harder it gets pushed, so #3c2611 came out
+  visibly lighter than #88673d. Clamping raises a colour to the floor and never
+  past it, so the inland end cannot overtake the beach end.
+
+  Everything below the floor lands on the same lightness, so ordering within the
+  dark half is gone. That is the honest trade: a six-step single-hue scale was
+  never readable in a 26px shape. Hue and saturation are untouched, which is what
+  still carries at this size — a brown pin against a blue one.
+*/
+const PIN_MIN_LIGHTNESS = 0.42;
+
+function pinFill(color: string) {
+  const c = rgb(color);
+  if (!c) return color;
+
+  const [r, g, b] = c.map((v) => v / 255) as [number, number, number];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (l >= PIN_MIN_LIGHTNESS) return color;
+
+  const d = max - min;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  // Back to RGB at the floor lightness.
+  const L = PIN_MIN_LIGHTNESS;
+  const chroma = (1 - Math.abs(2 * L - 1)) * s;
+  const x = chroma * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = L - chroma / 2;
+  const [r1, g1, b1] =
+    h < 60 ? [chroma, x, 0]
+    : h < 120 ? [x, chroma, 0]
+    : h < 180 ? [0, chroma, x]
+    : h < 240 ? [0, x, chroma]
+    : h < 300 ? [x, 0, chroma]
+    : [chroma, 0, x];
+  return hex([(r1 + m) * 255, (g1 + m) * 255, (b1 + m) * 255]);
 }
 
 function collection(areas: Area[]) {
@@ -406,8 +475,11 @@ export default function AreaMapbox({
       el.title = pin.approx ? `${detail}\nApproximate — shown at the centre of the area` : detail;
       el.className = pin.approx ? "gio-pin gio-pin--approx" : "gio-pin";
       el.style.opacity = dim ? "0.35" : "1";
-      el.style.color = pin.color;
-      el.style.setProperty("--pin-ink", readableOn(pin.color));
+      // readableOn takes the lifted fill, not the area's colour — the inner mark
+      // has to contrast with what is actually painted behind it.
+      const fill = pinFill(pin.color);
+      el.style.color = fill;
+      el.style.setProperty("--pin-ink", readableOn(fill));
 
       /*
         A count still shows when units share a building — two listings that
