@@ -86,10 +86,14 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
   function openListing(slug: string) {
     setOpenSlug(slug);
     /*
-      A pin tap comes from the full-screen map, which closes onto a page scrolled
-      wherever it was — usually not at the listing that just opened. Pull the
-      panel into view. Harmless on desktop, where the panel already sits beside
-      the map and this resolves to no movement.
+      Bring the top of the panel into view, so a listing always opens showing its
+      own header — the title, the back link and the ✕ — rather than dropping you
+      into the middle of a gallery with no visible way out.
+
+      The landing position is the panel's scroll-mt, which has to clear the
+      sticky site header on both breakpoints. It used to be lg:scroll-mt-0, which
+      parked the panel's top flush with the viewport top: exactly where the 97px
+      header sits, so the exit controls opened underneath it.
     */
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     panelRef.current?.scrollIntoView({
@@ -121,7 +125,7 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
       */}
       <div
         ref={panelRef}
-        className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px] scroll-mt-[88px] lg:scroll-mt-0"
+        className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px] scroll-mt-[100px] lg:scroll-mt-[112px]"
       >
         {/*
           One listing takes over the whole panel rather than expanding in place.
