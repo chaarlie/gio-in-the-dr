@@ -60,7 +60,20 @@ export default function ListingDetail({
         over the panel, and it sits where a close control is expected — top
         right, on its own, not at the end of a sentence.
       */}
-      <div className="flex items-center justify-between gap-3">
+      {/*
+        Sticky from lg up, because that is where the panel gets its own
+        scrollport (lg:overflow-y-auto on a 620px box). The exit control lived
+        inside that scroller, so scrolling down the listing took it off the top
+        and left no way back to the list without scrolling up again to find one.
+
+        Not sticky below lg: there the panel has no scroller of its own, so this
+        would pin against the page viewport and collide with the site header,
+        which is already sticky and already covers that corner.
+
+        -mx/px pair lets the background reach the panel's edges while the row's
+        contents stay aligned with everything below it.
+      */}
+      <div className="lg:sticky lg:top-0 lg:z-10 bg-card lg:-mx-1 lg:px-1 lg:pb-2 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={onBack}
