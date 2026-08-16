@@ -506,13 +506,76 @@ export default function AreaMapbox({
         them — picking one arbitrarily would hide the other.
       */
       const only = pin.items.length === 1 ? pin.items[0] : null;
-      el.onclick = () =>
+
+      /*
+        Built as DOM rather than an HTML string so the handlers can be attached
+        directly — setHTML would need delegation or a re-query on every open, and
+        one of those quietly breaks the first time someone adds a second button.
+      */
+      const card = document.createElement("div");
+      card.className = "gio-popup";
+
+      for (const item of pin.items) {
+        const row = document.createElement("div");
+        row.className = "gio-popup-row";
+
+        const name = document.createElement("p");
+        name.className = "gio-popup-title";
+        name.textContent = item.title;
+        row.append(name);
+
+        const sub = formatPrice(item.priceUsd);
+        if (sub) {
+          const p = document.createElement("p");
+          p.className = "gio-popup-price";
+          p.textContent = sub;
+          row.append(p);
+        }
+
+        /*
+          A real anchor, not a button that calls the router. It is the whole
+          point of the request — and it means cmd-click, middle-click and "copy
+          link address" all behave, which a click handler silently breaks.
+        */
+        if (item.slug) {
+          const view = document.createElement("a");
+          view.className = "gio-popup-cta";
+          view.href = `/properties/${item.slug}`;
+          view.textContent = "View property →";
+          row.append(view);
+        }
+
+        card.append(row);
+      }
+
+      /*
+        Second way in, kept because it is cheaper than a page load: the panel
+        shows the same property without leaving the map. Stacked pins have no
+        single property to open, so they select the area and let the panel list
+        what is there — picking one arbitrarily would hide the other.
+      */
+      const inPanel = document.createElement("button");
+      inPanel.type = "button";
+      inPanel.className = "gio-popup-secondary";
+      inPanel.textContent = only ? "Quick look" : `Show all ${pin.items.length} in the list`;
+      inPanel.onclick = () =>
         only?.slug
           ? onOpenListingRef.current?.(only.slug)
           : onSelectRef.current?.(pin.slug);
+      card.append(inPanel);
+
+      const popup = new gl.Popup({
+        offset: 34, // clears the 34px teardrop, which is anchored at its point
+        closeButton: true,
+        className: "gio-popup-shell",
+        maxWidth: "260px",
+      }).setDOMContent(card);
 
       markersRef.current.push(
-        new gl.Marker({ element: el, anchor: "bottom" }).setLngLat([pin.lng, pin.lat]).addTo(m),
+        new gl.Marker({ element: el, anchor: "bottom" })
+          .setLngLat([pin.lng, pin.lat])
+          .setPopup(popup)
+          .addTo(m),
       );
     });
 

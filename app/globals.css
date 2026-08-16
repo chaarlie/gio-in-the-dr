@@ -37,6 +37,85 @@
   DOM created outside React, so Tailwind's classes aren't available to them.
 */
 /*
+  The card a map pin opens. Plain CSS for the same reason the markers are:
+  mapbox builds its popups outside React, so Tailwind's classes never reach them.
+*/
+.gio-popup-shell .mapboxgl-popup-content {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.18);
+  font-family: var(--font-body);
+}
+/* The little arrow has its own element and does not inherit the fill. */
+.gio-popup-shell .mapboxgl-popup-tip {
+  border-top-color: var(--color-card);
+  border-bottom-color: var(--color-card);
+}
+.gio-popup-shell .mapboxgl-popup-close-button {
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-muted);
+  border-radius: 999px;
+}
+.gio-popup-shell .mapboxgl-popup-close-button:hover {
+  background: rgb(27 25 23 / 0.06);
+  color: var(--color-ink);
+}
+.gio-popup-row + .gio-popup-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-line);
+}
+.gio-popup-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-ink);
+  /* Titles run long — "Oceanfront 2-Bedroom Condo for Sale in Cabarete |
+     Seawinds" — and an unclamped one turns the popup into a wall. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 22px; /* clears the close button on the first row */
+}
+.gio-popup-price {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-top: 2px;
+}
+.gio-popup-cta {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.gio-popup-secondary {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gio-popup-secondary:hover {
+  border-color: var(--color-ink);
+}
+
+/*
   Scroll without a visible scrollbar — for the photo carousel, where the track
   would cut across the bottom of every image. The content is still scrollable by
   every means, and the arrows and thumbnails carry the affordance instead, so
