@@ -221,6 +221,17 @@ export function countLabel(count: number, filtered: boolean): string {
   flat $433/month — so the unit has to be resolved before the two can be compared. Returns
   the monthly dollar figure, or null when there's nothing to compute from.
 */
+/*
+  A per-m²-per-month rate above this is certainly a flat fee wearing the wrong
+  unit. The north coast market is $2.00–2.09/m²/month, so $25 is more than ten
+  times the going rate and still nowhere near the values that get mistyped —
+  those are the flat fee itself, $252 or $433 or $614.
+
+  Multiplying one of those by a 162 m² floor plan renders "$70,414 / month" on a
+  page whose whole job is to be believed.
+*/
+const MAX_PER_M2_MONTH = 25;
+
 export function monthlyHoa(
   amount: number | null,
   unit: string | null,
@@ -228,7 +239,22 @@ export function monthlyHoa(
 ): number | null {
   if (amount === null) return null;
   if (unit === "per-m2-month") {
-    return areaM2 ? Math.round(amount * areaM2) : null;
+    if (!areaM2) return null;
+    /*
+      Refuse rather than reinterpret. Treating it as flat would probably be
+      right, but "probably" is not good enough to print a carrying cost a buyer
+      budgets against — and silently correcting the data removes the only signal
+      that it needs correcting. The row disappears, the warning names the figure.
+    */
+    if (amount > MAX_PER_M2_MONTH) {
+      console.warn(
+        `[hoa] ${amount} / m² / month is not a rate — it looks like a flat monthly fee ` +
+          `filed under the wrong unit. Hiding it rather than showing ` +
+          `$${Math.round(amount * areaM2).toLocaleString("en-US")} / month.`,
+      );
+      return null;
+    }
+    return Math.round(amount * areaM2);
   }
   return Math.round(amount);
 }

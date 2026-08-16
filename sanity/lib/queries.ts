@@ -21,6 +21,7 @@ export const AREAS_QUERY = defineQuery(`
     "color": color.hex,
     boundary,
     pin,
+    beachPoint,
     marketPricePerM2,
     walkToBeach,
     driveToBeach,
@@ -48,6 +49,7 @@ export const AREAS_QUERY = defineQuery(`
         hoaAmount,
         hoaUnit,
         walkToBeachMin,
+        "beachPoint": ^.beachPoint,
         // Every image, not just the first: the explorer panel opens these
         // full-bleed, and a lightbox that can only show one photo isn't one.
         // (GROQ has line comments only — a /* */ block here is a syntax error.)
@@ -113,7 +115,7 @@ export const PROPERTY_QUERY = defineQuery(`
       "aspectRatio": asset->metadata.dimensions.aspectRatio,
       alt
     },
-    "area": neighborhood->{ name, "slug": slug.current }
+    "area": neighborhood->{ name, "slug": slug.current, beachPoint }
   }
 `);
 

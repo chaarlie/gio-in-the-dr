@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import PropertyGallery from "../PropertyGallery";
+import PropertyCalculators from "../PropertyCalculators";
 import { formatExactPrice } from "../../lib/format";
-import { monthlyHoa } from "../../lib/properties";
 import { waLink } from "../../lib/whatsapp";
 import type { AreaListing } from "../../lib/areas";
 
@@ -43,7 +43,6 @@ export default function ListingDetail({
 }) {
 
   const price = formatExactPrice(listing.priceUsd);
-  const hoa = monthlyHoa(listing.hoaAmount, listing.hoaUnit, listing.areaM2);
   const perM2 =
     listing.priceUsd && listing.areaM2
       ? `$${Math.round(listing.priceUsd / listing.areaM2).toLocaleString("en-US")}`
@@ -106,19 +105,22 @@ export default function ListingDetail({
             <Fact label="Bathrooms" value={listing.baths !== null ? String(listing.baths) : null} />
             <Fact label="Interior area" value={listing.areaM2 ? `${listing.areaM2} m²` : null} />
             <Fact label="Price per m²" value={perM2} />
-            {/* Resolved to a monthly figure — the listings quote HOA per m² and
-                flat, and $2.09 next to $433 compares nothing. */}
-            <Fact
-              label="HOA"
-              value={hoa !== null ? `$${hoa.toLocaleString("en-US")} / month` : null}
-            />
-            <Fact
-              label="Walk to beach"
-              value={listing.walkToBeachMin ? `${listing.walkToBeachMin} min` : null}
-            />
           </tbody>
         </table>
       </div>
+
+      {/* HOA and the walk to the sand moved out of the table and into their own
+          panels: both are things a buyer works out rather than reads off. */}
+      <PropertyCalculators
+        hoaAmount={listing.hoaAmount}
+        hoaUnit={listing.hoaUnit}
+        areaM2={listing.areaM2}
+        location={listing.location}
+        beachPoint={listing.beachPoint}
+        walkToBeachMin={listing.walkToBeachMin}
+        areaName={areaName}
+        className="mt-4 sm:grid-cols-1"
+      />
 
       <div className="flex flex-col gap-2 mt-4">
         <a

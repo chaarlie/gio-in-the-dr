@@ -7,10 +7,10 @@ import WhatsAppLauncher from "../../components/WhatsAppLauncher";
 import PortableBody from "../../components/PortableBody";
 import Badge from "../../components/Badge";
 import { formatExactPrice } from "../../lib/format";
-import { monthlyHoa } from "../../lib/properties";
 import { getProperty, getPropertySlugs } from "../../lib/properties.server";
 import { waLink } from "../../lib/whatsapp";
 import PropertyGallery from "../../components/PropertyGallery";
+import PropertyCalculators from "../../components/PropertyCalculators";
 
 /*
   A listing's own page — the address the slug field has been promising all along.
@@ -75,7 +75,6 @@ export default async function PropertyPage({ params }: PageProps) {
 
   const price = formatExactPrice(property.priceUsd);
   const where = property.area?.name ?? null;
-  const hoa = monthlyHoa(property.hoaAmount, property.hoaUnit, property.areaM2);
   const status = property.status ? STATUS_LABEL[property.status] : undefined;
   const image = property.images?.[0]?.url;
 
@@ -200,14 +199,21 @@ export default async function PropertyPage({ params }: PageProps) {
                       : null
                   }
                 />
-                {/* Resolved to a monthly figure, because the listings quote HOA two
-                    different ways and $2.09 next to $433 compares nothing. */}
-                <Fact label="HOA" value={hoa !== null ? `$${hoa.toLocaleString("en-US")} / month` : null} />
-                <Fact
-                  label="Walk to the beach"
-                  value={property.walkToBeachMin ? `${property.walkToBeachMin} min` : null}
-                />
               </dl>
+
+              {/* HOA and the walk to the sand are worked out, not read off — so
+                  they get panels of their own rather than two table rows. Same
+                  component the explorer panel uses. */}
+              <PropertyCalculators
+                hoaAmount={property.hoaAmount}
+                hoaUnit={property.hoaUnit}
+                areaM2={property.areaM2}
+                location={property.location}
+                beachPoint={property.area?.beachPoint ?? null}
+                walkToBeachMin={property.walkToBeachMin}
+                areaName={property.area?.name ?? null}
+                className="mt-5 sm:grid-cols-1"
+              />
 
               <a
                 href={waLink(message)}

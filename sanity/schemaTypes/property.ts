@@ -102,6 +102,26 @@ export const property = defineType({
       name: "hoaAmount",
       title: "HOA amount",
       type: "number",
+      description:
+        'The number only. If you picked "per m² per month" this is a rate like 2.09, not the whole bill.',
+      /*
+        The two units differ by ~200x, so mixing them up is not a rounding error:
+        433 filed as a rate against a 162 m² floor plan renders $70,414 a month.
+        A warning rather than an error — it is a strong smell, not an
+        impossibility, and blocking a save on a heuristic is how people learn to
+        fight the Studio.
+      */
+      validation: (Rule) =>
+        Rule.custom((amount, context) => {
+          const unit = (context.document as { hoaUnit?: string } | undefined)?.hoaUnit;
+          if (typeof amount !== "number" || unit !== "per-m2-month") return true;
+          if (amount <= 25) return true;
+          return (
+            `${amount} per m² per month is about ${Math.round(amount / 2)}x the going rate ` +
+            `on this coast (~$2.00–2.09). If ${amount} is the whole monthly bill, ` +
+            'switch "HOA is charged" to "flat per month".'
+          );
+        }).warning(),
     }),
     defineField({
       name: "hoaUnit",

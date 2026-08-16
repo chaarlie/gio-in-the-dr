@@ -28,6 +28,8 @@ export type AreaListing = {
   hoaAmount: number | null;
   hoaUnit: string | null;
   walkToBeachMin: number | null;
+  /** The area's beach access, carried down so a listing can measure its own distance. */
+  beachPoint: { lat: number; lng: number } | null;
   images: ListingImage[] | null;
 };
 
@@ -44,6 +46,8 @@ export type Area = {
     neighbourhood than a house that silently isn't on the map at all.
   */
   pin: { lat: number; lng: number } | null;
+  /** Where people in this area reach the sand. Distances measure to here. */
+  beachPoint: { lat: number; lng: number } | null;
   color: string;
   listingCount: number;
   priceFrom: number | null;
@@ -64,6 +68,7 @@ type SanityArea = {
   color: string | null;
   boundary: string | null;
   pin: { lat: number; lng: number } | null;
+  beachPoint: { lat: number; lng: number } | null;
   marketPricePerM2: number | null;
   walkToBeach: string | null;
   driveToBeach: string | null;
@@ -156,6 +161,7 @@ function staticAreas(): Area[] {
     boundary: (SHAPES as Record<string, number[][][]>)[n.slug] ?? null,
     // No pin in the committed data; the ring's centre is the same idea.
     pin: ringCentre((SHAPES as Record<string, number[][][]>)[n.slug]),
+    beachPoint: null,
     color: AREA_TONES[n.tone],
     listingCount: 0,
     priceFrom: null,
@@ -186,6 +192,7 @@ export async function getAreas(): Promise<Area[]> {
       tone,
       boundary: parseBoundary(r.boundary) ?? base?.boundary ?? null,
       pin: validPoint(r.pin, `neighbourhood "${r.name}"`) ?? base?.pin ?? null,
+      beachPoint: validPoint(r.beachPoint, `beach access for "${r.name}"`),
       // Gio's colour wins when set; the validated ramp is the default.
       color: r.color ?? AREA_TONES[Math.min(tone, AREA_TONES.length - 1)],
       listingCount: r.listingCount ?? 0,
@@ -201,6 +208,7 @@ export async function getAreas(): Promise<Area[]> {
       listings: (r.listings ?? []).map((l) => ({
         ...l,
         location: validPoint(l.location, `listing "${l.title}"`),
+        beachPoint: validPoint(l.beachPoint, `beach access near "${l.title}"`),
       })),
     };
   });

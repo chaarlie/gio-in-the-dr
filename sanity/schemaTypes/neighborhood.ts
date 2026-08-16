@@ -44,6 +44,14 @@ export const neighborhood = defineType({
       validation: geopointInRange,
     }),
     defineField({
+      name: "beachPoint",
+      title: "Beach access",
+      type: "geopoint",
+      description:
+        "Where people in this area actually reach the sand. Distances on the listings measure to here — leave blank and they show your walk time instead.",
+      validation: geopointInRange,
+    }),
+    defineField({
       name: "boundary",
       title: "Boundary (GeoJSON)",
       type: "text",

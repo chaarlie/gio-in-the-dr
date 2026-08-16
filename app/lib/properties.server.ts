@@ -52,7 +52,7 @@ export type PropertyDetail = {
   body: PortableBlocks | null;
   sourceUrl: string | null;
   images: PropertyImage[] | null;
-  area: { name: string; slug: string } | null;
+  area: { name: string; slug: string; beachPoint: { lat: number; lng: number } | null } | null;
 };
 
 /** Listings for the search grid, newest asking price first. */
