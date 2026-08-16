@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MapboxMap } from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { formatPrice } from "../lib/format";
+import { MAP_FRAME_OUTLIERS } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
 
 /*
@@ -77,12 +78,19 @@ export default function AreaMapbox({
   selected,
   onSelect,
   onOpenListing,
+  fullscreen = false,
 }: {
   areas: Area[];
   selected?: string | null;
   onSelect?: (slug: string) => void;
   /** Called with a listing slug when a pin resolves to exactly one property. */
   onOpenListing?: (slug: string) => void;
+  /**
+   * Filling the viewport rather than sitting in the page. Turns off
+   * cooperativeGestures — inline, the map must leave one-finger drag to the page
+   * or it swallows the scroll; owning the screen, one finger should pan.
+   */
+  fullscreen?: boolean;
 }) {
   const mapRef = useRef<MapboxMap | null>(null);
   const holder = useRef<HTMLDivElement>(null);
@@ -115,6 +123,8 @@ export default function AreaMapbox({
 
     let map: MapboxMap | undefined;
     let cancelled = false;
+    let resizer: ResizeObserver | undefined;
+    let fitted = false;
 
     /*
       mapbox-gl is 1.8 MB of JavaScript for a map that sits well below the fold.
@@ -139,12 +149,10 @@ export default function AreaMapbox({
 
     const data = collection(areas);
 
-    /* Frame the bay cluster, not every area. Perla Marina sits ~7 km west, and
-       fitting to it shrinks the five bay neighbourhoods to specks. It's still
-       drawn — zoom out and it's there — but it doesn't get to set the viewport. */
+    /* Frame the bay cluster, not every area — see MAP_FRAME_OUTLIERS. */
     const bounds = new mapboxgl.LngLatBounds();
     data.features
-      .filter((f) => f.properties.slug !== "perla-marina")
+      .filter((f) => !MAP_FRAME_OUTLIERS.has(f.properties.slug))
       .forEach((f) =>
         f.geometry.coordinates[0].forEach((c) => bounds.extend(c as [number, number])),
       );
@@ -158,11 +166,32 @@ export default function AreaMapbox({
       bearing: COAST_BEARING,
       bounds,
       fitBoundsOptions: { padding: 28, bearing: COAST_BEARING },
-      cooperativeGestures: true,
+      cooperativeGestures: !fullscreen,
     });
     map = m;
     mapRef.current = m;
     m.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
+
+    /*
+      Mapbox measures its container once, at construction, and afterwards only
+      listens to window resize. That is not enough here: opening inside a dialog
+      gives the container its real height a frame later, so the map is built
+      against the wrong box — the canvas renders torn and fitBounds frames to a
+      size that no longer exists. Orientation changes and the mobile URL bar
+      collapsing have the same problem and do not reliably fire window resize.
+
+      Only the first non-zero size refits. Refitting on every change would throw
+      away the pan and zoom someone just did, every time the URL bar slid away.
+    */
+    resizer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (!width || !height) return;
+      m.resize();
+      if (fitted) return;
+      fitted = true;
+      m.fitBounds(bounds, { padding: 28, bearing: COAST_BEARING, duration: 0 });
+    });
+    resizer.observe(holder.current);
 
     m.on("load", () => {
       m.fitBounds(bounds, { padding: 28, bearing: COAST_BEARING, duration: 0 });
@@ -250,6 +279,7 @@ export default function AreaMapbox({
       return () => {
         cancelled = true;
         setReady(false);
+        resizer?.disconnect();
         mapRef.current = null;
         map?.remove();
       };
@@ -268,13 +298,16 @@ export default function AreaMapbox({
     return () => {
       cancelled = true;
       observer.disconnect();
+      resizer?.disconnect();
       // The next map starts unready; leaving this true would let the marker
       // effect attach to a map that has just been removed.
       setReady(false);
       mapRef.current = null;
       map?.remove();
     };
-  }, [areas]);
+    // `fullscreen` is fixed for the life of an instance — the inline pane and the
+    // dialog are separate mounts — so this never actually rebuilds on it.
+  }, [areas, fullscreen]);
 
   /* Selection drives the camera and the highlight — the panel and the map stay
      in step whichever one you clicked. */
@@ -417,9 +450,15 @@ export default function AreaMapbox({
     };
   }, [areas, selected, ready]);
 
+  /* Fullscreen fills whatever the dialog gives it; inline keeps the desktop
+     pane's fixed height and rounded card. */
+  const box = fullscreen
+    ? "w-full h-full"
+    : "border-y border-line lg:rounded-3xl lg:border lg:h-[620px] h-[calc(100svh-88px)]";
+
   if (!TOKEN) {
     return (
-      <div className="border-y border-line bg-surface h-[calc(100svh-88px)] lg:rounded-3xl lg:border lg:h-[620px] flex items-center justify-center p-8 text-center">
+      <div className={`${box} bg-surface flex items-center justify-center p-8 text-center`}>
         <p className="text-muted text-sm max-w-sm leading-relaxed">
           Map needs <code className="text-ink">NEXT_PUBLIC_MAPBOX_TOKEN</code> in{" "}
           <code className="text-ink">.env.local</code>. The area details below work without it.
@@ -428,10 +467,5 @@ export default function AreaMapbox({
     );
   }
 
-  return (
-    <div
-      ref={holder}
-      className="overflow-hidden border-y border-line h-[calc(100svh-88px)] lg:rounded-3xl lg:border lg:h-[620px]"
-    />
-  );
+  return <div ref={holder} className={`overflow-hidden ${box}`} />;
 }

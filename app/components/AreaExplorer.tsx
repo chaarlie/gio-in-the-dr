@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AreaMapbox from "./AreaMapbox";
 import ExplorerTabs, { type ExplorerView } from "./explorer/ExplorerTabs";
 import AreaRow from "./explorer/AreaRow";
 import AreaDetail from "./explorer/AreaDetail";
 import ListingCard from "./explorer/ListingCard";
 import ListingDetail from "./explorer/ListingDetail";
+import StaticMapPreview from "./explorer/StaticMapPreview";
+import FullScreenMap from "./explorer/FullScreenMap";
 import type { Area } from "../lib/areas";
 
 /*
@@ -43,6 +45,38 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
           .flatMap((a) => a.listings.map((l) => ({ listing: l, area: a })))
           .find(({ listing }) => listing.slug === openSlug) ?? null;
 
+  /*
+    The full-screen map lives in the URL, so the phone Back button closes it
+    instead of leaving the page — the gesture people actually use to dismiss
+    something full-screen. Reading window.location rather than useSearchParams
+    is deliberate and for the same reason as PropertySearchProvider: touching
+    search params during render drops every client component under the boundary
+    out of the prerendered HTML, and this section's areas and listings are the
+    content that has to be crawlable.
+  */
+  const [mapOpen, setMapOpen] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setMapOpen(new URLSearchParams(window.location.search).has("map"));
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+
+  function openMap() {
+    const params = new URLSearchParams(window.location.search);
+    params.set("map", "1");
+    window.history.pushState(null, "", `${window.location.pathname}?${params}#areas`);
+    setMapOpen(true);
+  }
+
+  function closeMap() {
+    // back() rather than another push, so opening and closing doesn't stack
+    // history entries that need pressing Back through one at a time.
+    if (new URLSearchParams(window.location.search).has("map")) window.history.back();
+    setMapOpen(false);
+  }
+
   function selectArea(slug: string | null) {
     setSelected(slug);
     setOpenSlug(null);
@@ -52,10 +86,10 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
   function openListing(slug: string) {
     setOpenSlug(slug);
     /*
-      On a phone the map is pinned near full height with the panel below it, so a
-      pin tap opened details entirely off-screen. Pull the panel up to meet it.
-      Harmless on desktop, where the panel is already beside the map and this
-      resolves to no movement.
+      A pin tap comes from the full-screen map, which closes onto a page scrolled
+      wherever it was — usually not at the listing that just opened. Pull the
+      panel into view. Harmless on desktop, where the panel already sits beside
+      the map and this resolves to no movement.
     */
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     panelRef.current?.scrollIntoView({
@@ -80,15 +114,14 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
         inside cannot engage until this is set.
       */}
       {/*
-        On mobile this is a sheet: it overlaps the bottom of the full-height map
-        by a little so part of it is always visible as an affordance, then rides
-        up over the pinned map as you scroll. relative z-10 puts it above the
-        map's z-0; the -mx/-mt pair is undone at lg, where the two go back to
-        being side-by-side panes.
+        Full-bleed on mobile so it reads as one surface with the map preview
+        above it. No negative top margin any more — that overlap was sized for a
+        full-height map, and against a 240px preview it swallowed the label and
+        the Open button sitting along its bottom edge.
       */}
       <div
         ref={panelRef}
-        className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 -mt-10 lg:mt-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px] scroll-mt-[88px] lg:scroll-mt-0"
+        className="order-2 lg:order-none min-w-0 relative z-10 -mx-6 md:-mx-8 lg:mx-0 bg-card border-t border-line rounded-t-3xl shadow-[0_-10px_30px_rgb(0_0_0_/_0.10)] lg:border lg:rounded-3xl lg:shadow-none p-6 lg:p-5 flex flex-col min-h-0 h-auto lg:h-[620px] scroll-mt-[88px] lg:scroll-mt-0"
       >
         {/*
           One listing takes over the whole panel rather than expanding in place.
@@ -197,23 +230,38 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
       </div>
 
       {/*
-        Sticky on mobile only. Selecting an area moves the map — pans, zooms,
-        highlights — and all of that was happening off-screen above a list you
-        had scrolled down into, so the feature was invisible on a phone. Pinned
-        under the header, the map answers every tap while you keep browsing.
+        Small screens: a picture of the map, full-bleed, with the real one behind
+        a tap. The interactive map used to be pinned here at viewport height —
+        but cooperativeGestures reserves one-finger drag for scrolling the page,
+        which a full-bleed map has to do or it traps you. So it filled the screen
+        and could not be panned by the gesture everyone reaches for first.
 
-        top offset clears the sticky header (~88px at the mobile type scale).
+        Because this branch is CSS, the desktop pane below is display:none here,
+        and its IntersectionObserver never fires against a zero-sized box — so
+        mapbox-gl's 1.78 MB is not fetched on a phone at all until the map opens.
       */}
-      {/*
-        Full-bleed on mobile: the negative margins cancel the section's px-6 /
-        md:px-8 gutter so the map runs to both screen edges, and it is pinned
-        under the header at nearly full height. A map is a thing you read by
-        panning, and at 46svh in a padded box there was never enough of the bay
-        on screen to pan around.
+      <div className="order-1 lg:hidden min-w-0 -mx-6 md:-mx-8">
+        <StaticMapPreview areas={areas} onOpen={openMap} />
+      </div>
 
-        z-0 against the list's z-10 — the list slides up over the pinned map.
-      */}
-      <div className="order-1 lg:order-none min-w-0 -mx-6 md:-mx-8 lg:mx-0 sticky top-[88px] z-0 lg:static lg:z-auto">
+      {mapOpen ? (
+        <FullScreenMap
+          areas={areas}
+          selected={selected}
+          onSelect={(slug) => {
+            selectArea(slug);
+            closeMap();
+          }}
+          onOpenListing={(slug) => {
+            openListing(slug);
+            closeMap();
+          }}
+          onClose={closeMap}
+        />
+      ) : null}
+
+      {/* Desktop: the live pane, side by side with the list as before. */}
+      <div className="hidden lg:block order-1 lg:order-none min-w-0">
         <AreaMapbox
           areas={areas}
           selected={selected}
