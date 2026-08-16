@@ -11,7 +11,7 @@ const CHIPS = [
 export default function WhatsAppLauncher() {
   return (
     <details
-      className="fixed z-[200]"
+      className="fixed z-[150]"
       style={{
         right: "calc(1.5rem + env(safe-area-inset-right))",
         bottom: "calc(1.5rem + env(safe-area-inset-bottom))",

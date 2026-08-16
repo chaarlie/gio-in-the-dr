@@ -1,4 +1,16 @@
 /*
+  Areas too far out to share a frame with the bay. Perla Marina is ~7 km west and
+  Casa Linda is over by Sosúa; fitting the map to either shrinks the Cabarete
+  neighbourhoods to specks in the middle of a lot of sea. They are still drawn —
+  zoom out and they are there — they just don't get to set the viewport.
+
+  Lives here because both the live map and the static preview have to agree, and
+  they did not: the interactive map excluded only Perla Marina, so adding Casa
+  Linda silently pulled its centre halfway to Sosúa.
+*/
+export const MAP_FRAME_OUTLIERS = new Set(["perla-marina", "casa-linda"]);
+
+/*
   Cabarete micro-neighbourhoods.
 
   Moves to Sanity so Gio maintains it — average price and walk times go stale, and
