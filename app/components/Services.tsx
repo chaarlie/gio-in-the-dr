@@ -29,7 +29,7 @@ export default function Services() {
       id="services"
       className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4"
     >
-      <SectionHeading align="center" title="Our services" className="mb-11">
+      <SectionHeading align="center" title="Services" className="mb-11">
         <p className="text-muted mt-3">
           How I help you buy — and settle into — life in the DR.
         </p>
