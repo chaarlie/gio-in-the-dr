@@ -50,10 +50,12 @@ export const AREAS_QUERY = defineQuery(`
         hoaUnit,
         walkToBeachMin,
         "beachPoint": ^.beachPoint,
-        // Every image, not just the first: the explorer panel opens these
-        // full-bleed, and a lightbox that can only show one photo isn't one.
+        // The thumbnail only. Sending every photo of every listing cost 12.5 KB
+        // a listing and put 289 KB of HTML on the home page for seven of them —
+        // about 4 MB at a hundred. The panel fetches the rest when a listing is
+        // actually opened, which is one listing at a time.
         // (GROQ has line comments only — a /* */ block here is a syntax error.)
-        "images": images[]{
+        "images": images[0...1]{
           // _key, not the asset URL, identifies a photo in React's list: the
           // same image can legitimately appear twice in a gallery, and Sanity
           // gives every array member its own key even when the asset repeats.
@@ -93,6 +95,76 @@ export const PROPERTIES_QUERY = defineQuery(`
 `);
 
 /** Every published property slug — for generateStaticParams on detail pages. */
+/*
+  The paginated, server-filtered index behind /properties.
+
+  Both the page of results and the total run the same predicate — that is the
+  whole point of filtering server-side. Filter on the client over a page of 24
+  and a match on page 3 never appears; filter here and the slice is taken from
+  the matching set, so the count is honest and every page is correct.
+
+  Empty-means-any rather than building the predicate string in TypeScript: one
+  fixed query is cacheable, inspectable, and cannot be assembled wrong from
+  user input. "" and 0 are the sentinels because GROQ params cannot be omitted.
+
+  Text matching runs in two passes, never both at once. $tokens is folded prefix
+  patterns — ["sosua*", "condo*"] — matched against searchText, the folded copy,
+  because GROQ's match is accent-sensitive. An array of patterns is ANDed, which
+  is what a search box means by two words.
+
+  $phonetic is only populated on the retry, when the folded pass found nothing.
+  It cannot be ORed in permanently: phonetic codes collapse near-homophones, and
+  a property site cannot afford "3 bed" quietly returning bathrooms. As a
+  fallback it only ever fires where the alternative was an empty page.
+
+  title and the neighbourhood name stay in the folded branch so a document
+  published before searchText existed still answers.
+*/
+const PROPERTY_FILTER = `
+  _type == "property" && status == "available" && defined(slug.current)
+  && ($area == "" || neighborhood->slug.current == $area)
+  && ($category == "" || category == $category)
+  && ($minBeds == 0 || (defined(beds) && beds >= $minBeds))
+  && ($maxPrice == 0 || priceUsd <= $maxPrice)
+  && ((count($tokens) == 0 && count($phonetic) == 0)
+      || (count($tokens) > 0 && (searchText match $tokens || title match $tokens
+          || neighborhood->name match $tokens))
+      || (count($phonetic) > 0 && searchPhonetic match $phonetic))
+`;
+
+export const PROPERTIES_PAGE_QUERY = defineQuery(`
+  {
+    "items": *[${PROPERTY_FILTER}] | order(priceUsd desc) [$from...$to] {
+      "slug": slug.current,
+      title,
+      priceUsd,
+      beds,
+      baths,
+      areaM2,
+      spec,
+      category,
+      "image": images[0].asset->url,
+      "lqip": images[0].asset->metadata.lqip,
+      "area": neighborhood->name,
+      "areaSlug": neighborhood->slug.current
+    },
+    "total": count(*[${PROPERTY_FILTER}])
+  }
+`);
+
+/*
+  The facets, counted against everything published rather than hard-coded — an
+  option that matches nothing is a dead end, and a missing one hides inventory.
+*/
+export const PROPERTY_FACETS_QUERY = defineQuery(`
+  {
+    "areas": *[_type == "neighborhood" && count(*[_type == "property" && neighborhood._ref == ^._id && status == "available"]) > 0]
+      | order(name asc) { name, "slug": slug.current },
+    "categories": array::unique(*[_type == "property" && status == "available" && defined(category)].category),
+    "maxPrice": math::max(*[_type == "property" && status == "available"].priceUsd)
+  }
+`);
+
 export const PROPERTY_SLUGS_QUERY = defineQuery(`
   *[_type == "property" && defined(slug.current)].slug.current
 `);
@@ -218,5 +290,22 @@ export const GUIDE_QUERY = defineQuery(`
       "aspectRatio": cover.asset->metadata.dimensions.aspectRatio,
       "alt": cover.alt
     }
+  }
+`);
+
+/*
+  One listing's full gallery, fetched when the explorer panel opens it.
+
+  Split out of AREAS_QUERY rather than joined to it: the list needs one
+  thumbnail per listing, the opened listing needs all twenty-three photos, and
+  sending the second to satisfy the first is what made the home page 289 KB.
+*/
+export const LISTING_IMAGES_QUERY = defineQuery(`
+  *[_type == "property" && slug.current == $slug][0].images[]{
+    "key": _key,
+    "url": asset->url,
+    "lqip": asset->metadata.lqip,
+    "aspectRatio": asset->metadata.dimensions.aspectRatio,
+    alt
   }
 `);

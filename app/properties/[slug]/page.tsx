@@ -111,7 +111,7 @@ export default async function PropertyPage({ params }: PageProps) {
       <Header />
       <main id="main" tabIndex={-1} className="flex-1 max-w-5xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         <Link
-          href="/#properties"
+          href="/properties"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink no-underline transition-colors"
         >
           ← All properties

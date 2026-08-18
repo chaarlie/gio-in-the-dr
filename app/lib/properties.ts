@@ -258,3 +258,37 @@ export function monthlyHoa(
   }
   return Math.round(amount);
 }
+
+/*
+  A search box turned into GROQ match patterns.
+
+  Two facts about GROQ's match, both established against the live dataset rather
+  than assumed:
+
+  - an array of patterns is ANDed, order-independent, so ["kite*","beach*"]
+    means "both words appear somewhere" — exactly what a search box means;
+  - patterns take at most one "*", and matching is accent-sensitive.
+
+  The second is why the site stores a folded copy of the searchable text. Folding
+  only the query cannot work: "sosua" is not a prefix of "sosúa", and the single
+  wildcard leaves no way to express "prefix, with one letter possibly accented".
+  Fold both sides and the problem disappears.
+
+  Tokens are capped because every one adds a clause: someone pasting a paragraph
+  should get a slow-ish query, not a thousand-term one.
+*/
+const MAX_TOKENS = 6;
+const MAX_TOKEN_LENGTH = 32;
+
+export function searchTokens(query: string): string[] {
+  return fold(query)
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .slice(0, MAX_TOKENS)
+    .map((t) => `${t.slice(0, MAX_TOKEN_LENGTH)}*`);
+}
+
+/** The folded haystack stored on each property. Must match what searchTokens folds. */
+export function searchableText(parts: (string | null | undefined)[]): string {
+  return fold(parts.filter(Boolean).join(" ")).replace(/\s+/g, " ").trim();
+}

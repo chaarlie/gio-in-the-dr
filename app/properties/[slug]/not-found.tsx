@@ -33,7 +33,7 @@ export default function PropertyNotFound() {
             Ask Gio what&apos;s available
           </a>
           <Link
-            href="/#properties"
+            href="/properties"
             className="border border-ink/20 hover:border-ink text-ink text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
           >
             Browse all properties

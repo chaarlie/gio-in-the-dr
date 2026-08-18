@@ -42,16 +42,25 @@ type PropertySearchValue = {
     filters: Filters;
     /** Everything Sanity returned, before filtering — an empty grid needs to know why. */
     all: Property[];
+    /** Every match, across all pages — the count and the pager both need the whole set. */
     results: Property[];
+    /** Just the current page of `results`, which is what the grid renders. */
+    pageItems: Property[];
+    page: number;
+    pageCount: number;
     fields: SearchField[];
     hasFilters: boolean;
     resultLabel: string;
   };
   actions: {
     setFilter: (key: keyof Filters, value: string) => void;
+    setPage: (page: number) => void;
     reset: () => void;
   };
 };
+
+/** Nine fills the 3-column grid exactly at lg, and 3 rows of 3 reads as a set. */
+const HOME_PAGE_SIZE = 9;
 
 const PropertySearchContext = createContext<PropertySearchValue | null>(null);
 
@@ -74,6 +83,7 @@ export default function PropertySearchProvider({
   const pathname = usePathname();
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [page, setPageState] = useState(1);
 
   /*
     Location and Property type are built from the listings, so the option lists can't
@@ -121,43 +131,81 @@ export default function PropertySearchProvider({
           ? prev
           : next,
       );
+      // The page rides in the URL too, so a shared ?page=2 link opens on page 2
+      // and Back restores the page you came from rather than the first one.
+      const fromUrl = Number.parseInt(params.get("page") ?? "1", 10);
+      setPageState(Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : 1);
     }
     syncFromUrl();
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
 
-  function syncUrl(next: Filters) {
+  /*
+    `replace` for filters, `push` for pages.
+
+    Typing is not navigation: a history entry per keystroke would make Back walk
+    letter by letter out of a search, which is why the filters have always
+    replaced. Changing page is navigation — someone who pages forward and hits
+    Back means "the previous page of results", and replace would take them off
+    the site instead.
+  */
+  function syncUrl(next: Filters, nextPage = 1, mode: "replace" | "push" = "replace") {
     const params = new URLSearchParams();
     if (next.q.trim()) params.set("q", next.q.trim());
     if (next.area !== ALL) params.set("area", next.area);
     if (next.category !== ALL) params.set("category", next.category);
     if (next.rooms !== ANY) params.set("rooms", next.rooms);
     if (next.maxPrice !== ANY) params.set("max", next.maxPrice);
+    if (nextPage > 1) params.set("page", String(nextPage));
     const query = params.toString();
     // Stay on the current path rather than hardcoding "/", so this can't bounce anyone
     // off the page they're on. Non-urgent: the results already updated, and keeping the
     // navigation out of the urgent lane stops a router.replace per keystroke from
     // blocking typing.
+    const href = `${pathname}${query ? `?${query}` : ""}`;
     startTransition(() => {
-      router.replace(`${pathname}${query ? `?${query}` : ""}`, { scroll: false });
+      if (mode === "push") router.push(href, { scroll: false });
+      else router.replace(href, { scroll: false });
     });
   }
 
   function setFilter(key: keyof Filters, value: string) {
     const next = { ...filters, [key]: value };
     setFilters(next);
-    syncUrl(next);
+    // Back to page one whenever the set changes, or narrowing a filter strands
+    // you on a page that no longer exists.
+    setPageState(1);
+    syncUrl(next, 1);
+  }
+
+  function setPage(next: number) {
+    setPageState(next);
+    syncUrl(filters, next, "push");
   }
 
   function reset() {
     setFilters(EMPTY_FILTERS);
+    setPageState(1);
     startTransition(() => router.replace(pathname, { scroll: false }));
   }
 
   // Derived during render — no effects, no state drift.
   const results = filterProperties(properties, filters);
   const hasFilters = hasActiveFilters(filters);
+
+  /*
+    Paginated in the browser, not on the server, and that is safe here for the
+    one reason it is not safe on /properties: the filter runs over the whole set
+    too. Both halves see all the listings, so a match can never hide on a page
+    the filter did not look at.
+
+    Clamped rather than trusted — a stale ?page=9 from a wider filter should show
+    the last page, not an empty grid.
+  */
+  const pageCount = Math.max(1, Math.ceil(results.length / HOME_PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page), pageCount);
+  const pageItems = results.slice((safePage - 1) * HOME_PAGE_SIZE, safePage * HOME_PAGE_SIZE);
 
   return (
     <PropertySearchContext
@@ -166,12 +214,16 @@ export default function PropertySearchProvider({
           filters,
           all: properties,
           results,
+          pageItems,
+          page: safePage,
+          pageCount,
           fields,
           hasFilters,
           resultLabel: countLabel(results.length, hasFilters),
         },
         actions: {
           setFilter,
+          setPage,
           reset,
         },
       }}
