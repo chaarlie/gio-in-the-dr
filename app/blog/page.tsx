@@ -18,7 +18,11 @@ export default async function BlogPage() {
   return (
     <>
       <Header />
-      <main id="main" tabIndex={-1} className="flex-1 w-full max-w-6xl mx-auto px-6 md:px-8 py-16 md:py-20">
+      <main
+        id="main"
+        tabIndex={-1}
+        className="flex-1 w-full max-w-6xl mx-auto px-6 md:px-8 py-16 md:py-20"
+      >
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs font-semibold tracking-[0.22em] uppercase text-muted mb-4">
             Guides & stories
@@ -26,12 +30,14 @@ export default async function BlogPage() {
           {/* Two headlines for two states — the empty one is a real page, not a
               placeholder, so an unpublished blog never looks like a broken deploy. */}
           <h1 className="font-display font-bold text-ink text-4xl md:text-6xl text-balance">
-            {posts.length === 0 ? "The blog is on the way." : "Buying on the north coast."}
+            {posts.length === 0
+              ? "The blog is on the way."
+              : "Buying on the north coast."}
           </h1>
           <p className="text-muted text-lg leading-relaxed mt-5">
             {posts.length === 0
               ? "Soon: the 2026 Dominican Republic Buyer's Guide, area guides for Cabarete & Sosúa, and practical notes on residency, taxes and financing — all editable from the backend."
-              : "What Gio gets asked before anyone is ready to talk to an agent — the buying process, the areas, the taxes, and what living here actually costs."}
+              : "Real answers to the questions people ask before moving or buying: from neighborhoods and property taxes to the cost of living and what everyday life in Cabarete is really like."}
           </p>
           {posts.length === 0 ? (
             <Link
