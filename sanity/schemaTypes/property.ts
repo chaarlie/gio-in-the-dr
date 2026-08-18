@@ -183,6 +183,35 @@ export const property = defineType({
         }),
       ],
     }),
+    /*
+      Derived search fields. Hidden, never typed — rewritten from title, spec,
+      category and neighbourhood whenever the document is published.
+
+      searchText is the folded copy: accents stripped, lowercased. GROQ's match
+      is accent-sensitive and takes one "*" per pattern, so "sosua" can never be
+      made to match "Sosúa" from the query side alone — a prefix cannot skip a
+      letter, and the single wildcard cannot be a prefix and a substitution at
+      once. Fold both sides and it is a plain prefix match again.
+
+      searchPhonetic is the Double Metaphone of the same tokens, used only when
+      the folded query returns nothing. It catches the misspellings a Spanish
+      speaker actually makes — cavarete, sozua — but "bath" and "bed" share a
+      code, so it can never be the primary index on a property site.
+    */
+    defineField({
+      name: "searchText",
+      title: "Search text (generated)",
+      type: "string",
+      hidden: true,
+      readOnly: true,
+    }),
+    defineField({
+      name: "searchPhonetic",
+      title: "Search phonetics (generated)",
+      type: "string",
+      hidden: true,
+      readOnly: true,
+    }),
     defineField({
       name: "spec",
       title: "Short spec line",

@@ -8,7 +8,8 @@ import {
   PROPERTY_SLUGS_QUERY,
 } from "../../sanity/lib/queries";
 import { formatPrice } from "./format";
-import type { Property } from "./properties";
+import { searchTokens, type Property } from "./properties";
+import { phoneticTokens } from "./phonetic";
 import type { PortableBlocks } from "../components/PortableBody";
 import type { GalleryImage } from "./sanity-image";
 
@@ -121,6 +122,8 @@ export type PropertyPage = {
   total: number;
   page: number;
   pageCount: number;
+  /** True when these results came from the phonetic retry, not the literal query. */
+  fuzzy: boolean;
 };
 
 export type PropertyFacets = {
@@ -147,20 +150,43 @@ export async function getPropertiesPage(
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const from = (safePage - 1) * PAGE_SIZE;
 
-  const result = await sanityFetch<{ items: PropertyRow[]; total: number }>(
-    PROPERTIES_PAGE_QUERY,
-    {
-      area: filters.area,
-      category: filters.category,
-      minBeds: filters.minBeds,
-      maxPrice: filters.maxPrice,
-      q: filters.q ? `${filters.q}*` : "",
-      from,
-      to: from + PAGE_SIZE,
-    },
-    { items: [], total: 0 },
-    "properties",
-  );
+  const run = (tokens: string[], phonetic: string[]) =>
+    sanityFetch<{ items: PropertyRow[]; total: number }>(
+      PROPERTIES_PAGE_QUERY,
+      {
+        area: filters.area,
+        category: filters.category,
+        minBeds: filters.minBeds,
+        maxPrice: filters.maxPrice,
+        tokens,
+        phonetic,
+        from,
+        to: from + PAGE_SIZE,
+      },
+      { items: [], total: 0 },
+      "properties",
+    );
+
+  const tokens = searchTokens(filters.q);
+  let result = await run(tokens, []);
+
+  /*
+    Second pass only when the first found nothing and there was something to
+    find. This is the "did you mean" shape: precise while it works, forgiving
+    when it does not, and never both — phonetic codes collapse near-homophones,
+    so ORing them in permanently would let "3 bed" return bathrooms.
+  */
+  let fuzzy = false;
+  if (result.total === 0 && tokens.length > 0) {
+    const phonetic = phoneticTokens(filters.q);
+    if (phonetic.length > 0) {
+      const retry = await run([], phonetic);
+      if (retry.total > 0) {
+        result = retry;
+        fuzzy = true;
+      }
+    }
+  }
 
   const items = result.items
     .filter((r) => r.slug && r.priceUsd !== null)
@@ -183,6 +209,7 @@ export async function getPropertiesPage(
     total: result.total,
     page: safePage,
     pageCount: Math.max(1, Math.ceil(result.total / PAGE_SIZE)),
+    fuzzy,
   };
 }
 

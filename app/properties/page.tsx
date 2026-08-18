@@ -123,6 +123,16 @@ export default async function PropertiesIndex({ searchParams }: PageProps) {
             : `${first}–${last} of ${result.total} ${result.total === 1 ? "property" : "properties"}`}
         </p>
 
+        {/* Say when the results are approximate. These came from the phonetic
+            retry because nothing matched literally, and presenting a guess as an
+            exact answer is how someone concludes the search is broken. */}
+        {result.fuzzy ? (
+          <p className="text-sm text-muted mt-1">
+            No exact match for <span className="text-ink font-semibold">{filters.q}</span> —
+            showing the closest listings.
+          </p>
+        ) : null}
+
         {result.total === 0 ? (
           <div className="min-h-[320px] flex flex-col items-center justify-center text-center text-muted">
             {/* Two empty states, because they mean different things: no matches is

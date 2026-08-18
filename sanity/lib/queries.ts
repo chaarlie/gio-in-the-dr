@@ -107,8 +107,18 @@ export const PROPERTIES_QUERY = defineQuery(`
   fixed query is cacheable, inspectable, and cannot be assembled wrong from
   user input. "" and 0 are the sentinels because GROQ params cannot be omitted.
 
-  $q arrives with its wildcard already attached ("sosua*"); match is
-  token-prefix, so "sosua" alone matches only a whole token.
+  Text matching runs in two passes, never both at once. $tokens is folded prefix
+  patterns — ["sosua*", "condo*"] — matched against searchText, the folded copy,
+  because GROQ's match is accent-sensitive. An array of patterns is ANDed, which
+  is what a search box means by two words.
+
+  $phonetic is only populated on the retry, when the folded pass found nothing.
+  It cannot be ORed in permanently: phonetic codes collapse near-homophones, and
+  a property site cannot afford "3 bed" quietly returning bathrooms. As a
+  fallback it only ever fires where the alternative was an empty page.
+
+  title and the neighbourhood name stay in the folded branch so a document
+  published before searchText existed still answers.
 */
 const PROPERTY_FILTER = `
   _type == "property" && status == "available" && defined(slug.current)
@@ -116,8 +126,10 @@ const PROPERTY_FILTER = `
   && ($category == "" || category == $category)
   && ($minBeds == 0 || (defined(beds) && beds >= $minBeds))
   && ($maxPrice == 0 || priceUsd <= $maxPrice)
-  && ($q == "" || title match $q || spec match $q || category match $q
-      || neighborhood->name match $q)
+  && ((count($tokens) == 0 && count($phonetic) == 0)
+      || (count($tokens) > 0 && (searchText match $tokens || title match $tokens
+          || neighborhood->name match $tokens))
+      || (count($phonetic) > 0 && searchPhonetic match $phonetic))
 `;
 
 export const PROPERTIES_PAGE_QUERY = defineQuery(`
