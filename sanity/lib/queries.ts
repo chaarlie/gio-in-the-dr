@@ -183,3 +183,40 @@ export const PIN_CHECK_QUERY = defineQuery(`
     "geographic": *[_type == "neighborhood" && defined(boundary) && geo::contains(geo(boundary), ^.location)][0].name
   }[declared != geographic && defined(geographic)]
 `);
+
+/*
+  One downloadable guide, preferring the requested slug.
+
+  Deliberately not `slug.current == $slug` alone. The slug is generated from the
+  title in the Studio, and "Buyer's Guide" slugifies to `buyer-s-guide` — the
+  apostrophe becomes a separator — so an exact match silently emptied the home
+  page twice: the upload was fine, the lookup just missed. The schema now strips
+  apostrophes, but regenerating a slug is one click and the failure is invisible,
+  so ordering exact matches first and falling back to the newest guide degrades
+  to the right document instead of to nothing.
+
+  `defined(file.asset)` keeps a half-filled draft from winning that fallback.
+
+  `size` comes back in bytes and is rendered on the card: a 2.8 MB download on
+  Dominican mobile data is worth stating before someone taps. `extension` labels
+  the link rather than being assumed — a link that says PDF about a file that
+  isn't one is worse than no label.
+*/
+export const GUIDE_QUERY = defineQuery(`
+  *[_type == "guide" && defined(file.asset)]
+    | order(select(slug.current == $slug => 0, 1) asc, _updatedAt desc)[0]{
+    title,
+    description,
+    pages,
+    "url": file.asset->url,
+    "size": file.asset->size,
+    "extension": file.asset->extension,
+    "filename": file.asset->originalFilename,
+    "cover": {
+      "url": cover.asset->url,
+      "lqip": cover.asset->metadata.lqip,
+      "aspectRatio": cover.asset->metadata.dimensions.aspectRatio,
+      "alt": cover.alt
+    }
+  }
+`);

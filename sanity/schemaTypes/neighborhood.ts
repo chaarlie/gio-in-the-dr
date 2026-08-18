@@ -8,8 +8,8 @@ import { geopointInRange } from "../lib/geopoint";
 
   `boundary` is the field that makes the map self-serve. Sanity has no polygon
   type, so the shape is pasted as GeoJSON — draw it at geojson.io, copy, paste,
-  publish. The map re-reads it with no deploy. Until it's filled in, the site
-  falls back to the approximate shapes committed in app/lib/area-shapes.json.
+  publish. The map re-reads it with no deploy. There is no committed fallback:
+  leave it blank and the neighbourhood simply isn't drawn.
 */
 export const neighborhood = defineType({
   name: "neighborhood",
@@ -57,7 +57,7 @@ export const neighborhood = defineType({
       type: "text",
       rows: 4,
       description:
-        "Draw the area at geojson.io with the polygon tool, then paste the whole export here. Leave blank to use the built-in approximate shape.",
+        "Draw the area at geojson.io with the polygon tool, then paste the whole export here. Leave blank and this neighbourhood won't be drawn on the map.",
       validation: (Rule) =>
         Rule.custom((value) => {
           if (!value) return true;

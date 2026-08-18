@@ -1,9 +1,20 @@
 import Link from "next/link";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
+import NavLink from "./NavLink";
 
+/*
+  Every nav item lives here, including the highlighted first one.
+
+  It used to be split: a hardcoded "Start" link pointing at "/" rendered before
+  this array, and only the array was handed to MobileMenu. So the primary item
+  existed on desktop and nowhere else — whatever sat in that slot was missing
+  from the phone menu entirely. Marking it with `primary` instead keeps one
+  source for both navs.
+*/
 const NAV = [
-  { label: "Properties", href: "/#properties" },
+  { label: "Properties", href: "/#properties", primary: true },
+  { label: "Map", href: "/#areas" },
   { label: "Services", href: "/#services" },
   { label: "Blog", href: "/blog" },
   { label: "About", href: "/#about" },
@@ -25,22 +36,21 @@ export default function Header() {
           <Logo />
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop nav. The logo is already the way home, so the first slot
+            carries the listings rather than a second link to "/". */}
         <nav className="hidden md:flex items-center gap-1">
-          <Link
-            href="/"
-            className="text-sm font-semibold px-4 py-2 rounded-full bg-accent text-cream no-underline"
-          >
-            Start
-          </Link>
           {NAV.map((item) => (
-            <Link
+            <NavLink
               key={item.href}
               href={item.href}
-              className="text-sm font-medium px-4 py-2 rounded-full text-ink hover:bg-ink/5 transition-colors no-underline"
+              className={
+                item.primary
+                  ? "text-sm font-semibold px-4 py-2 rounded-full bg-accent hover:bg-accent-soft text-cream no-underline transition-colors"
+                  : "text-sm font-medium px-4 py-2 rounded-full text-ink hover:bg-ink/5 transition-colors no-underline"
+              }
             >
               {item.label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
 

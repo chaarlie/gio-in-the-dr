@@ -11,34 +11,26 @@
 export const MAP_FRAME_OUTLIERS = new Set(["perla-marina", "casa-linda"]);
 
 /*
-  Cabarete micro-neighbourhoods.
+  What's left in this file is presentation, not content.
 
-  Moves to Sanity so Gio maintains it — average price and walk times go stale, and
-  she's the one who knows them. Anything she hasn't confirmed is `null` and renders
-  as "To confirm" rather than a made-up number: these are claims buyers act on.
+  The neighbourhood list, their blurbs and their boundary shapes all used to be
+  committed here and in area-shapes.json, and getAreas() merged them field by
+  field with whatever Sanity returned. That merge is gone: Sanity is the only
+  source of neighbourhood data now, so an area Gio hasn't filled in reads as
+  empty instead of quietly showing a value nobody in the Studio can see or edit.
 
-  `tone` indexes the ordinal ramp below (0 = closest to the sand). Colour encodes
-  distance from the beach, not identity — six identity hues cannot pass CVD
-  separation on a map, so identity is carried by the label on each zone instead.
+  The ramp below stays because it isn't data — it's the colour scale the map and
+  the legend both draw from, and it has to match between them.
 */
-
-export type Neighborhood = {
-  slug: string;
-  name: string;
-  blurb: string;
-  /** Ordinal ramp index, 0-5. Lower = closer to the water. */
-  tone: number;
-  /** Display strings. null = not yet confirmed by Gio. */
-  avgPrice: string | null;
-  walkToBeach: string | null;
-  driveToBeach: string | null;
-  hoa: string | null;
-  activities: string[];
-};
 
 /**
  * Single-hue ordinal ramp, validated against the cream surface: monotone
  * lightness, adjacent ΔL ≥ 0.06, light end 2.22:1 vs surface, hue spread 17°.
+ *
+ * Indexed by sortOrder (0 = closest to the sand). Colour encodes distance from
+ * the beach, not identity — six identity hues cannot pass CVD separation on a
+ * map, so identity is carried by the label on each zone instead. A neighbourhood
+ * with its own `color` in Sanity overrides this.
  */
 export const AREA_TONES = [
   "#b59a6e",
@@ -51,74 +43,3 @@ export const AREA_TONES = [
 
 /** Fill is dark enough from step 2 on that cream text is the readable choice. */
 export const AREA_LABEL_INK = ["#2a1e10", "#2a1e10", "#f4efe6", "#f4efe6", "#f4efe6", "#f4efe6"] as const;
-
-export const NEIGHBORHOODS: Neighborhood[] = [
-  {
-    slug: "kite-beach",
-    name: "Kite Beach",
-    blurb: "The kite and wing-foil end of the bay. Low-rise condos right on the sand.",
-    tone: 0,
-    avgPrice: null,
-    walkToBeach: null,
-    driveToBeach: null,
-    hoa: null,
-    activities: ["Kitesurfing", "Wing foiling", "Beach bars"],
-  },
-  {
-    slug: "kite-point",
-    name: "Kite Point",
-    blurb: "The point at the western end — quieter, and the launch everyone walks to.",
-    tone: 1,
-    avgPrice: null,
-    walkToBeach: null,
-    driveToBeach: null,
-    hoa: null,
-    activities: ["Kitesurfing", "Sunset walks"],
-  },
-  {
-    slug: "cabarete-center",
-    name: "Cabarete Center",
-    blurb:
-      "Cabarete Bay itself. Restaurants, cafés and supermarkets on foot; the most walkable address on the coast.",
-    tone: 2,
-    avgPrice: null,
-    walkToBeach: "Under 1 min",
-    driveToBeach: null,
-    // From Gio's own listings: Coccoloba quotes per-m², Seawinds a flat monthly fee.
-    hoa: "$2.00–2.09 / m² / month",
-    activities: ["Restaurants", "Nightlife", "Water sports", "Supermarkets"],
-  },
-  {
-    slug: "callejon",
-    name: "Callejón",
-    blurb: "The lane running back off the bay — walkable to town, a step quieter.",
-    tone: 3,
-    avgPrice: null,
-    walkToBeach: null,
-    driveToBeach: null,
-    hoa: null,
-    activities: ["Local dining", "Walk to town"],
-  },
-  {
-    slug: "perla-marina",
-    name: "Perla Marina",
-    blurb: "Residential and green, east toward Sosúa. Villas and gated lots.",
-    tone: 4,
-    avgPrice: null,
-    walkToBeach: null,
-    driveToBeach: null,
-    hoa: null,
-    activities: ["Villas", "Quiet beaches", "Gated living"],
-  },
-  {
-    slug: "procab",
-    name: "ProCab",
-    blurb: "Inland from the bay. More space and more house for the money.",
-    tone: 5,
-    avgPrice: null,
-    walkToBeach: null,
-    driveToBeach: null,
-    hoa: null,
-    activities: ["Family homes", "Larger lots"],
-  },
-];
