@@ -22,15 +22,23 @@ import { fold } from "./properties";
 function normalise(token: string): string {
   return token
     .replace(/^h/, "") // hola/ola — silent in Spanish
-    .replace(/ll/g, "y") // yeísmo: callejon/cayejon
     .replace(/qu/g, "k")
     .replace(/ch/g, "X") // single sound, kept distinct from c
+    /*
+      Doubles collapse before y-folding, not after, and the order is the whole
+      difference between "vila" finding Villa and not. Folding ll→y first made
+      villa→by while the dropped-letter typo vila→bl, so the two never met.
+      Collapsing first, then folding y→l, lands yeísmo (cayejon/callejon) and the
+      dropped letter (vila/villa) on the same code — measured, at no cost in
+      collisions on the real vocabulary.
+    */
+    .replace(/(.)\1+/g, "$1")
     .replace(/c([eiy])/g, "s$1") // ciudad/siudad
     .replace(/[ckq]/g, "k") // condo/kondo
     .replace(/[vb]/g, "b") // cabarete/cavarete
     .replace(/z/g, "s") // sosua/sozua
     .replace(/g([eiy])/g, "j$1") // gente/jente
-    .replace(/(.)\1+/g, "$1"); // any remaining doubles
+    .replace(/y/g, "l"); // yeísmo, both directions
 }
 
 /**
