@@ -50,10 +50,12 @@ export const AREAS_QUERY = defineQuery(`
         hoaUnit,
         walkToBeachMin,
         "beachPoint": ^.beachPoint,
-        // Every image, not just the first: the explorer panel opens these
-        // full-bleed, and a lightbox that can only show one photo isn't one.
+        // The thumbnail only. Sending every photo of every listing cost 12.5 KB
+        // a listing and put 289 KB of HTML on the home page for seven of them —
+        // about 4 MB at a hundred. The panel fetches the rest when a listing is
+        // actually opened, which is one listing at a time.
         // (GROQ has line comments only — a /* */ block here is a syntax error.)
-        "images": images[]{
+        "images": images[0...1]{
           // _key, not the asset URL, identifies a photo in React's list: the
           // same image can legitimately appear twice in a gallery, and Sanity
           // gives every array member its own key even when the asset repeats.
@@ -276,5 +278,22 @@ export const GUIDE_QUERY = defineQuery(`
       "aspectRatio": cover.asset->metadata.dimensions.aspectRatio,
       "alt": cover.alt
     }
+  }
+`);
+
+/*
+  One listing's full gallery, fetched when the explorer panel opens it.
+
+  Split out of AREAS_QUERY rather than joined to it: the list needs one
+  thumbnail per listing, the opened listing needs all twenty-three photos, and
+  sending the second to satisfy the first is what made the home page 289 KB.
+*/
+export const LISTING_IMAGES_QUERY = defineQuery(`
+  *[_type == "property" && slug.current == $slug][0].images[]{
+    "key": _key,
+    "url": asset->url,
+    "lqip": asset->metadata.lqip,
+    "aspectRatio": asset->metadata.dimensions.aspectRatio,
+    alt
   }
 `);

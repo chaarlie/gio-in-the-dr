@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PropertyGallery from "../PropertyGallery";
 import PropertyCalculators from "../PropertyCalculators";
@@ -41,6 +42,45 @@ export default function ListingDetail({
   areaName: string;
   onBack: () => void;
 }) {
+
+  /*
+    The list ships one thumbnail per listing; the rest arrive when a listing is
+    opened, which is one at a time. Starting from the thumbnail means the
+    gallery paints immediately with the photo the card already showed, and the
+    others slot in behind it — no spinner, no layout jump.
+
+    Keyed on the slug so switching listings drops the previous set rather than
+    showing the last property's photos under the new one's title. `ignore`
+    covers the race where a fast second click resolves before the first.
+  */
+  const [gallery, setGallery] = useState<{ slug: string; images: typeof listing.images } | null>(
+    null,
+  );
+  const slug = listing.slug;
+  /*
+    Tagged with the slug it was fetched for, rather than cleared when the slug
+    changes. Resetting state from inside the effect renders once with the
+    previous property's photos before the reset lands — deriving it instead means
+    the stale set is simply never the one that gets read.
+  */
+  const loaded = gallery && gallery.slug === slug ? gallery.images : null;
+
+  useEffect(() => {
+    if (!slug) return;
+    let ignore = false;
+    fetch(`/api/listings/${encodeURIComponent(slug)}/images`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!ignore && data?.images?.length) setGallery({ slug, images: data.images });
+      })
+      .catch(() => {
+        // The thumbnail is already on screen; a failed gallery fetch should
+        // leave the listing readable rather than blanking it.
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [slug]);
 
   const price = formatExactPrice(listing.priceUsd);
   const perM2 =
@@ -96,7 +136,7 @@ export default function ListingDetail({
       {/* Shared with /properties/<slug> — same carousel, same lightbox, so the
           two views of a property cannot drift apart again. */}
       <PropertyGallery
-        images={listing.images}
+        images={loaded ?? listing.images}
         title={listing.title}
         sizes="(min-width: 1024px) 390px, 100vw"
         fallbackColor={color}
