@@ -3,6 +3,7 @@ import Logo from "./Logo";
 import WhatsAppIcon from "./WhatsAppIcon";
 import { WA } from "../lib/whatsapp";
 import { EMAIL } from "../lib/email";
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "../lib/instagram";
 
 export default function Footer() {
   return (
@@ -27,11 +28,29 @@ export default function Footer() {
               <WhatsAppIcon size={20} className="text-whatsapp" />
               Chat on WhatsApp
             </a>
+            {/* Email and Instagram share the underlined-text treatment so the
+                column reads as one primary action with two quieter ways to
+                reach the same person, rather than three buttons of equal
+                weight. Both sit in the same flex column as the button above, so
+                all three stay left-aligned on every breakpoint. */}
             <a
               href={`mailto:${EMAIL}`}
               className="text-cream/80 text-[15px] font-medium border-b border-cream/30 pb-0.5 no-underline hover:text-cream transition-colors"
             >
               {EMAIL}
+            </a>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-2 text-cream/80 text-[15px] font-medium border-b border-cream/30 pb-0.5 no-underline hover:text-cream transition-colors"
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
+                <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" />
+              </svg>
+              {INSTAGRAM_HANDLE}
             </a>
           </div>
         </div>
