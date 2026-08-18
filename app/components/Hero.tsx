@@ -1,6 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
-import { WA } from "../lib/whatsapp";
 
 export default function Hero() {
   return (
@@ -19,23 +17,6 @@ export default function Hero() {
             investments around Cabarete, guided from first viewing to closing,
             in your language.
           </p>
-
-          <div className="flex flex-wrap items-center gap-5 mt-8">
-            <Link
-              href="#properties"
-              className="bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
-            >
-              View properties
-            </Link>
-            <a
-              href={WA.general}
-              target="_blank"
-              rel="noopener"
-              className="text-ink text-sm font-semibold pb-1 border-b border-ink/40 hover:border-ink transition-colors no-underline"
-            >
-              Message Gio →
-            </a>
-          </div>
 
           <div className="flex items-center gap-3 mt-10">
             <Image
