@@ -41,7 +41,7 @@ export default function Footer() {
           </div>
           <nav className="flex gap-6 flex-wrap">
             <Link
-              href="/#properties"
+              href="/properties"
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
               Properties

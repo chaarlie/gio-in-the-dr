@@ -13,7 +13,7 @@ import NavLink from "./NavLink";
   source for both navs.
 */
 const NAV = [
-  { label: "Properties", href: "/#properties", primary: true },
+  { label: "Properties", href: "/properties", primary: true },
   { label: "Map", href: "/#areas" },
   { label: "Services", href: "/#services" },
   { label: "Blog", href: "/blog" },

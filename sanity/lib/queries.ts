@@ -93,6 +93,64 @@ export const PROPERTIES_QUERY = defineQuery(`
 `);
 
 /** Every published property slug — for generateStaticParams on detail pages. */
+/*
+  The paginated, server-filtered index behind /properties.
+
+  Both the page of results and the total run the same predicate — that is the
+  whole point of filtering server-side. Filter on the client over a page of 24
+  and a match on page 3 never appears; filter here and the slice is taken from
+  the matching set, so the count is honest and every page is correct.
+
+  Empty-means-any rather than building the predicate string in TypeScript: one
+  fixed query is cacheable, inspectable, and cannot be assembled wrong from
+  user input. "" and 0 are the sentinels because GROQ params cannot be omitted.
+
+  $q arrives with its wildcard already attached ("sosua*"); match is
+  token-prefix, so "sosua" alone matches only a whole token.
+*/
+const PROPERTY_FILTER = `
+  _type == "property" && status == "available" && defined(slug.current)
+  && ($area == "" || neighborhood->slug.current == $area)
+  && ($category == "" || category == $category)
+  && ($minBeds == 0 || (defined(beds) && beds >= $minBeds))
+  && ($maxPrice == 0 || priceUsd <= $maxPrice)
+  && ($q == "" || title match $q || spec match $q || category match $q
+      || neighborhood->name match $q)
+`;
+
+export const PROPERTIES_PAGE_QUERY = defineQuery(`
+  {
+    "items": *[${PROPERTY_FILTER}] | order(priceUsd desc) [$from...$to] {
+      "slug": slug.current,
+      title,
+      priceUsd,
+      beds,
+      baths,
+      areaM2,
+      spec,
+      category,
+      "image": images[0].asset->url,
+      "lqip": images[0].asset->metadata.lqip,
+      "area": neighborhood->name,
+      "areaSlug": neighborhood->slug.current
+    },
+    "total": count(*[${PROPERTY_FILTER}])
+  }
+`);
+
+/*
+  The facets, counted against everything published rather than hard-coded — an
+  option that matches nothing is a dead end, and a missing one hides inventory.
+*/
+export const PROPERTY_FACETS_QUERY = defineQuery(`
+  {
+    "areas": *[_type == "neighborhood" && count(*[_type == "property" && neighborhood._ref == ^._id && status == "available"]) > 0]
+      | order(name asc) { name, "slug": slug.current },
+    "categories": array::unique(*[_type == "property" && status == "available" && defined(category)].category),
+    "maxPrice": math::max(*[_type == "property" && status == "available"].priceUsd)
+  }
+`);
+
 export const PROPERTY_SLUGS_QUERY = defineQuery(`
   *[_type == "property" && defined(slug.current)].slug.current
 `);

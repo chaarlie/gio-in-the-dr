@@ -2,6 +2,8 @@ import { cache } from "react";
 import { sanityFetch } from "../../sanity/lib/client";
 import {
   PROPERTIES_QUERY,
+  PROPERTIES_PAGE_QUERY,
+  PROPERTY_FACETS_QUERY,
   PROPERTY_QUERY,
   PROPERTY_SLUGS_QUERY,
 } from "../../sanity/lib/queries";
@@ -90,4 +92,107 @@ export async function getPropertySlugs(): Promise<string[]> {
 export const getProperty = cache(
   async (slug: string): Promise<PropertyDetail | null> =>
     sanityFetch<PropertyDetail | null>(PROPERTY_QUERY, { slug }, null, "property"),
+);
+
+/* ── The paginated index ──────────────────────────────────────────────────── */
+
+/** How many cards a page shows. Three columns at lg, so multiples of 3 and 4 land evenly. */
+export const PAGE_SIZE = 12;
+
+export type PropertyFilters = {
+  area: string;
+  category: string;
+  minBeds: number;
+  maxPrice: number;
+  q: string;
+};
+
+export const NO_FILTERS: PropertyFilters = {
+  area: "",
+  category: "",
+  minBeds: 0,
+  maxPrice: 0,
+  q: "",
+};
+
+export type PropertyPage = {
+  items: Property[];
+  /** Matches across the whole set, not this page — the count has to survive paging. */
+  total: number;
+  page: number;
+  pageCount: number;
+};
+
+export type PropertyFacets = {
+  areas: { name: string; slug: string }[];
+  categories: string[];
+  maxPrice: number | null;
+};
+
+/*
+  One page of results, filtered by Sanity rather than by the browser.
+
+  The predicate runs before the slice, which is the reason to do it here at all:
+  filtering a page of 12 on the client silently drops every match that happens to
+  live on another page, and the result count is then a count of the wrong thing.
+
+  `q` gets its wildcard here rather than at the call site, so no caller can forget
+  it and quietly turn prefix search into exact-token search. Empty stays empty —
+  "*" alone would match everything and defeat the sentinel.
+*/
+export async function getPropertiesPage(
+  filters: PropertyFilters,
+  page: number,
+): Promise<PropertyPage> {
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const from = (safePage - 1) * PAGE_SIZE;
+
+  const result = await sanityFetch<{ items: PropertyRow[]; total: number }>(
+    PROPERTIES_PAGE_QUERY,
+    {
+      area: filters.area,
+      category: filters.category,
+      minBeds: filters.minBeds,
+      maxPrice: filters.maxPrice,
+      q: filters.q ? `${filters.q}*` : "",
+      from,
+      to: from + PAGE_SIZE,
+    },
+    { items: [], total: 0 },
+    "properties",
+  );
+
+  const items = result.items
+    .filter((r) => r.slug && r.priceUsd !== null)
+    .map((r) => ({
+      slug: r.slug,
+      title: r.title,
+      area: r.area ?? "Dominican Republic",
+      areaSlug: r.areaSlug ?? "",
+      category: r.category ?? "Property",
+      price: formatPrice(r.priceUsd),
+      priceUsd: r.priceUsd as number,
+      beds: r.beds,
+      spec: r.spec,
+      image: r.image,
+      lqip: r.lqip,
+    }));
+
+  return {
+    items,
+    total: result.total,
+    page: safePage,
+    pageCount: Math.max(1, Math.ceil(result.total / PAGE_SIZE)),
+  };
+}
+
+/** Options for the filter form, counted from what is actually published. */
+export const getPropertyFacets = cache(
+  async (): Promise<PropertyFacets> =>
+    sanityFetch<PropertyFacets>(
+      PROPERTY_FACETS_QUERY,
+      {},
+      { areas: [], categories: [], maxPrice: null },
+      "properties",
+    ),
 );
