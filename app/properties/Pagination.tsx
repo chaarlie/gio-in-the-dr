@@ -25,11 +25,19 @@ export default function Pagination({
   page,
   pageCount,
   hrefFor,
+  onSelect,
 }: {
   page: number;
   pageCount: number;
   /** Builds a URL for a page while preserving the active filters. */
   hrefFor: (page: number) => string;
+  /*
+    Present when the pager drives client state instead of navigating — the home
+    page holds every listing already, so changing page there is a slice, not a
+    request. The href stays on the element regardless, so the URL is still
+    shareable and middle-click still opens a real page.
+  */
+  onSelect?: (page: number) => void;
 }) {
   if (pageCount <= 1) return null;
 
@@ -40,6 +48,7 @@ export default function Pagination({
       {page > 1 ? (
         <Link
           href={hrefFor(page - 1)}
+          onClick={onSelect ? (e) => { e.preventDefault(); onSelect(page - 1); } : undefined}
           rel="prev"
           aria-label="Previous page"
           className="flex items-center justify-center min-w-11 h-11 px-4 rounded-full border border-line text-sm font-semibold text-ink hover:bg-ink/5 transition-colors no-underline"
@@ -57,6 +66,7 @@ export default function Pagination({
           <Link
             key={slot}
             href={hrefFor(slot)}
+            onClick={onSelect ? (e) => { e.preventDefault(); onSelect(slot); } : undefined}
             aria-label={`Page ${slot}`}
             // aria-current tells a screen reader which page it is on; the ring
             // is only the sighted half of the same fact.
@@ -75,6 +85,7 @@ export default function Pagination({
       {page < pageCount ? (
         <Link
           href={hrefFor(page + 1)}
+          onClick={onSelect ? (e) => { e.preventDefault(); onSelect(page + 1); } : undefined}
           rel="next"
           aria-label="Next page"
           className="flex items-center justify-center min-w-11 h-11 px-4 rounded-full border border-line text-sm font-semibold text-ink hover:bg-ink/5 transition-colors no-underline"

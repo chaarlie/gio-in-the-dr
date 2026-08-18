@@ -97,8 +97,8 @@ export const getProperty = cache(
 
 /* ── The paginated index ──────────────────────────────────────────────────── */
 
-/** How many cards a page shows. Three columns at lg, so multiples of 3 and 4 land evenly. */
-export const PAGE_SIZE = 12;
+/** Nine fills the 3-column grid exactly at lg — 3 rows of 3, matching the home page. */
+export const PAGE_SIZE = 9;
 
 export type PropertyFilters = {
   area: string;

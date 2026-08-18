@@ -2,6 +2,7 @@
 
 import SectionHeading from "./SectionHeading";
 import PropertyCard from "./PropertyCard";
+import Pagination from "../properties/Pagination";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { SearchFieldGrid, SearchQueryRow, SearchActionsRow } from "./PropertySearchFields";
 import { WA } from "../lib/whatsapp";
@@ -79,11 +80,32 @@ export default function Properties() {
           </button>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {state.results.map((property) => (
-            <PropertyCard key={property.slug} property={property} />
-          ))}
-        </div>
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {state.pageItems.map((property) => (
+              <PropertyCard key={property.slug} property={property} />
+            ))}
+          </div>
+
+          {/*
+            Paged in the browser, because the filter runs over the whole set here
+            too — both halves see every listing, so nothing can hide on a page the
+            filter never looked at. That is exactly what is not true on
+            /properties, which is why that one filters server-side.
+
+            Scrolls back to the top of the results: changing page while looking at
+            the ninth card otherwise leaves you mid-grid on new content.
+          */}
+          <Pagination
+            page={state.page}
+            pageCount={state.pageCount}
+            hrefFor={(p) => `?page=${p}`}
+            onSelect={(p) => {
+              actions.setPage(p);
+              scrollToResults();
+            }}
+          />
+        </>
       )}
       </div>
     </section>
