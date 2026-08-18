@@ -15,8 +15,9 @@ import type { Area } from "../lib/areas";
   edges curve instead of reading as rectangles. Anchored on real OSM positions —
   Cabarete town, Kite Beach and Perla Marina each fall inside their own area.
 
-  Still approximate: the inland edges are offsets, not surveyed boundaries.
-  Replace app/lib/area-shapes.json once Gio confirms where each starts and stops.
+  Still approximate: the inland edges are offsets, not surveyed boundaries. They
+  now live in each neighbourhood's `boundary` field in Sanity, so Gio can redraw
+  any of them at geojson.io without a deploy.
 
   Fill colour is the validated single-hue ordinal ramp: lighter = closer to the
   sand. Identity comes from the labels, not the colour — six identity hues can't
@@ -224,6 +225,29 @@ export default function AreaMapbox({
       .filter((f) => !MAP_FRAME_OUTLIERS.has(f.properties.slug))
       .forEach((f) =>
         f.geometry.coordinates[0].forEach((c) => bounds.extend(c as [number, number])),
+      );
+
+    /*
+      And the pins themselves, which the boundaries do not necessarily contain.
+      Mareal sits 16 m past the west edge of the Kite Beach shape, so the map
+      opened with its marker just off-frame — the listing was on the map and
+      invisible until you panned, which reads as "it has no pin".
+
+      The shapes are approximate offsets rather than surveyed lines (see the note
+      at the top of this file), so a real address falling outside one is expected
+      and will happen again. Framing what is actually plotted fixes the class of
+      bug, not just this listing.
+
+      Same fallback the markers use, and the same outlier list, so the frame and
+      the pins always agree about what is on screen.
+    */
+    areas
+      .filter((a) => !MAP_FRAME_OUTLIERS.has(a.slug))
+      .forEach((a) =>
+        a.listings.forEach((l) => {
+          const at = l.location ?? a.pin;
+          if (at) bounds.extend([at.lng, at.lat]);
+        }),
       );
 
     /* The shore runs northwest, so a north-up frame is half empty ocean and half
