@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "./Logo";
 import WhatsAppIcon from "./WhatsAppIcon";
 import { WA } from "../lib/whatsapp";
+import { EMAIL } from "../lib/email";
 
 export default function Footer() {
   return (
@@ -27,10 +28,10 @@ export default function Footer() {
               Chat on WhatsApp
             </a>
             <a
-              href="mailto:info@giointhedr.com"
+              href={`mailto:${EMAIL}`}
               className="text-cream/80 text-[15px] font-medium border-b border-cream/30 pb-0.5 no-underline hover:text-cream transition-colors"
             >
-              info@giointhedr.com
+              {EMAIL}
             </a>
           </div>
         </div>
