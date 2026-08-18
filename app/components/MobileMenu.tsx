@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import NavLink from "./NavLink";
 import { useEffect, useRef, useState } from "react";
 
 /*
@@ -95,22 +95,15 @@ export default function MobileMenu({
           */
           className="absolute inset-x-0 top-full max-h-[calc(100svh-5rem)] overflow-y-auto overscroll-contain bg-card border-b border-line shadow-lg flex flex-col pb-[env(safe-area-inset-bottom)]"
         >
-          <Link
-            href="/"
-            onClick={() => setOpen(false)}
-            className="flex items-center min-h-14 px-6 border-b border-line text-lg font-semibold text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
-          >
-            Start
-          </Link>
           {items.map((item) => (
-            <Link
+            <NavLink
               key={item.href}
               href={item.href}
-              onClick={() => setOpen(false)}
+              onNavigate={() => setOpen(false)}
               className="flex items-center min-h-14 px-6 border-b border-line last:border-0 text-lg font-medium text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
             >
               {item.label}
-            </Link>
+            </NavLink>
           ))}
         </nav>
       ) : null}
