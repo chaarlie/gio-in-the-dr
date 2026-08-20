@@ -5,43 +5,51 @@ import Footer from "../../../components/Footer";
 import WhatsAppLauncher from "../../../components/WhatsAppLauncher";
 import PostView from "../../../components/blog/PostView";
 import { getPost, getPostSlugsIn } from "../../../lib/posts.server";
-import { HREFLANG, blogPath, isLocale, type Locale } from "../../../lib/i18n";
+import { HREFLANG, LOCALES, blogPath, isLocale, type Locale } from "../../../lib/i18n";
 
 /*
-  A post in a non-default language. English stays at /blog; Spanish is /es/blog.
+  One post, in whichever language the URL asked for.
 
-  The static /blog segment wins over this dynamic one, so the two coexist without
-  a middleware or a redirect. When the whole site moves under [locale], English
-  joins this tree and app/blog is deleted — the shape here is already the shape
-  it will keep.
+  English is served without a prefix — middleware rewrites "/blog/x" to
+  "/en/blog/x" — so this one file covers both /blog/<slug> and /es/blog/<slug>
+  and the two cannot drift.
 */
 
-/** Only the locales that actually have posts. Anything else 404s below. */
 export async function generateStaticParams() {
-  const slugs = await getPostSlugsIn("es");
-  return slugs.map((slug) => ({ locale: "es", slug }));
+  const perLocale = await Promise.all(
+    LOCALES.map(async (locale) => {
+      const slugs = await getPostSlugsIn(locale);
+      return slugs.map((slug) => ({ locale, slug }));
+    }),
+  );
+  return perLocale.flat();
 }
 
 type PageProps = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, slug } = await params;
-  if (!isLocale(locale) || locale === "en") return {};
+  if (!isLocale(locale)) return {};
 
-  const post = await getPost(slug, locale as Locale);
-  if (!post) return { title: "Página no encontrada — Gio In The DR" };
+  const post = await getPost(slug, locale);
+  if (!post) return { title: "Gio In The DR" };
+
+  const other: Locale = locale === "en" ? "es" : "en";
 
   return {
     title: `${post.title} — Gio In The DR`,
     description: post.excerpt ?? undefined,
     alternates: {
       canonical: blogPath(locale, post.slug),
-      // Both directions, so Google reads them as one guide in two languages
-      // rather than two pages competing for the same queries.
+      /*
+        Both directions. Without it Google reads a guide and its translation as
+        two pages competing for the same queries rather than one page in two
+        languages — the worst of both outcomes for the thing the blog exists for.
+      */
       languages: post.translation
         ? {
-            [HREFLANG.es]: blogPath("es", post.slug),
-            [HREFLANG.en]: blogPath("en", post.translation.slug),
+            [HREFLANG[locale]]: blogPath(locale, post.slug),
+            [HREFLANG[other]]: blogPath(other, post.translation.slug),
           }
         : undefined,
     },
@@ -49,29 +57,45 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: post.title,
       description: post.excerpt ?? undefined,
       type: "article",
-      locale: "es_DO",
+      locale: locale === "es" ? "es_DO" : "en_US",
       publishedTime: post.publishedAt ?? undefined,
       images: post.cover?.url ? [post.cover.url] : undefined,
     },
   };
 }
 
-export default async function LocalisedPostPage({ params }: PageProps) {
+export default async function PostPage({ params }: PageProps) {
   const { locale, slug } = await params;
-  // "en" is served by /blog, so /en/blog would be a second URL for one page.
-  if (!isLocale(locale) || locale === "en") notFound();
+  if (!isLocale(locale)) notFound();
 
-  const post = await getPost(slug, locale as Locale);
+  const post = await getPost(slug, locale);
   if (!post) notFound();
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt ?? undefined,
+    datePublished: post.publishedAt ?? undefined,
+    inLanguage: HREFLANG[locale],
+    image: post.cover?.url ? [post.cover.url] : undefined,
+    author: { "@type": "Person", name: "Gio" },
+    publisher: { "@type": "Organization", name: "Gio In The DR" },
+    mainEntityOfPage: blogPath(locale, post.slug),
+  };
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main id="main" tabIndex={-1} className="flex-1 w-full">
-        <PostView post={post} locale={locale as Locale} />
+        <PostView post={post} locale={locale} />
       </main>
-      <Footer />
+      <Footer locale={locale} />
       <WhatsAppLauncher />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </>
   );
 }

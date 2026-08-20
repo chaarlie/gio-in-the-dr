@@ -4,18 +4,20 @@ import WhatsAppIcon from "./WhatsAppIcon";
 import { WA } from "../lib/whatsapp";
 import { EMAIL } from "../lib/email";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "../lib/instagram";
+import { DEFAULT_LOCALE, MESSAGES, localePath, type Locale } from "../lib/i18n";
 
-export default function Footer() {
+export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = MESSAGES[locale];
   return (
     <footer className="mt-20 bg-accent text-cream">
       <div className="max-w-7xl mx-auto px-6 md:px-8 pt-20 pb-10">
         <div className="grid md:grid-cols-[1.3fr_1fr] gap-10 items-end pb-14 border-b border-cream/15">
           <div>
             <p className="text-xs font-semibold tracking-[0.22em] uppercase text-cream/60 mb-4">
-              Let&apos;s talk
+              {t.footerEyebrow}
             </p>
             <h2 className="font-display font-bold text-4xl md:text-6xl leading-[1.02] max-w-xl text-balance">
-              Find your place in the Dominican Republic.
+              {t.footerHeading}
             </h2>
           </div>
           <div className="flex flex-col gap-4 items-start">
@@ -26,7 +28,7 @@ export default function Footer() {
               className="inline-flex items-center gap-2.5 bg-cream text-ink text-[15px] font-bold px-7 py-4 rounded-full no-underline hover:bg-white transition-colors"
             >
               <WhatsAppIcon size={20} className="text-whatsapp" />
-              Chat on WhatsApp
+              {t.chatOnWhatsApp}
             </a>
             {/* Email and Instagram share the underlined-text treatment so the
                 column reads as one primary action with two quieter ways to
@@ -61,38 +63,38 @@ export default function Footer() {
           </div>
           <nav className="flex gap-6 flex-wrap">
             <Link
-              href="/properties"
+              href={localePath(locale, "/properties")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Properties
+              {t.nav.properties}
             </Link>
             <Link
-              href="/blog"
+              href={localePath(locale, "/blog")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Blog
+              {t.nav.blog}
             </Link>
             <Link
-              href="/#services"
+              href={localePath(locale, "/#services")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Services
+              {t.nav.services}
             </Link>
             <Link
-              href="/#about"
+              href={localePath(locale, "/#about")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              About
+              {t.nav.about}
             </Link>
             <Link
-              href="/#contact"
+              href={localePath(locale, "/#contact")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Contact
+              {t.nav.contact}
             </Link>
           </nav>
           <div className="text-cream/50 text-sm">
-            © 2026 Gio In The DR. All rights reserved.
+            {t.rights}
           </div>
         </div>
       </div>

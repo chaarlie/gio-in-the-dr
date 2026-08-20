@@ -17,8 +17,11 @@ import { useEffect, useRef, useState } from "react";
 */
 export default function MobileMenu({
   items,
+  switcher,
 }: {
   items: { label: string; href: string }[];
+  /** The language toggle, shown inside the panel where the desktop one is hidden. */
+  switcher?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -105,6 +108,9 @@ export default function MobileMenu({
               {item.label}
             </NavLink>
           ))}
+          {/* The desktop toggle is hidden below sm, so the panel carries its own —
+              otherwise a phone has no way to change language at all. */}
+          {switcher ? <div className="px-6 py-4">{switcher}</div> : null}
         </nav>
       ) : null}
     </div>

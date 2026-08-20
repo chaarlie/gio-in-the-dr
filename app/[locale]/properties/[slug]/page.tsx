@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import WhatsAppLauncher from "../../components/WhatsAppLauncher";
-import PortableBody from "../../components/PortableBody";
-import Badge from "../../components/Badge";
-import { formatExactPrice } from "../../lib/format";
-import { getProperty, getPropertySlugs } from "../../lib/properties.server";
-import { waLink } from "../../lib/whatsapp";
-import PropertyGallery from "../../components/PropertyGallery";
-import PropertyCalculators from "../../components/PropertyCalculators";
+import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import WhatsAppLauncher from "../../../components/WhatsAppLauncher";
+import PortableBody from "../../../components/PortableBody";
+import Badge from "../../../components/Badge";
+import { formatExactPrice } from "../../../lib/format";
+import { getProperty, getPropertySlugs } from "../../../lib/properties.server";
+import { waLink } from "../../../lib/whatsapp";
+import PropertyGallery from "../../../components/PropertyGallery";
+import PropertyCalculators from "../../../components/PropertyCalculators";
+import { DEFAULT_LOCALE, LOCALES, isLocale } from "../../../lib/i18n";
 
 /*
   A listing's own page — the address the slug field has been promising all along.
@@ -22,10 +23,12 @@ import PropertyCalculators from "../../components/PropertyCalculators";
 
 export async function generateStaticParams() {
   const slugs = await getPropertySlugs();
-  return slugs.map((slug) => ({ slug }));
+  // Listings are not translated yet, so both locales serve the same documents;
+  // only the surrounding chrome differs.
+  return LOCALES.flatMap((locale) => slugs.map((slug) => ({ locale, slug })));
 }
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = { params: Promise<{ locale: string; slug: string }> };
 
 const STATUS_LABEL: Record<string, string> = {
   reserved: "Reserved",
@@ -69,7 +72,8 @@ function Fact({ label, value }: { label: string; value: string | null }) {
 }
 
 export default async function PropertyPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { locale: raw, slug } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const property = await getProperty(slug);
   if (!property) notFound();
 
@@ -108,7 +112,7 @@ export default async function PropertyPage({ params }: PageProps) {
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main id="main" tabIndex={-1} className="flex-1 max-w-5xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         <Link
           href="/properties"
@@ -230,7 +234,7 @@ export default async function PropertyPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
-      <Footer />
+      <Footer locale={locale} />
       <WhatsAppLauncher />
       <script
         type="application/ld+json"

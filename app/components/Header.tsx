@@ -2,6 +2,8 @@ import Link from "next/link";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
 import NavLink from "./NavLink";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { DEFAULT_LOCALE, MESSAGES, localePath, type Locale } from "../lib/i18n";
 
 /*
   Every nav item lives here, including the highlighted first one.
@@ -12,16 +14,31 @@ import NavLink from "./NavLink";
   from the phone menu entirely. Marking it with `primary` instead keeps one
   source for both navs.
 */
+/*
+  Paths are stored unprefixed and localised on render — see localePath. Storing
+  "/properties" once and prefixing per locale keeps one nav; storing both would
+  be two lists to forget to update.
+*/
 const NAV = [
-  { label: "Properties", href: "/properties", primary: true },
-  { label: "Map", href: "/#areas" },
-  { label: "Services", href: "/#services" },
-  { label: "Blog", href: "/blog" },
-  { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
-];
+  { key: "properties", href: "/properties", primary: true },
+  { key: "map", href: "/#areas" },
+  { key: "services", href: "/#services" },
+  { key: "blog", href: "/blog" },
+  { key: "about", href: "/#about" },
+  { key: "contact", href: "/#contact" },
+] as const;
 
-export default function Header() {
+export default function Header({
+  locale = DEFAULT_LOCALE,
+}: {
+  locale?: Locale;
+}) {
+  const t = MESSAGES[locale];
+  const items = NAV.map((item) => ({
+    label: t.nav[item.key],
+    href: localePath(locale, item.href),
+    primary: "primary" in item ? item.primary : undefined,
+  }));
   // `relative` so the mobile menu can anchor to the header's full width rather
   // than to the padded max-w-7xl row inside it — a menu that stops short of the
   // screen edge is the thing that read as a floating card.
@@ -29,7 +46,7 @@ export default function Header() {
     <header className="sticky top-0 z-50 relative bg-cream/80 backdrop-blur-md border-b border-line">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
         <Link
-          href="/"
+          href={localePath(locale, "/")}
           aria-label="Gio In The DR — home"
           className="text-ink no-underline shrink-0"
         >
@@ -39,7 +56,7 @@ export default function Header() {
         {/* Desktop nav. The logo is already the way home, so the first slot
             carries the listings rather than a second link to "/". */}
         <nav className="hidden md:flex items-center gap-1">
-          {NAV.map((item) => (
+          {items.map((item) => (
             <NavLink
               key={item.href}
               href={item.href}
@@ -54,7 +71,22 @@ export default function Header() {
           ))}
         </nav>
 
-        <MobileMenu items={NAV} />
+        <div className="flex items-center gap-2">
+          {/* Site-wide language toggle. Every page has a counterpart in the
+              other language, so unlike the per-post switcher this one always
+              has somewhere to go. */}
+          <LanguageSwitcher
+            locale={locale}
+            otherLocale={locale === "en" ? "es" : "en"}
+            className="hidden sm:flex"
+          />
+          <MobileMenu items={items} switcher={
+            <LanguageSwitcher
+              locale={locale}
+              otherLocale={locale === "en" ? "es" : "en"}
+              />
+          } />
+        </div>
       </div>
     </header>
   );

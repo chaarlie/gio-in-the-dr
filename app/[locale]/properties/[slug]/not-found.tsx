@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import WhatsAppLauncher from "../../components/WhatsAppLauncher";
-import { WA } from "../../lib/whatsapp";
+import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import WhatsAppLauncher from "../../../components/WhatsAppLauncher";
+import { WA } from "../../../lib/whatsapp";
 
 /*
   Listings come off the market. Someone landing here followed a real link to something

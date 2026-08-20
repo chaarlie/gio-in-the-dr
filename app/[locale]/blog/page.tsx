@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import WhatsAppLauncher from "../components/WhatsAppLauncher";
-import PostCard from "../components/PostCard";
-import { getPosts } from "../lib/posts.server";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import WhatsAppLauncher from "../../components/WhatsAppLauncher";
+import PostCard from "../../components/PostCard";
+import { getPostsIn } from "../../lib/posts.server";
+import { DEFAULT_LOCALE, MESSAGES, isLocale, localePath } from "../../lib/i18n";
 
 export const metadata: Metadata = {
   title: "Blog — Gio In The DR",
@@ -12,12 +13,15 @@ export const metadata: Metadata = {
     "Guides on buying property, residency, taxes and living on the Dominican Republic's north coast.",
 };
 
-export default async function BlogPage() {
-  const posts = await getPosts();
+export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale];
+  const posts = await getPostsIn(locale);
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main
         id="main"
         tabIndex={-1}
@@ -25,14 +29,14 @@ export default async function BlogPage() {
       >
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs font-semibold tracking-[0.22em] uppercase text-muted mb-4">
-            Guides & stories
+            {t.indexEyebrow}
           </p>
           {/* Two headlines for two states — the empty one is a real page, not a
               placeholder, so an unpublished blog never looks like a broken deploy. */}
           <h1 className="font-display font-bold text-ink text-4xl md:text-6xl text-balance">
             {posts.length === 0
-              ? "The blog is on the way."
-              : "Buying on the north coast."}
+              ? t.indexEmpty
+              : t.indexHeading}
           </h1>
           <p className="text-muted text-lg leading-relaxed mt-5">
             {posts.length === 0
@@ -41,7 +45,7 @@ export default async function BlogPage() {
           </p>
           {posts.length === 0 ? (
             <Link
-              href="/#contact"
+              href={localePath(locale, "/#contact")}
               className="inline-block mt-8 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
             >
               Get notified
@@ -57,7 +61,7 @@ export default async function BlogPage() {
           </div>
         ) : null}
       </main>
-      <Footer />
+      <Footer locale={locale} />
       <WhatsAppLauncher />
     </>
   );

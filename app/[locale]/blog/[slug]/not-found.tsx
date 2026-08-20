@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import WhatsAppLauncher from "../../components/WhatsAppLauncher";
+import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
+import WhatsAppLauncher from "../../../components/WhatsAppLauncher";
 
 export default function PostNotFound() {
   return (

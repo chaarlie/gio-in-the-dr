@@ -19,10 +19,21 @@ export function isLocale(value: string): value is Locale {
   return (LOCALES as readonly string[]).includes(value);
 }
 
-/** English lives at /blog, Spanish at /es/blog — see app/[locale]/blog. */
+/*
+  Any path, under the right locale.
+
+  English carries no prefix — middleware rewrites "/blog" to "/en/blog"
+  internally — so this returns the path unchanged for English and prefixes
+  everything else. Hash-only links ("/#areas") keep their fragment.
+*/
+export function localePath(locale: Locale, path: string): string {
+  const clean = path.startsWith("/") ? path : `/${path}`;
+  if (locale === DEFAULT_LOCALE) return clean;
+  return clean === "/" ? `/${locale}` : `/${locale}${clean}`;
+}
+
 export function blogPath(locale: Locale, slug?: string): string {
-  const base = locale === DEFAULT_LOCALE ? "/blog" : `/${locale}/blog`;
-  return slug ? `${base}/${slug}` : base;
+  return localePath(locale, slug ? `/blog/${slug}` : "/blog");
 }
 
 /** The tag hreflang wants: the language, and for Spanish the market it is written for. */
@@ -54,6 +65,18 @@ export const LANGUAGE_NAME_IN: Record<Locale, Record<Locale, string>> = {
 };
 
 type Messages = {
+  nav: {
+    properties: string;
+    map: string;
+    services: string;
+    blog: string;
+    about: string;
+    contact: string;
+  };
+  footerEyebrow: string;
+  footerHeading: string;
+  chatOnWhatsApp: string;
+  rights: string;
   inThisGuide: string;
   keepReading: string;
   ctaHeading: string;
@@ -62,14 +85,27 @@ type Messages = {
   ctaEmail: string;
   emailSubject: string;
   indexEyebrow: string;
+  indexEmpty: string;
   indexHeading: string;
   indexIntro: string;
   minRead: (n: number) => string;
-  readInOtherLanguage: (language: string) => string;
+  viewInOtherLanguage: (language: string) => string;
 };
 
 export const MESSAGES: Record<Locale, Messages> = {
   en: {
+    nav: {
+      properties: "Properties",
+      map: "Map",
+      services: "Services",
+      blog: "Blog",
+      about: "About",
+      contact: "Contact",
+    },
+    footerEyebrow: "Let's talk",
+    footerHeading: "Find your place in the Dominican Republic.",
+    chatOnWhatsApp: "Chat on WhatsApp",
+    rights: "© 2026 Gio In The DR. All rights reserved.",
     inThisGuide: "In this guide",
     keepReading: "Keep reading",
     ctaHeading: "Questions this didn't answer?",
@@ -78,13 +114,26 @@ export const MESSAGES: Record<Locale, Messages> = {
     ctaEmail: "Email Gio",
     emailSubject: "Question about",
     indexEyebrow: "Guides & stories",
+    indexEmpty: "The blog is on the way.",
     indexHeading: "Buying on the north coast.",
     indexIntro:
       "Real answers to the questions people ask before moving or buying: from neighborhoods and property taxes to the cost of living and what everyday life in Cabarete is really like.",
     minRead: (n) => `${n} min read`,
-    readInOtherLanguage: (language) => `Read this in ${language}`,
+    viewInOtherLanguage: (language) => `View this page in ${language}`,
   },
   es: {
+    nav: {
+      properties: "Propiedades",
+      map: "Mapa",
+      services: "Servicios",
+      blog: "Blog",
+      about: "Sobre mí",
+      contact: "Contacto",
+    },
+    footerEyebrow: "Hablemos",
+    footerHeading: "Encuentra tu lugar en República Dominicana.",
+    chatOnWhatsApp: "Escríbeme por WhatsApp",
+    rights: "© 2026 Gio In The DR. Todos los derechos reservados.",
     inThisGuide: "En esta guía",
     keepReading: "Sigue leyendo",
     ctaHeading: "¿Te quedaron preguntas?",
@@ -93,10 +142,11 @@ export const MESSAGES: Record<Locale, Messages> = {
     ctaEmail: "Escríbele por correo",
     emailSubject: "Pregunta sobre",
     indexEyebrow: "Guías e historias",
+    indexEmpty: "El blog viene en camino.",
     indexHeading: "Comprar en la costa norte.",
     indexIntro:
       "Respuestas reales a las preguntas que la gente hace antes de mudarse o comprar: desde los barrios y los impuestos hasta el costo de vida y cómo es de verdad el día a día en Cabarete.",
     minRead: (n) => `${n} min de lectura`,
-    readInOtherLanguage: (language) => `Léelo en ${language}`,
+    viewInOtherLanguage: (language) => `Ver esta página en ${language}`,
   },
 };

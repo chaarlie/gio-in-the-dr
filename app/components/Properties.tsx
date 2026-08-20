@@ -2,7 +2,7 @@
 
 import SectionHeading from "./SectionHeading";
 import PropertyCard from "./PropertyCard";
-import Pagination from "../properties/Pagination";
+import Pagination from "./properties/Pagination";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { SearchFieldGrid, SearchQueryRow, SearchActionsRow } from "./PropertySearchFields";
 import { WA } from "../lib/whatsapp";

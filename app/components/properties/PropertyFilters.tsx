@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { PropertyFacets, PropertyFilters as Filters } from "../lib/properties.server";
+import type { PropertyFacets, PropertyFilters as Filters } from "../../lib/properties.server";
 
 /*
   The filter bar for /properties.

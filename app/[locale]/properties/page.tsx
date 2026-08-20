@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import WhatsAppLauncher from "../components/WhatsAppLauncher";
-import SectionHeading from "../components/SectionHeading";
-import PropertyCard from "../components/PropertyCard";
-import PropertyFiltersBar from "./PropertyFilters";
-import Pagination from "./Pagination";
-import { WA } from "../lib/whatsapp";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import WhatsAppLauncher from "../../components/WhatsAppLauncher";
+import SectionHeading from "../../components/SectionHeading";
+import PropertyCard from "../../components/PropertyCard";
+import PropertyFiltersBar from "../../components/properties/PropertyFilters";
+import Pagination from "../../components/properties/Pagination";
+import { WA } from "../../lib/whatsapp";
+import { DEFAULT_LOCALE, isLocale } from "../../lib/i18n";
 import {
   getPropertiesPage,
   getPropertyFacets,
   NO_FILTERS,
   PAGE_SIZE,
   type PropertyFilters,
-} from "../lib/properties.server";
+} from "../../lib/properties.server";
 
 /*
   The property index: filtered and paginated by Sanity, not by the browser.
@@ -40,6 +41,7 @@ export const metadata: Metadata = {
 
 /** Next 16 hands searchParams in as a promise. */
 type PageProps = {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -78,7 +80,9 @@ function hrefFor(filters: PropertyFilters, page: number): string {
   return qs ? `/properties?${qs}` : "/properties";
 }
 
-export default async function PropertiesIndex({ searchParams }: PageProps) {
+export default async function PropertiesIndex({ searchParams, params: routeParams }: PageProps) {
+  const { locale: raw } = await routeParams;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const params = await searchParams;
   const filters = readFilters(params);
   const page = toInt(params.page) || 1;
@@ -104,7 +108,7 @@ export default async function PropertiesIndex({ searchParams }: PageProps) {
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         <SectionHeading title="Properties for sale" className="mb-8">
           <p className="text-muted mt-3 max-w-2xl">
@@ -179,7 +183,7 @@ export default async function PropertiesIndex({ searchParams }: PageProps) {
           hrefFor={(p) => hrefFor(filters, p)}
         />
       </main>
-      <Footer />
+      <Footer locale={locale} />
       <WhatsAppLauncher />
     </>
   );
