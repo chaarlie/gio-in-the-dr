@@ -6,6 +6,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import WhatsAppLauncher from "../../components/WhatsAppLauncher";
 import PortableBody from "../../components/PortableBody";
+import TableOfContents from "../../components/TableOfContents";
 import PostCard from "../../components/PostCard";
 import { formatDate, getPost, getPostSlugs, readingTime } from "../../lib/posts.server";
 import { WA } from "../../lib/whatsapp";
@@ -107,6 +108,12 @@ export default async function PostPage({ params }: PageProps) {
               />
             </div>
           ) : null}
+
+          {/* The index sits above the body, not floating beside it: at 720px of
+              column there is no gutter to put it in, and a reader deciding
+              whether to jump wants it before the first paragraph, not next to
+              the fourth. */}
+          <TableOfContents value={post.body} />
 
           <div className="mt-10">
             <PortableBody value={post.body} />
