@@ -232,8 +232,20 @@ export const POST_SLUGS_QUERY = defineQuery(`
   *[_type == "post" && defined(slug.current) && language != "es"].slug.current
 `);
 
+/*
+  A post in one language, with the slug of its counterpart in the other.
+
+  Looked up both ways because the link between the two only points one way: the
+  Spanish document carries translationOf, the English knows nothing about it. So
+  from Spanish it is a dereference, and from English it is a reverse lookup.
+  Returning null here is what hides the flag toggle — see LanguageSwitcher.
+*/
 export const POST_QUERY = defineQuery(`
-  *[_type == "post" && slug.current == $slug][0]{
+  *[_type == "post" && slug.current == $slug && language == $language][0]{
+    "translation": select(
+      language == "es" => translationOf->{ "slug": slug.current, language },
+      *[_type == "post" && language == "es" && translationOf._ref == ^._id][0]{ "slug": slug.current, language }
+    ),
     ${POST_CARD_FIELDS},
     body[]{
       ...,
@@ -316,4 +328,16 @@ export const LISTING_IMAGES_QUERY = defineQuery(`
     "aspectRatio": asset->metadata.dimensions.aspectRatio,
     alt
   }
+`);
+
+/** One language's index. The English index keeps POSTS_QUERY's language != "es" guard. */
+export const POSTS_IN_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && publishedAt <= now() && language == $language]
+    | order(publishedAt desc) {
+      ${POST_CARD_FIELDS}
+    }
+`);
+
+export const POST_SLUGS_IN_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && language == $language].slug.current
 `);

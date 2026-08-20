@@ -1,4 +1,5 @@
 import { extractHeadings } from "../lib/headings";
+import { MESSAGES, type Locale } from "../lib/i18n";
 import type { PortableBlocks } from "./PortableBody";
 
 /*
@@ -18,7 +19,13 @@ import type { PortableBlocks } from "./PortableBody";
 /** Below this a guide is short enough to skim, and a contents list is furniture. */
 const MIN_SECTIONS = 4;
 
-export default function TableOfContents({ value }: { value: PortableBlocks }) {
+export default function TableOfContents({
+  value,
+  locale = "en",
+}: {
+  value: PortableBlocks;
+  locale?: Locale;
+}) {
   const headings = extractHeadings(value).filter((h) => h.level === 2);
   if (headings.length < MIN_SECTIONS) return null;
 
@@ -31,7 +38,7 @@ export default function TableOfContents({ value }: { value: PortableBlocks }) {
         id="contents-heading"
         className="text-xs font-semibold uppercase tracking-[0.18em] text-muted"
       >
-        In this guide
+        {MESSAGES[locale].inThisGuide}
       </h2>
       {/*
         A real list, so a screen reader announces how many sections there are
