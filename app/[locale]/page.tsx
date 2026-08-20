@@ -32,19 +32,19 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     <>
       <Header locale={locale} />
       <main id="main" tabIndex={-1} className="flex-1">
-        <Hero />
+        <Hero locale={locale} />
         {/* The only page with the search on it, so the provider sits here rather than in
             the layout. Everything inside it stays a server component — they're passed
             through as children. */}
         <PropertySearchProvider properties={properties}>
-          <Properties />
+          <Properties locale={locale} />
         </PropertySearchProvider>
-        <RealEstate360 />
-        <AreaMap areas={areasPromise} />
-        <Services />
-        <Stats />
-        <About />
-        <ContactForm />
+        <RealEstate360 locale={locale} />
+        <AreaMap areas={areasPromise} locale={locale} />
+        <Services locale={locale} />
+        <Stats locale={locale} />
+        <About locale={locale} />
+        <ContactForm locale={locale} />
       </main>
       <Footer locale={locale} />
       <WhatsAppLauncher />

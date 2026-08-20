@@ -2,6 +2,7 @@ import SectionHeading from "./SectionHeading";
 import AreaExplorer from "./AreaExplorer";
 import { AREA_TONES } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
+import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
 
 /*
   Explore by area.
@@ -24,9 +25,12 @@ import type { Area } from "../lib/areas";
 */
 export default async function AreaMap({
   areas: areasPromise,
+  locale = DEFAULT_LOCALE,
 }: {
   areas: Promise<Area[]>;
+  locale?: Locale;
 }) {
+  const t = MESSAGES[locale].home;
   const areas = await areasPromise;
 
   return (
@@ -36,8 +40,8 @@ export default async function AreaMap({
     >
       <SectionHeading
         align="center"
-        eyebrow="North coast"
-        title="Explore by area"
+        eyebrow={t.areasEyebrow}
+        title={t.areasHeading}
         className="mb-8"
       >
         <p className="text-muted mt-3 max-w-2xl mx-auto">
@@ -67,7 +71,7 @@ export default async function AreaMap({
         <span className="font-semibold uppercase tracking-[0.18em]">
           Further inland
         </span>
-        <span className="ml-auto italic">Boundaries approximate.</span>
+        <span className="ml-auto italic">{t.boundariesNote}</span>
       </p>
     </section>
   );

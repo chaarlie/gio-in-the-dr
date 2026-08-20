@@ -6,6 +6,7 @@ import Pagination from "./properties/Pagination";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { SearchFieldGrid, SearchQueryRow, SearchActionsRow } from "./PropertySearchFields";
 import { WA } from "../lib/whatsapp";
+import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
 
 /*
   The in-page search, over whatever is published in Sanity.
@@ -15,7 +16,8 @@ import { WA } from "../lib/whatsapp";
   is the visitor's filters, and the only useful thing to offer is clearing them. Showing
   "clear your filters" to someone who never set one is the version that reads broken.
 */
-export default function Properties() {
+export default function Properties({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = MESSAGES[locale].home;
   const { state, actions } = usePropertySearch();
 
   function scrollToResults() {
@@ -27,7 +29,7 @@ export default function Properties() {
 
   return (
     <section id="properties" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4">
-      <SectionHeading align="center" title="Find your property" className="mb-8">
+      <SectionHeading align="center" title={t.propertiesHeading} className="mb-8">
         <p className="text-muted mt-3">
           Search beachfront condos, villas, investment and pre-construction across the north coast.
         </p>

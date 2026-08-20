@@ -2,6 +2,7 @@ import SectionHeading from "./SectionHeading";
 import CheckItem from "./CheckItem";
 import { GuideCover, GuideButton } from "./Guide";
 import { getGuide, BUYERS_GUIDE_SLUG } from "../lib/guide.server";
+import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
 
 const POINTS = [
   "Real rental data from 10+ properties I manage in Cabarete Bay & Sosúa",
@@ -11,7 +12,8 @@ const POINTS = [
   "The unique pros and cons of each neighborhood & condominium",
 ];
 
-export default async function RealEstate360() {
+export default async function RealEstate360({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = MESSAGES[locale].home;
   /*
     Fetched once here and handed to both halves. The cover and the download
     button are in different places in the layout but describe the same document,
@@ -24,7 +26,7 @@ export default async function RealEstate360() {
     <section className="max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="min-w-0">
-          <SectionHeading eyebrow="Beyond the listing" title="Real estate in 360°">
+          <SectionHeading eyebrow={t.r360Eyebrow} title={t.r360Heading}>
             <p className="text-muted text-lg leading-relaxed max-w-xl mt-5">
               Buying a property is more than choosing a condo. I help you understand the
               full picture before you commit — so you know exactly what you&apos;re getting
