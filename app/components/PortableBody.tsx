@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PortableText } from "next-sanity";
+import { headingIds } from "../lib/headings";
 
 /*
   One renderer for every rich-text field in the CMS — property descriptions and blog
@@ -22,18 +23,39 @@ type ImageValue = {
   alt?: string;
 };
 
-const components: Components = {
+/*
+  Built per render rather than as a module constant, so the heading components
+  can close over the id map for the document they are drawing. A shared constant
+  would have to slugify each heading independently, which is exactly the
+  duplicate-id bug headingIds exists to prevent.
+*/
+function buildComponents(ids: Map<string, string>): Components {
+  return {
   block: {
     normal: ({ children }) => (
       <p className="text-ink/85 leading-relaxed mt-4 first:mt-0">{children}</p>
     ),
-    h2: ({ children }) => (
-      <h2 className="font-display font-bold text-ink text-2xl md:text-3xl mt-10 mb-3 text-balance">
+    /*
+      Headings carry an id so the contents list at the top of a guide has
+      somewhere to point, and scroll-mt so the sticky header does not sit on top
+      of the section you just jumped to — the anchor lands at y=0, which is
+      exactly where the header is.
+    */
+    h2: ({ children, value }) => (
+      <h2
+        id={ids.get((value as { _key?: string })._key ?? "")}
+        className="font-display font-bold text-ink text-2xl md:text-3xl mt-10 mb-3 text-balance scroll-mt-28"
+      >
         {children}
       </h2>
     ),
-    h3: ({ children }) => (
-      <h3 className="font-display font-semibold text-ink text-xl mt-8 mb-2">{children}</h3>
+    h3: ({ children, value }) => (
+      <h3
+        id={ids.get((value as { _key?: string })._key ?? "")}
+        className="font-display font-semibold text-ink text-xl mt-8 mb-2 scroll-mt-28"
+      >
+        {children}
+      </h3>
     ),
     h4: ({ children }) => (
       <h4 className="font-semibold text-ink text-base mt-6 mb-2">{children}</h4>
@@ -108,9 +130,10 @@ const components: Components = {
       );
     },
   },
-};
+  };
+}
 
 export default function PortableBody({ value }: { value: PortableBlocks }) {
   if (!value) return null;
-  return <PortableText value={value} components={components} />;
+  return <PortableText value={value} components={buildComponents(headingIds(value))} />;
 }
