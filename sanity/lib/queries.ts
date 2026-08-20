@@ -213,15 +213,23 @@ const POST_CARD_FIELDS = `
   }
 `;
 
+/*
+  English only, until the site actually routes by locale.
+
+  A translated post is its own document, so without this filter the Spanish
+  version of a guide appears on /blog next to the English one the moment Gio
+  publishes it — same index, same list, two languages. `language != "es"` rather
+  than `== "en"` so posts written before the field existed still show.
+*/
 export const POSTS_QUERY = defineQuery(`
-  *[_type == "post" && defined(slug.current) && publishedAt <= now()]
+  *[_type == "post" && defined(slug.current) && publishedAt <= now() && language != "es"]
     | order(publishedAt desc) {
       ${POST_CARD_FIELDS}
     }
 `);
 
 export const POST_SLUGS_QUERY = defineQuery(`
-  *[_type == "post" && defined(slug.current)].slug.current
+  *[_type == "post" && defined(slug.current) && language != "es"].slug.current
 `);
 
 export const POST_QUERY = defineQuery(`
