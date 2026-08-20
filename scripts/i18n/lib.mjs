@@ -91,3 +91,52 @@ export function rebuild(post, translated) {
 export function draftId(slug) {
   return `drafts.es-${slug}`;
 }
+
+/* ── Properties ──────────────────────────────────────────────────────────── */
+
+/*
+  Properties translate in place, not into a second document.
+
+  A listing is mostly language-neutral — price, beds, m², coordinates, photos —
+  so a translated document would duplicate all of it, and the first time someone
+  updates the price on one side the Spanish page starts lying about money. Only
+  three fields carry language; everything else is shared, so there is exactly one
+  price.
+
+  Same flat-string contract as the blog, so the same review step works: extract
+  to plain strings, translate those, rebuild the blocks from the original tree.
+*/
+export function extractProperty(prop) {
+  const out = {};
+  if (prop.title) out.title = prop.title;
+  if (prop.spec) out.spec = prop.spec;
+  for (const block of prop.body ?? []) {
+    if (block._type !== "block" || !block._key) continue;
+    (block.children ?? []).forEach((child, i) => {
+      if (child._type === "span" && child.text?.trim()) {
+        out[`${block._key}.${i}`] = child.text;
+      }
+    });
+  }
+  return out;
+}
+
+/** The Spanish fields to patch onto the document. Nothing else is touched. */
+export function rebuildProperty(prop, translated) {
+  const bodyEs = (prop.body ?? []).map((block) => {
+    if (block._type !== "block") return block;
+    return {
+      ...block,
+      children: (block.children ?? []).map((child, i) => {
+        const next = translated[`${block._key}.${i}`];
+        return next === undefined ? child : { ...child, text: next };
+      }),
+    };
+  });
+
+  return {
+    titleEs: translated.title ?? prop.title,
+    specEs: translated.spec ?? prop.spec,
+    bodyEs,
+  };
+}

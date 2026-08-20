@@ -37,8 +37,9 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const property = await getProperty(slug);
+  const { locale: raw, slug } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const property = await getProperty(slug, locale);
   if (!property) return { title: "Property not found — Gio In The DR" };
 
   const where = property.area?.name ?? "the Dominican Republic";
@@ -76,7 +77,7 @@ export default async function PropertyPage({ params }: PageProps) {
   const { locale: raw, slug } = await params;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].properties;
-  const property = await getProperty(slug);
+  const property = await getProperty(slug, locale);
   if (!property) notFound();
 
   const price = formatExactPrice(property.priceUsd);

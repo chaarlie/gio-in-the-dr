@@ -175,11 +175,23 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(`
   a gallery that reflows as it loads is the worst possible CLS on the page a buyer
   actually reads.
 */
+/*
+  A listing, in the requested language.
+
+  coalesce rather than a second document: a property is mostly language-neutral,
+  so price, beds, coordinates and photos have exactly one copy and cannot drift
+  between languages. Only the three text fields are per-language, and an
+  untranslated one falls back to English rather than rendering blank — a Spanish
+  page with an English paragraph is worse than nothing only if it is unexpected.
+*/
 export const PROPERTY_QUERY = defineQuery(`
   *[_type == "property" && slug.current == $slug][0]{
+    "title": select($language == "es" => coalesce(titleEs, title), title),
+    "spec": select($language == "es" => coalesce(specEs, spec), spec),
+    "body": select($language == "es" => coalesce(bodyEs, body), body),
     "slug": slug.current,
-    title, priceUsd, beds, baths, areaM2, spec, category, status,
-    hoaAmount, hoaUnit, walkToBeachMin, location, body, sourceUrl,
+    priceUsd, beds, baths, areaM2, category, status,
+    hoaAmount, hoaUnit, walkToBeachMin, location, sourceUrl,
     "images": images[]{
       "key": _key,
       "url": asset->url,

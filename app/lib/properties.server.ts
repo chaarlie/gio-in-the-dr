@@ -12,6 +12,7 @@ import { searchTokens, type Property } from "./properties";
 import { phoneticTokens } from "./phonetic";
 import type { PortableBlocks } from "../components/PortableBody";
 import type { GalleryImage } from "./sanity-image";
+import type { Locale } from "./i18n";
 
 /*
   Every read of the listings. Server-only by construction — it imports the Sanity
@@ -91,8 +92,8 @@ export async function getPropertySlugs(): Promise<string[]> {
   slower layer that still costs a round trip on a miss.
 */
 export const getProperty = cache(
-  async (slug: string): Promise<PropertyDetail | null> =>
-    sanityFetch<PropertyDetail | null>(PROPERTY_QUERY, { slug }, null, "property"),
+  async (slug: string, language: Locale = "en"): Promise<PropertyDetail | null> =>
+    sanityFetch<PropertyDetail | null>(PROPERTY_QUERY, { slug, language }, null, "property"),
 );
 
 /* ── The paginated index ──────────────────────────────────────────────────── */

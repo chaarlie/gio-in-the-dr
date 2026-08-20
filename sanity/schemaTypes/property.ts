@@ -21,6 +21,11 @@ export const property = defineType({
   name: "property",
   title: "Property",
   type: "document",
+  // A tab, so the Spanish fields sit together instead of scattered down a long form.
+  groups: [
+    { name: "main", title: "Listing", default: true },
+    { name: "es", title: "Español" },
+  ],
   fields: [
     defineField({
       name: "title",
@@ -198,6 +203,38 @@ export const property = defineType({
       speaker actually makes — cavarete, sozua — but "bath" and "bed" share a
       code, so it can never be the primary index on a property site.
     */
+    /*
+      The Spanish text, on the same document rather than a second one.
+
+      A property is mostly language-neutral — price, beds, m², coordinates, HOA,
+      photos — so a translated *document* would duplicate all of it, and the day
+      someone updates the price on one and not the other the Spanish page starts
+      lying about money. Blog posts get their own documents because a Spanish
+      guide is a different article; a listing is the same listing.
+
+      Only these three fields carry language. Everything else is shared, which
+      means there is exactly one price.
+    */
+    defineField({
+      name: "titleEs",
+      title: "Título (español)",
+      type: "string",
+      group: "es",
+    }),
+    defineField({
+      name: "specEs",
+      title: "Resumen (español)",
+      type: "string",
+      group: "es",
+      description: 'e.g. "2 hab · 2 baños · 108 m²"',
+    }),
+    defineField({
+      name: "bodyEs",
+      title: "Descripción (español)",
+      type: "array",
+      of: [{ type: "block" }],
+      group: "es",
+    }),
     defineField({
       name: "searchText",
       title: "Search text (generated)",
