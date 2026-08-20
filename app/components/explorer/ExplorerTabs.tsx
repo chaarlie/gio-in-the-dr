@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { useMessages } from "../LocaleProvider";
 
 export type ExplorerView = "areas" | "listings";
 
@@ -23,6 +24,7 @@ export default function ExplorerTabs({
   onChange: (v: ExplorerView) => void;
   counts: Record<ExplorerView, number>;
 }) {
+  const t = useMessages();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   function onKeyDown(e: React.KeyboardEvent, index: number) {
@@ -41,7 +43,7 @@ export default function ExplorerTabs({
   return (
     <div
       role="tablist"
-      aria-label="Browse by"
+      aria-label={t.map.browseBy}
       className="flex gap-1 p-1 bg-surface rounded-full"
     >
       {TABS.map((t, i) => {

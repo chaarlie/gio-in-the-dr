@@ -37,7 +37,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
             the layout. Everything inside it stays a server component — they're passed
             through as children. */}
         <PropertySearchProvider properties={properties}>
-          <Properties locale={locale} />
+          <Properties />
         </PropertySearchProvider>
         <RealEstate360 locale={locale} />
         <AreaMap areas={areasPromise} locale={locale} />
@@ -47,7 +47,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <ContactForm locale={locale} />
       </main>
       <Footer locale={locale} />
-      <WhatsAppLauncher />
+      <WhatsAppLauncher locale={locale} />
     </>
   );
 }

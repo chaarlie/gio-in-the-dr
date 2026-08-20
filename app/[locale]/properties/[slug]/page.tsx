@@ -12,6 +12,7 @@ import { waLink } from "../../../lib/whatsapp";
 import PropertyGallery from "../../../components/PropertyGallery";
 import PropertyCalculators from "../../../components/PropertyCalculators";
 import { DEFAULT_LOCALE, LOCALES, isLocale } from "../../../lib/i18n";
+import { MESSAGES } from "../../../lib/messages";
 
 /*
   A listing's own page — the address the slug field has been promising all along.
@@ -74,6 +75,7 @@ function Fact({ label, value }: { label: string; value: string | null }) {
 export default async function PropertyPage({ params }: PageProps) {
   const { locale: raw, slug } = await params;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].properties;
   const property = await getProperty(slug);
   if (!property) notFound();
 
@@ -118,7 +120,7 @@ export default async function PropertyPage({ params }: PageProps) {
           href="/properties"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink no-underline transition-colors"
         >
-          ← All properties
+          {t.allProperties}
         </Link>
 
         <div className="mt-6">
@@ -175,7 +177,7 @@ export default async function PropertyPage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="inline-block mt-8 text-sm font-semibold text-accent underline underline-offset-2"
               >
-                Full listing on the brokerage site ↗
+                {t.brokerageFull}
               </a>
             ) : null}
           </div>
@@ -192,11 +194,11 @@ export default async function PropertyPage({ params }: PageProps) {
               ) : null}
 
               <dl className="mt-5">
-                <Fact label="Bedrooms" value={property.beds !== null ? String(property.beds) : null} />
-                <Fact label="Bathrooms" value={property.baths !== null ? String(property.baths) : null} />
-                <Fact label="Interior area" value={property.areaM2 ? `${property.areaM2} m²` : null} />
+                <Fact label={t.bedrooms} value={property.beds !== null ? String(property.beds) : null} />
+                <Fact label={t.bathrooms} value={property.baths !== null ? String(property.baths) : null} />
+                <Fact label={t.interiorArea} value={property.areaM2 ? `${property.areaM2} m²` : null} />
                 <Fact
-                  label="Price per m²"
+                  label={t.pricePerM2}
                   value={
                     property.priceUsd && property.areaM2
                       ? `$${Math.round(property.priceUsd / property.areaM2).toLocaleString("en-US")}`
@@ -225,17 +227,16 @@ export default async function PropertyPage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="block text-center mt-6 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
               >
-                Ask Gio about this property
+                {t.askAboutProperty}
               </a>
-              <p className="text-xs text-muted text-center mt-3">
-                English, Spanish & Italian — usually replies the same day.
+              <p className="text-xs text-muted text-center mt-3"> {t.repliesNote}
               </p>
             </div>
           </aside>
         </div>
       </main>
       <Footer locale={locale} />
-      <WhatsAppLauncher />
+      <WhatsAppLauncher locale={locale} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

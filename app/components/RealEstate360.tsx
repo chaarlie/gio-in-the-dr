@@ -2,7 +2,8 @@ import SectionHeading from "./SectionHeading";
 import CheckItem from "./CheckItem";
 import { GuideCover, GuideButton } from "./Guide";
 import { getGuide, BUYERS_GUIDE_SLUG } from "../lib/guide.server";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 const POINTS = [
   "Real rental data from 10+ properties I manage in Cabarete Bay & Sosúa",
@@ -28,7 +29,7 @@ export default async function RealEstate360({ locale = DEFAULT_LOCALE }: { local
         <div className="min-w-0">
           <SectionHeading eyebrow={t.r360Eyebrow} title={t.r360Heading}>
             <p className="text-muted text-lg leading-relaxed max-w-xl mt-5">
-              Buying a property is more than choosing a condo. I help you understand the
+              {t.r360Body}
               full picture before you commit — so you know exactly what you&apos;re getting
               into.
             </p>

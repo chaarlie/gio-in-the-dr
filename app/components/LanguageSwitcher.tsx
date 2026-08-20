@@ -2,14 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  DEFAULT_LOCALE,
-  LOCALES,
-  LANGUAGE_NAME,
-  LANGUAGE_NAME_IN,
-  MESSAGES,
-  type Locale,
-} from "../lib/i18n";
+import { DEFAULT_LOCALE, LOCALES, LANGUAGE_NAME, LANGUAGE_NAME_IN, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 /*
   The language toggle on a post that has a translation.
@@ -116,7 +110,7 @@ export default function LanguageSwitcher({
         href={href}
         hrefLang={otherLocale}
         // Named in the reader's language, not its own — the label is a sentence.
-        aria-label={MESSAGES[locale].viewInOtherLanguage(LANGUAGE_NAME_IN[locale][otherLocale])}
+        aria-label={MESSAGES[locale].switcher.viewIn(LANGUAGE_NAME_IN[locale][otherLocale])}
         className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 h-9 text-xs font-semibold text-muted hover:text-ink hover:border-ink/30 transition-colors no-underline"
       >
         <Other />

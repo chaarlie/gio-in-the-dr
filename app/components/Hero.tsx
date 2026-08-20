@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 export default function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const t = MESSAGES[locale].home;
@@ -19,7 +20,7 @@ export default function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           <div className="flex items-center gap-3 mt-10">
             <Image
               src="/gio-avatar-1x1.jpg"
-              alt="Gio, real estate agent in Cabarete"
+              alt={t.heroAlt}
               width={52}
               height={52}
               className="w-[52px] h-[52px] rounded-full object-cover"
@@ -40,7 +41,7 @@ export default function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
         <div className="relative rounded-[28px] overflow-hidden bg-accent aspect-[4/5]">
           <Image
             src="/gio-portrait-4x5.jpg"
-            alt="Gio, real estate agent, at a beachfront property in Cabarete, Dominican Republic"
+            alt={t.heroPortraitAlt}
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"

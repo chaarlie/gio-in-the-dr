@@ -2,6 +2,7 @@
 
 import { staticMapUrl } from "../../lib/static-map";
 import type { Area } from "../../lib/areas";
+import { useMessages } from "../LocaleProvider";
 
 /*
   The small-screen stand-in for the map.
@@ -19,6 +20,7 @@ export default function StaticMapPreview({
   areas: Area[];
   onOpen: () => void;
 }) {
+  const t = useMessages();
   /*
     Sized close to the box it renders in — 240px tall, full-bleed, so roughly a
     phone's width. `cover` crops whatever doesn't match, and the wider the
@@ -39,7 +41,7 @@ export default function StaticMapPreview({
     <button
       type="button"
       onClick={onOpen}
-      aria-label="Open the full-screen map"
+      aria-label={t.map.openFullScreen}
       className="group relative block w-full h-[240px] overflow-hidden border-y border-line bg-surface text-left"
       style={url ? { backgroundImage: `url("${url}")`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
     >
@@ -49,16 +51,16 @@ export default function StaticMapPreview({
       <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 p-4">
         <span className="min-w-0">
           <span className="block text-cream font-semibold leading-tight">
-            Explore the map
+            {t.map.exploreMap}
           </span>
           <span className="block text-cream/80 text-sm leading-tight mt-0.5">
-            {areas.length} areas on the north coast
+            {t.map.areasAround(areas.length)}
           </span>
         </span>
         {/* The affordance has to look like a control — the whole card is the hit
             target, but a flat image with a caption reads as decoration. */}
         <span className="shrink-0 flex items-center gap-1.5 rounded-full bg-cream text-ink text-sm font-semibold px-4 h-11">
-          Open
+          {t.common.open}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M9 3H3v6M15 21h6v-6M21 3l-7 7M3 21l7-7"

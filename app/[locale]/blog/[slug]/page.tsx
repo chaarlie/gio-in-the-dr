@@ -91,7 +91,7 @@ export default async function PostPage({ params }: PageProps) {
         <PostView post={post} locale={locale} />
       </main>
       <Footer locale={locale} />
-      <WhatsAppLauncher />
+      <WhatsAppLauncher locale={locale} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

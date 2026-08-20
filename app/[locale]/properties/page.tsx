@@ -10,6 +10,7 @@ import PropertyFiltersBar from "../../components/properties/PropertyFilters";
 import Pagination from "../../components/properties/Pagination";
 import { WA } from "../../lib/whatsapp";
 import { DEFAULT_LOCALE, isLocale } from "../../lib/i18n";
+import { MESSAGES } from "../../lib/messages";
 import {
   getPropertiesPage,
   getPropertyFacets,
@@ -83,6 +84,7 @@ function hrefFor(filters: PropertyFilters, page: number): string {
 export default async function PropertiesIndex({ searchParams, params: routeParams }: PageProps) {
   const { locale: raw } = await routeParams;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].properties;
   const params = await searchParams;
   const filters = readFilters(params);
   const page = toInt(params.page) || 1;
@@ -110,21 +112,21 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
     <>
       <Header locale={locale} />
       <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
-        <SectionHeading title="Properties for sale" className="mb-8">
+        <SectionHeading title={t.heading} className="mb-8">
           <p className="text-muted mt-3 max-w-2xl">
-            Beachfront condos, villas, land and pre-construction across Cabarete, Sosúa and
+            {t.indexIntro}
             the north coast.
           </p>
         </SectionHeading>
 
-        <PropertyFiltersBar facets={facets} filters={filters} />
+        <PropertyFiltersBar facets={facets} filters={filters} locale={locale} />
 
         {/* aria-live so a screen reader hears the count change after a search,
             which is otherwise the one part of the result that is invisible. */}
         <p aria-live="polite" className="text-sm text-muted mt-6 tabular-nums">
           {result.total === 0
-            ? "No properties match"
-            : `${first}–${last} of ${result.total} ${result.total === 1 ? "property" : "properties"}`}
+            ? t.noMatch
+            : t.count(first, last, result.total)}
         </p>
 
         {/* Say when the results are approximate. These came from the phonetic
@@ -132,8 +134,7 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
             exact answer is how someone concludes the search is broken. */}
         {result.fuzzy ? (
           <p className="text-sm text-muted mt-1">
-            No exact match for <span className="text-ink font-semibold">{filters.q}</span> —
-            showing the closest listings.
+            {t.noExactMatch} <span className="text-ink font-semibold">{filters.q}</span> {t.showingClosest}
           </p>
         ) : null}
 
@@ -144,19 +145,17 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
                 listings and the only useful thing to offer is a conversation. */}
             {filtered ? (
               <>
-                <p>Nothing matches those filters.</p>
+                <p>{t.noMatchFilters}</p>
                 <Link
                   href="/properties"
                   className="mt-4 border border-line rounded-full px-5 py-2.5 text-sm font-semibold text-ink hover:bg-ink/5 transition-colors no-underline"
                 >
-                  Clear filters
+                  {t.clearFilters}
                 </Link>
               </>
             ) : (
               <>
-                <p className="max-w-sm">
-                  Nothing is listed publicly right now — a lot of what Gio sells never gets
-                  that far. Message her and she&apos;ll tell you what&apos;s actually available.
+                <p className="max-w-sm"> {t.nothingListed}
                 </p>
                 <a
                   href={WA.general}
@@ -164,7 +163,7 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
                   rel="noopener noreferrer"
                   className="mt-5 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-3.5 rounded-full transition-colors no-underline"
                 >
-                  Ask Gio what&apos;s available
+                  {t.askAvailable}
                 </a>
               </>
             )}
@@ -181,10 +180,11 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
           page={result.page}
           pageCount={result.pageCount}
           hrefFor={(p) => hrefFor(filters, p)}
+          labels={MESSAGES[locale].common}
         />
       </main>
       <Footer locale={locale} />
-      <WhatsAppLauncher />
+      <WhatsAppLauncher locale={locale} />
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { monthlyHoa } from "../lib/properties";
 import { distanceMetres, formatDistance, walkMinutes, PACES, type Point } from "../lib/geo";
+import { useMessages } from "./LocaleProvider";
 
 /*
   The two numbers a buyer actually works out on paper, made interactive.
@@ -15,6 +16,11 @@ import { distanceMetres, formatDistance, walkMinutes, PACES, type Point } from "
   an appreciation curve or a rental yield: those are professional claims, and
   the blog posts making them are sitting unpublished for exactly that reason.
 */
+
+/** The pace names, from the catalogue rather than the PACES constant. */
+function paceLabel(t: ReturnType<typeof useMessages>["calculators"], id: string) {
+  return id === "stroll" ? t.paceStroll : id === "brisk" ? t.paceBrisk : t.paceWalk;
+}
 
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 
@@ -38,6 +44,7 @@ function HoaCalculator({
   hoaUnit: string | null;
   areaM2: number | null;
 }) {
+  const t = useMessages().calculators;
   const [yearly, setYearly] = useState(false);
   /*
     Only meaningful when the fee scales with floor area. For a flat fee the
@@ -55,25 +62,25 @@ function HoaCalculator({
   const rate = effectiveArea ? monthly / effectiveArea : null;
 
   return (
-    <Panel title="What the HOA costs">
+    <Panel title={t.hoaTitle}>
       <p className="font-display text-3xl font-bold text-ink mt-2 tabular-nums">
         {usd(shown)}
-        <span className="text-base font-semibold text-muted"> / {yearly ? "year" : "month"}</span>
+        <span className="text-base font-semibold text-muted"> {yearly ? t.perYear : t.perMonth}</span>
       </p>
 
       {/* The comparable number. Two buildings quote flat and per-m², and $433
           against $2.09 compares nothing until both are per m². */}
       {rate !== null ? (
         <p className="text-sm text-muted mt-1 tabular-nums">
-          ${rate.toFixed(2)} / m² / month
+          ${rate.toFixed(2)} {t.perM2Month}
           {perM2 && areaM2 ? ` · ${Math.round(size)} m²` : null}
         </p>
       ) : null}
 
-      <div className="flex gap-1 p-1 bg-card rounded-full mt-3 w-fit" role="group" aria-label="Period">
+      <div className="flex gap-1 p-1 bg-card rounded-full mt-3 w-fit" role="group" aria-label={t.period}>
         {[
-          { id: "month", label: "Monthly" },
-          { id: "year", label: "Yearly" },
+          { id: "month", label: t.monthly },
+          { id: "year", label: t.yearly },
         ].map((p) => {
           const active = (p.id === "year") === yearly;
           return (
@@ -98,7 +105,7 @@ function HoaCalculator({
             htmlFor="hoa-size"
             className="flex items-baseline justify-between gap-3 text-sm"
           >
-            <span className="text-muted">Try another size</span>
+            <span className="text-muted">{t.tryAnotherSize}</span>
             <span className="font-semibold text-ink tabular-nums">{Math.round(size)} m²</span>
           </label>
           <input
@@ -112,13 +119,12 @@ function HoaCalculator({
             className="w-full mt-2 accent-accent"
           />
           <p className="text-xs text-muted mt-1.5">
-            This building charges by floor area, so a bigger unit costs
-            proportionally more to hold.
+            {t.byFloorArea}
           </p>
         </div>
       ) : (
         <p className="text-xs text-muted mt-3">
-          A flat fee — it does not change with the size of the unit.
+          {t.flatFee}
         </p>
       )}
     </Panel>
@@ -138,6 +144,7 @@ function BeachDistance({
   walkToBeachMin: number | null;
   areaName: string | null;
 }) {
+  const t = useMessages().calculators;
   const [pace, setPace] = useState(1); // index into PACES; "Walking" is the middle
   const metres = useMemo(
     () => (location && beachPoint ? distanceMetres(location, beachPoint) : null),
@@ -150,18 +157,18 @@ function BeachDistance({
   const current = PACES[pace];
 
   return (
-    <Panel title="How close the sand is">
+    <Panel title={t.beachTitle}>
       {metres !== null ? (
         <>
           <p className="font-display text-3xl font-bold text-ink mt-2 tabular-nums">
             {formatDistance(metres)}
-            <span className="text-base font-semibold text-muted"> in a straight line</span>
+            <span className="text-base font-semibold text-muted"> {t.straightLine}</span>
           </p>
           <p className="text-sm text-muted mt-1 tabular-nums">
-            About {walkMinutes(metres, current.metresPerMinute)} min {current.label.toLowerCase()}
+            {t.aboutMinutes(walkMinutes(metres, current.metresPerMinute), paceLabel(t, current.id))}
           </p>
 
-          <div className="flex gap-1 p-1 bg-card rounded-full mt-3 w-fit" role="group" aria-label="Walking pace">
+          <div className="flex gap-1 p-1 bg-card rounded-full mt-3 w-fit" role="group" aria-label={t.pace}>
             {PACES.map((p, i) => (
               <button
                 key={p.id}
@@ -172,7 +179,7 @@ function BeachDistance({
                   i === pace ? "bg-accent text-cream" : "text-muted hover:text-ink"
                 }`}
               >
-                {p.label}
+                {paceLabel(t, p.id)}
               </button>
             ))}
           </div>
@@ -188,25 +195,24 @@ function BeachDistance({
               />
             </div>
             <p className="flex justify-between text-xs text-muted mt-1.5">
-              <span>On the sand</span>
-              <span>10 min away</span>
+              <span>{t.onTheSand}</span>
+              <span>{t.tenMinAway}</span>
             </p>
           </div>
 
           <p className="text-xs text-muted mt-3">
-            Straight line to the beach access
-            {areaName ? ` for ${areaName}` : ""}, so the real walk is a little longer.
-            {walkToBeachMin ? ` Gio times it at ${walkToBeachMin} min.` : ""}
+            {t.straightLineNote(areaName)}
+            {walkToBeachMin ? t.gioTimes(walkToBeachMin) : ""}
           </p>
         </>
       ) : (
         <>
           <p className="font-display text-3xl font-bold text-ink mt-2 tabular-nums">
             {walkToBeachMin} min
-            <span className="text-base font-semibold text-muted"> walk</span>
+            <span className="text-base font-semibold text-muted"> {t.minWalk}</span>
           </p>
           <p className="text-xs text-muted mt-2">
-            Gio&rsquo;s own timing, walking the route people actually take.
+            {t.gioTiming}
           </p>
         </>
       )}

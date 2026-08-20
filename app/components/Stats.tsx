@@ -1,5 +1,6 @@
 import StatCard from "./StatCard";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 /*
   Built from the messages rather than declared at module scope: the labels are

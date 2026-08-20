@@ -5,7 +5,8 @@ import Footer from "../../components/Footer";
 import WhatsAppLauncher from "../../components/WhatsAppLauncher";
 import PostCard from "../../components/PostCard";
 import { getPostsIn } from "../../lib/posts.server";
-import { DEFAULT_LOCALE, MESSAGES, isLocale, localePath } from "../../lib/i18n";
+import { DEFAULT_LOCALE, isLocale, localePath } from "../../lib/i18n";
+import { MESSAGES } from "../../lib/messages";
 
 export const metadata: Metadata = {
   title: "Blog — Gio In The DR",
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
-  const t = MESSAGES[locale];
+  const t = MESSAGES[locale].blog;
   const posts = await getPostsIn(locale);
 
   return (
@@ -48,7 +49,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
               href={localePath(locale, "/#contact")}
               className="inline-block mt-8 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
             >
-              Get notified
+              {t.getNotified}
             </Link>
           ) : null}
         </div>
@@ -62,7 +63,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         ) : null}
       </main>
       <Footer locale={locale} />
-      <WhatsAppLauncher />
+      <WhatsAppLauncher locale={locale} />
     </>
   );
 }

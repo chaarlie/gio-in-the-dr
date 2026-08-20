@@ -2,7 +2,8 @@ import SectionHeading from "./SectionHeading";
 import AreaExplorer from "./AreaExplorer";
 import { AREA_TONES } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 /*
   Explore by area.
@@ -44,22 +45,14 @@ export default async function AreaMap({
         title={t.areasHeading}
         className="mb-8"
       >
-        <p className="text-muted mt-3 max-w-2xl mx-auto">
-          Take a closer look at Cabarete and Sosúa. Use the map to understand
-          where each area is, how the neighborhoods connect, and what makes each
-          one unique: from beaches and local life to restaurants, amenities and
-          atmosphere. Especially if it’s your first time here, the map gives you
-          an easy feel for the area and helps you discover which neighborhood
-          might be the right fit for you.
-        </p>
+        <p className="text-muted mt-3 max-w-2xl mx-auto"> {t.areasIntro}
+          </p>
       </SectionHeading>
 
       <AreaExplorer areas={areas} />
 
       <p className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-xs text-muted">
-        <span className="font-semibold uppercase tracking-[0.18em]">
-          Closer to the sand
-        </span>
+        <span className="font-semibold uppercase tracking-[0.18em]">{t.closerToSand}</span>
         <span
           className="flex rounded-full overflow-hidden border border-line"
           aria-hidden="true"
@@ -68,9 +61,7 @@ export default async function AreaMap({
             <span key={c} className="w-7 h-3" style={{ background: c }} />
           ))}
         </span>
-        <span className="font-semibold uppercase tracking-[0.18em]">
-          Further inland
-        </span>
+        <span className="font-semibold uppercase tracking-[0.18em]">{t.furtherInland}</span>
         <span className="ml-auto italic">{t.boundariesNote}</span>
       </p>
     </section>

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { WA } from "../lib/whatsapp";
 import SectionHeading from "./SectionHeading";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 type HomeMessages = (typeof MESSAGES)["en"]["home"];
 

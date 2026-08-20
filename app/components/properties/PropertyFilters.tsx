@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { PropertyFacets, PropertyFilters as Filters } from "../../lib/properties.server";
+import { DEFAULT_LOCALE, type Locale } from "../../lib/i18n";
+import { MESSAGES } from "../../lib/messages";
 
 /*
   The filter bar for /properties.
@@ -63,10 +65,14 @@ function priceSteps(max: number | null): number[] {
 export default function PropertyFiltersBar({
   facets,
   filters,
+  locale = DEFAULT_LOCALE,
 }: {
   facets: PropertyFacets;
   filters: Filters;
+  locale?: Locale;
 }) {
+  const m = MESSAGES[locale];
+  const t = m.properties;
   const steps = priceSteps(facets.maxPrice);
 
   return (
@@ -74,7 +80,7 @@ export default function PropertyFiltersBar({
       method="get"
       action="/properties"
       role="search"
-      aria-label="Filter properties"
+      aria-label={t.heading}
       className="bg-card border border-line rounded-3xl overflow-hidden"
     >
       {/*
@@ -92,7 +98,7 @@ export default function PropertyFiltersBar({
           type="search"
           name="q"
           defaultValue={filters.q}
-          placeholder="Beachfront, penthouse, Kite Beach…"
+          placeholder={t.searchPlaceholder}
           autoComplete="off"
           spellCheck={false}
           className="flex-1 bg-transparent py-1.5 text-base text-ink outline-none placeholder:text-muted min-w-0"
@@ -100,8 +106,8 @@ export default function PropertyFiltersBar({
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line">
-        <Field label="Location" name="area" value={filters.area}>
-          <option value={ANY}>All areas</option>
+        <Field label={t.location} name="area" value={filters.area}>
+          <option value={ANY}>{t.allAreas}</option>
           {facets.areas.map((a) => (
             <option key={a.slug} value={a.slug}>
               {a.name}
@@ -109,8 +115,8 @@ export default function PropertyFiltersBar({
           ))}
         </Field>
 
-        <Field label="Property type" name="category" value={filters.category}>
-          <option value={ANY}>All types</option>
+        <Field label={t.propertyType} name="category" value={filters.category}>
+          <option value={ANY}>{t.allTypes}</option>
           {facets.categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -118,8 +124,8 @@ export default function PropertyFiltersBar({
           ))}
         </Field>
 
-        <Field label="Bedrooms" name="minBeds" value={String(filters.minBeds || "")}>
-          <option value="">Any</option>
+        <Field label={t.bedrooms} name="minBeds" value={String(filters.minBeds || "")}>
+          <option value="">{t.anyBedrooms}</option>
           {[1, 2, 3, 4, 5].map((n) => (
             <option key={n} value={n}>
               {n}+
@@ -127,8 +133,8 @@ export default function PropertyFiltersBar({
           ))}
         </Field>
 
-        <Field label="Max price" name="maxPrice" value={String(filters.maxPrice || "")}>
-          <option value="">No maximum</option>
+        <Field label={t.maxPrice} name="maxPrice" value={String(filters.maxPrice || "")}>
+          <option value="">{t.noMaximum}</option>
           {steps.map((v) => (
             <option key={v} value={v}>
               {v >= 1_000_000 ? `$${v / 1_000_000}M` : `$${v / 1_000}K`}
@@ -142,13 +148,13 @@ export default function PropertyFiltersBar({
           href="/properties"
           className="text-sm font-semibold text-muted hover:text-ink transition-colors no-underline"
         >
-          Clear
+          {t.clearFilters}
         </Link>
         <button
           type="submit"
           className="bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-3 rounded-full transition-colors"
         >
-          Search
+          {m.common.search}
         </button>
       </div>
     </form>

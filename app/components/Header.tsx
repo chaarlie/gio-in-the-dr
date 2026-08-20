@@ -3,7 +3,8 @@ import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
 import NavLink from "./NavLink";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { DEFAULT_LOCALE, MESSAGES, localePath, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, localePath, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 /*
   Every nav item lives here, including the highlighted first one.
@@ -47,7 +48,7 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
         <Link
           href={localePath(locale, "/")}
-          aria-label="Gio In The DR — home"
+          aria-label={t.common.homeAria}
           className="text-ink no-underline shrink-0"
         >
           <Logo />

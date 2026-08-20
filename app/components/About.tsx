@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { WA } from "../lib/whatsapp";
 import SectionHeading from "./SectionHeading";
-import { DEFAULT_LOCALE, MESSAGES, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 
 type HomeMessages = (typeof MESSAGES)["en"]["home"];
 
@@ -24,7 +25,7 @@ export default function About({ locale = DEFAULT_LOCALE }: { locale?: Locale }) 
               two sections don't repeat the same image. */}
           <Image
             src="/gio-headshot.jpg"
-            alt="Gio, real estate agent in Cabarete, Dominican Republic"
+            alt={t.aboutAlt}
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
             className="object-cover object-[center_30%]"

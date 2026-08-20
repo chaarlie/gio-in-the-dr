@@ -10,6 +10,7 @@ import ListingDetail from "./explorer/ListingDetail";
 import StaticMapPreview from "./explorer/StaticMapPreview";
 import FullScreenMap from "./explorer/FullScreenMap";
 import type { Area } from "../lib/areas";
+import { useMessages } from "./LocaleProvider";
 
 /*
   Two panes sharing one selection: a toggleable list on one side, the map on the
@@ -26,6 +27,7 @@ import type { Area } from "../lib/areas";
   listing is in the server-rendered HTML for crawlers.
 */
 export default function AreaExplorer({ areas }: { areas: Area[] }) {
+  const t = useMessages();
   const [view, setView] = useState<ExplorerView>("listings");
   const [selected, setSelected] = useState<string | null>(null);
   /** Slug of the listing whose details fill the panel. Null = browsing the lists. */
@@ -165,7 +167,7 @@ export default function AreaExplorer({ areas }: { areas: Area[] }) {
               onClick={() => setSelected(null)}
               className="text-xs font-semibold text-muted hover:text-ink transition-colors shrink-0 touch-manipulation"
             >
-              Clear ✕
+              {t.common.clear} ✕
             </button>
           </div>
         ) : null}

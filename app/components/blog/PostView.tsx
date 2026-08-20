@@ -7,7 +7,8 @@ import LanguageSwitcher from "../LanguageSwitcher";
 import { formatDate, readingTime, type Post } from "../../lib/posts.server";
 import { WA } from "../../lib/whatsapp";
 import { mailtoLink } from "../../lib/email";
-import { MESSAGES, blogPath, type Locale } from "../../lib/i18n";
+import { blogPath, type Locale } from "../../lib/i18n";
+import { MESSAGES } from "../../lib/messages";
 
 /*
   One post, rendered the same way in every language.
@@ -17,7 +18,7 @@ import { MESSAGES, blogPath, type Locale } from "../../lib/i18n";
   genuinely per-route: fetching, metadata and the JSON-LD.
 */
 export default function PostView({ post, locale }: { post: Post; locale: Locale }) {
-  const t = MESSAGES[locale];
+  const t = MESSAGES[locale].blog;
   const other: Locale = locale === "en" ? "es" : "en";
   const date = formatDate(post.publishedAt, locale);
   const minutesValue = readingTime(post.body);
@@ -32,7 +33,7 @@ export default function PostView({ post, locale }: { post: Post; locale: Locale 
             href={blogPath(locale)}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink no-underline transition-colors"
           >
-            {locale === "en" ? "← All guides" : "← Todas las guías"}
+            {t.allGuides}
           </Link>
           {/* Only rendered when a translation exists — see LanguageSwitcher. */}
           <LanguageSwitcher

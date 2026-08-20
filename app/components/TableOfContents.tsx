@@ -1,5 +1,6 @@
 import { extractHeadings } from "../lib/headings";
-import { MESSAGES, type Locale } from "../lib/i18n";
+import { type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
 import type { PortableBlocks } from "./PortableBody";
 
 /*
@@ -38,7 +39,7 @@ export default function TableOfContents({
         id="contents-heading"
         className="text-xs font-semibold uppercase tracking-[0.18em] text-muted"
       >
-        {MESSAGES[locale].inThisGuide}
+        {MESSAGES[locale].blog.inThisGuide}
       </h2>
       {/*
         A real list, so a screen reader announces how many sections there are

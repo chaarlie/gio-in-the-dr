@@ -26,6 +26,7 @@ export default function Pagination({
   pageCount,
   hrefFor,
   onSelect,
+  labels,
 }: {
   page: number;
   pageCount: number;
@@ -38,19 +39,29 @@ export default function Pagination({
     shareable and middle-click still opens a real page.
   */
   onSelect?: (page: number) => void;
+  /*
+    Labels as a prop, not a hook.
+
+    This renders from both sides — the server /properties page and the client
+    home grid — so it cannot call useMessages (server) and cannot be marked
+    "use client" either, because the server page passes hrefFor, and a function
+    cannot cross the server/client boundary. Taking strings as props is the only
+    shape that works from either parent.
+  */
+  labels: { previous: string; next: string; pagination: string };
 }) {
   if (pageCount <= 1) return null;
 
   const slots = pageNumbers(page, pageCount);
 
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-center gap-1.5 mt-10">
+    <nav aria-label={labels.pagination} className="flex items-center justify-center gap-1.5 mt-10">
       {page > 1 ? (
         <Link
           href={hrefFor(page - 1)}
           onClick={onSelect ? (e) => { e.preventDefault(); onSelect(page - 1); } : undefined}
           rel="prev"
-          aria-label="Previous page"
+          aria-label={labels.previous}
           className="flex items-center justify-center min-w-11 h-11 px-4 rounded-full border border-line text-sm font-semibold text-ink hover:bg-ink/5 transition-colors no-underline"
         >
           ←
@@ -87,7 +98,7 @@ export default function Pagination({
           href={hrefFor(page + 1)}
           onClick={onSelect ? (e) => { e.preventDefault(); onSelect(page + 1); } : undefined}
           rel="next"
-          aria-label="Next page"
+          aria-label={labels.next}
           className="flex items-center justify-center min-w-11 h-11 px-4 rounded-full border border-line text-sm font-semibold text-ink hover:bg-ink/5 transition-colors no-underline"
         >
           →
