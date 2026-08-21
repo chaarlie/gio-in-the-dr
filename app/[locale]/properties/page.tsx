@@ -114,7 +114,7 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
     pays nothing and keeps its ~8 ms to first byte.
   */
   if (page > 1) {
-    const total = await countProperties(filters, locale);
+    const total = await countProperties(filters);
     if (total === 0 || page > Math.ceil(total / PAGE_SIZE)) notFound();
   }
 

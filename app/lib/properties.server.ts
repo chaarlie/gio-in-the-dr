@@ -251,10 +251,12 @@ export const getPropertyFacets = cache(
   Used to validate a page number before the results stream, because notFound()
   inside a Suspense boundary arrives too late to set a status code.
 */
-export async function countProperties(
-  filters: PropertyFilters,
-  language: Locale = "en",
-): Promise<number> {
+/*
+  No language parameter, deliberately: the page query does not filter by locale
+  either — a listing exists in both languages — so the count is the same number
+  whichever language asked. Taking one would imply otherwise.
+*/
+export async function countProperties(filters: PropertyFilters): Promise<number> {
   return sanityFetch<number>(
     PROPERTIES_COUNT_QUERY,
     {
