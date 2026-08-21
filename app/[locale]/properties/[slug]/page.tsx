@@ -219,7 +219,7 @@ export default async function PropertyPage({ params }: PageProps) {
                 beachPoint={property.area?.beachPoint ?? null}
                 walkToBeachMin={property.walkToBeachMin}
                 areaName={property.area?.name ?? null}
-                className="mt-5 sm:grid-cols-1"
+                className="mt-5"
               />
 
               <a
