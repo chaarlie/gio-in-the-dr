@@ -69,6 +69,39 @@ function readableOn(color: string) {
 }
 
 /*
+  Two markers closer together than the marker is wide collide, and whichever one
+  mapbox happens to append last takes every click — the other is on the map and
+  unreachable. Coccoloba's units are 3.2 m apart, Seawinds and Oceanfront 34 m;
+  at the zoom the map opens at, all of them land on the same few pixels.
+
+  So "same place" is a question about the screen, not about the coordinates. The
+  previous rule keyed on the coordinate rounded to five decimals, which is ~1.1 m
+  — it only ever merged listings typed at literally the same point, and the data
+  drifted off that the moment anyone geocoded a unit separately.
+*/
+const MERGE_PX = 26;
+
+/*
+  Metres one pixel covers in Web Mercator. Depends on zoom and latitude only, not
+  on where the map is panned to, so the grouping is stable while someone drags
+  and changes only when they zoom.
+*/
+function metresPerPixel(lat: number, zoom: number): number {
+  return (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** zoom;
+}
+
+function metresBetween(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const midLat = ((a.lat + b.lat) / 2) * (Math.PI / 180);
+  return Math.hypot(
+    (a.lat - b.lat) * 111_320,
+    (a.lng - b.lng) * 111_320 * Math.cos(midLat),
+  );
+}
+
+/*
   The fill a marker actually gets: the area's colour with a floor under its
   lightness.
 
@@ -183,6 +216,13 @@ export default function AreaMapbox({
     `selected`. State re-renders, which re-runs the effects with the map in hand.
   */
   const [ready, setReady] = useState(false);
+
+  /*
+    Drives the pin grouping, which is a screen-space question. zoomend rather
+    than zoom: regrouping mid-gesture rebuilds every marker on each animation
+    frame, and it closes any popup the pinch happened to start from.
+  */
+  const [zoom, setZoom] = useState(0);
 
   // Keep the latest callbacks without re-running the map's init effect.
   useEffect(() => {
@@ -426,6 +466,17 @@ export default function AreaMapbox({
     ]);
   }, [selected, areas, ready]);
 
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!ready || !m) return;
+    const sync = () => setZoom(m.getZoom());
+    sync(); // the fitBounds on load has already run by the time ready flips
+    m.on("zoomend", sync);
+    return () => {
+      m.off("zoomend", sync);
+    };
+  }, [ready]);
+
   /*
     Listings as thumbnails rather than dots — a price you can read beats a dot you
     have to hover. Properties sharing a building (Coccoloba's two units sit on the
@@ -448,7 +499,7 @@ export default function AreaMapbox({
       approx: boolean;
       items: typeof areas[number]["listings"];
     };
-    const byPlace = new Map<string, Pin>();
+    const placed: (Omit<Pin, "items"> & { item: Pin["items"][number] })[] = [];
     areas.forEach((a) =>
       a.listings.forEach((l) => {
         /*
@@ -461,17 +512,43 @@ export default function AreaMapbox({
         */
         const at = l.location ?? a.pin;
         if (!at) return;
-        const approx = !l.location;
-        // Approximate pins key separately, so a listing sitting on the area
-        // centre never merges into an exact pin that happens to be nearby.
-        const key = `${approx ? "~" : ""}${at.lng.toFixed(5)},${at.lat.toFixed(5)}`;
-        const pin = byPlace.get(key);
-        if (pin) pin.items.push(l);
-        else byPlace.set(key, { lng: at.lng, lat: at.lat, color: a.color, slug: a.slug, approx, items: [l] });
+        placed.push({
+          lng: at.lng,
+          lat: at.lat,
+          color: a.color,
+          slug: a.slug,
+          approx: !l.location,
+          item: l,
+        });
       }),
     );
 
-    byPlace.forEach((pin) => {
+    /*
+      Greedy single-pass clustering: the first listing at a place fixes the pin,
+      and anything landing within a marker's width of it joins. Order-dependent
+      by nature, but with a threshold this small the alternatives only disagree
+      about pins that are already a pixel apart, and it stays O(n²) on a set that
+      is ten listings today and would be a few hundred at its worst.
+    */
+    const tolerance = MERGE_PX * metresPerPixel(placed[0]?.lat ?? 19.75, zoom);
+    const pins: Pin[] = [];
+    for (const p of placed) {
+      // Approximate pins never merge into exact ones, so a listing sitting on
+      // the area centre cannot absorb a house that really is nearby.
+      const home = pins.find(
+        (pin) => pin.approx === p.approx && metresBetween(pin, p) <= tolerance,
+      );
+      if (home) {
+        home.items.push(p.item);
+        continue;
+      }
+      // Destructured rather than spread wholesale: `item` is scaffolding for the
+      // clustering pass and has no business on the pin it produces.
+      const { item, ...place } = p;
+      pins.push({ ...place, items: [item] });
+    }
+
+    pins.forEach((pin) => {
       const cheapest = pin.items.reduce((lo, c) =>
         (c.priceUsd ?? Infinity) < (lo.priceUsd ?? Infinity) ? c : lo, pin.items[0]);
       const price = formatPrice(cheapest.priceUsd);
@@ -609,7 +686,7 @@ export default function AreaMapbox({
       markersRef.current.forEach((mk) => mk.remove());
       markersRef.current = [];
     };
-  }, [areas, selected, ready]);
+  }, [areas, selected, ready, zoom]);
 
   /* Fullscreen fills whatever the dialog gives it; inline keeps the desktop
      pane's fixed height and rounded card. */

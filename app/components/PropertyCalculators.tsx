@@ -77,7 +77,16 @@ function HoaCalculator({
         </p>
       ) : null}
 
-      <div className="flex gap-1 p-1 bg-card rounded-full mt-3 w-fit" role="group" aria-label={t.period}>
+      {/* Wraps rather than overflows. `w-fit` alone is fit-content, which happily
+          reports a width its container cannot give it — so in a narrow card the
+          second pill simply hung outside the border. max-w-full caps it and
+          flex-wrap gives the overflow somewhere to go, which beats shrinking the
+          buttons below a comfortable tap target or truncating "Monthly". */}
+      <div
+        className="flex flex-wrap gap-1 p-1 bg-card rounded-full mt-3 w-fit max-w-full"
+        role="group"
+        aria-label={t.period}
+      >
         {[
           { id: "month", label: t.monthly },
           { id: "year", label: t.yearly },
@@ -242,7 +251,21 @@ export default function PropertyCalculators({
   className?: string;
 }) {
   return (
-    <div className={`grid gap-3 sm:grid-cols-2 ${className}`}>
+    /*
+      One column, and no responsive default to override.
+
+      This used to be `sm:grid-cols-2`, with both callers passing
+      `sm:grid-cols-1` to undo it — and neither one worked. Tailwind resolves a
+      conflict like that by the order the classes appear in the generated
+      stylesheet, not the order they appear in the attribute, and `grid-cols-1`
+      is emitted first, so `grid-cols-2` won every time. The two panels sat in a
+      143px column inside a 298px sidebar, and the period toggle hung 57px out
+      past its own card.
+
+      Since nobody wanted two columns, the fix is to stop offering them rather
+      than to fight the cascade.
+    */
+    <div className={`grid gap-3 ${className}`}>
       <HoaCalculator hoaAmount={hoaAmount} hoaUnit={hoaUnit} areaM2={areaM2} />
       <BeachDistance
         location={location}

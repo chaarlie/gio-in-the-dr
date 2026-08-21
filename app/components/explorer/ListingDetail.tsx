@@ -193,7 +193,7 @@ export default function ListingDetail({
         beachPoint={listing.beachPoint}
         walkToBeachMin={listing.walkToBeachMin}
         areaName={areaName}
-        className="mt-4 sm:grid-cols-1"
+        className="mt-4"
       />
 
       <div className="flex flex-col gap-2 mt-4">
