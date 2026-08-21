@@ -22,9 +22,11 @@ export function isLocale(value: string): value is Locale {
 /*
   Any path, under the right locale.
 
-  English carries no prefix — middleware rewrites "/blog" to "/en/blog"
-  internally — so this returns the path unchanged for English and prefixes
-  everything else. Hash-only links ("/#areas") keep their fragment.
+  English carries no prefix: /blog, not /en/blog. Both spellings resolve — the
+  [locale] segment matches "en" directly, and rootParams serves the unprefixed
+  path from the same tree — so the choice here is which one we *emit*, and
+  emitting one form consistently is what keeps the canonicals honest.
+  Hash-only links ("/#areas") keep their fragment.
 */
 export function localePath(locale: Locale, path: string): string {
   const clean = path.startsWith("/") ? path : `/${path}`;
@@ -34,6 +36,34 @@ export function localePath(locale: Locale, path: string): string {
 
 export function blogPath(locale: Locale, slug?: string): string {
   return localePath(locale, slug ? `/blog/${slug}` : "/blog");
+}
+
+export function propertyPath(locale: Locale, slug?: string): string {
+  return localePath(locale, slug ? `/properties/${slug}` : "/properties");
+}
+
+/*
+  canonical + hreflang for a page that exists in every locale at the same slug —
+  which is every page except a blog post, whose translation is a separate
+  document with its own slug (see blog/[slug]/page.tsx).
+
+  The canonical has to carry the locale prefix. It did not, and a hardcoded
+  "/properties/<slug>" on the Spanish page told Google the Spanish catalogue was
+  a duplicate of the English one — the whole translated half of the site asking
+  not to be indexed. Building both tags from one function is what stops the two
+  from drifting apart again.
+
+  x-default points at English: it is what someone whose language we don't
+  publish should land on.
+*/
+export function localeAlternates(locale: Locale, path: (l: Locale) => string) {
+  return {
+    canonical: path(locale),
+    languages: {
+      ...Object.fromEntries(LOCALES.map((l) => [HREFLANG[l], path(l)])),
+      "x-default": path(DEFAULT_LOCALE),
+    },
+  };
 }
 
 /** The tag hreflang wants: the language, and for Spanish the market it is written for. */

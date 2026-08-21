@@ -10,7 +10,12 @@ import PropertyCard from "../../components/PropertyCard";
 import PropertyFiltersBar from "../../components/properties/PropertyFilters";
 import Pagination from "../../components/properties/Pagination";
 import { WA } from "../../lib/whatsapp";
-import { DEFAULT_LOCALE, isLocale } from "../../lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  isLocale,
+  localeAlternates,
+  propertyPath,
+} from "../../lib/i18n";
 import { MESSAGES } from "../../lib/messages";
 import {
   countProperties,
@@ -36,12 +41,29 @@ import type { Locale } from "../../lib/i18n";
   of what happened to land on this page.
 */
 
-export const metadata: Metadata = {
-  title: "Properties for sale in Cabarete & the north coast — Gio In The DR",
-  description:
-    "Every listing Gio has published: beachfront condos, villas, land and pre-construction around Cabarete, Sosúa and the Dominican north coast.",
-  alternates: { canonical: "/properties" },
-};
+/*
+  generateMetadata, not a `metadata` const: a constant cannot see the locale, so
+  /es/properties served the English title and a canonical pointing at the English
+  URL — telling Google the Spanish index was a duplicate of it.
+*/
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].properties;
+
+  return {
+    title: t.metaTitle,
+    description: t.metaDescription,
+    alternates: localeAlternates(locale, (l) => propertyPath(l)),
+    openGraph: {
+      title: t.metaTitle,
+      description: t.metaDescription,
+      type: "website",
+      locale: locale === "es" ? "es_DO" : "en_US",
+      url: propertyPath(locale),
+    },
+  };
+}
 
 /** Next 16 hands searchParams in as a promise. */
 type PageProps = {
@@ -122,7 +144,9 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
     <>
       <Header />
       <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
-        <SectionHeading title={t.heading} className="mb-8">
+        {/* as="h1": this is a page in its own right, not a section of one, and
+            it was shipping with no h1 at all. */}
+        <SectionHeading as="h1" title={t.heading} className="mb-8">
           <p className="text-muted mt-3 max-w-2xl">{t.indexIntro}</p>
         </SectionHeading>
 

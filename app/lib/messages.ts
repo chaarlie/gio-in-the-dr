@@ -35,6 +35,8 @@ type Copy = {
   };
   nav: Record<"properties" | "map" | "services" | "blog" | "about" | "contact", string>;
   home: {
+    metaTitle: string;
+    metaDescription: string;
     heroEyebrow: string;
     heroHeading: string;
     heroBody: string;
@@ -107,6 +109,12 @@ type Copy = {
     whatsappAria: (number: string) => string;
   };
   properties: {
+    /* <title> and <meta description> for /properties. Separate from `heading`
+       and `indexIntro`: a SERP snippet is not a page headline, and the index
+       used to serve its English title on the Spanish URL because these were a
+       module-level constant rather than catalogue keys. */
+    metaTitle: string;
+    metaDescription: string;
     heading: string;
     intro: string;
     indexIntro: string;
@@ -211,6 +219,8 @@ type Copy = {
     tokenMissing: string;
   };
   blog: {
+    metaTitle: string;
+    metaDescription: string;
     indexEyebrow: string;
     indexHeading: string;
     indexIntro: string;
@@ -272,6 +282,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       contact: "Contact",
     },
     home: {
+      metaTitle: "Gio In The DR — Buy Property in Cabarete, Dominican Republic",
+      metaDescription:
+        "Trilingual agent in Cabarete helping foreigners buy homes, land & investment property on the DR's north coast — guidance in English, Spanish & Italian.",
       heroEyebrow: "Cabarete · Dominican Republic",
       heroHeading: "Buy property & build a life in the Dominican Republic.",
       heroBody:
@@ -350,6 +363,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       whatsappAria: (number) => `Message Gio on WhatsApp at ${number}`,
     },
     properties: {
+      metaTitle: "Property for sale in Cabarete & Sosúa — Gio In The DR",
+      metaDescription:
+        "Every listing Gio has published: beachfront condos, villas, land and pre-construction around Cabarete, Sosúa and the Dominican north coast.",
       heading: "Find your property",
       intro:
         "Search beachfront condos, villas, investment and pre-construction across the north coast.",
@@ -459,6 +475,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       tokenMissing: "Map needs NEXT_PUBLIC_MAPBOX_TOKEN in .env.local. The area details below work without it.",
     },
     blog: {
+      metaTitle: "Guides to buying & living on the DR's north coast — Gio In The DR",
+      metaDescription:
+        "Guides on buying property, residency, taxes and living on the Dominican Republic's north coast.",
       indexEyebrow: "Guides & stories",
       indexHeading: "Buying on the north coast.",
       indexIntro:
@@ -519,6 +538,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       contact: "Contacto",
     },
     home: {
+      metaTitle: "Gio In The DR — Compra propiedad en Cabarete, República Dominicana",
+      metaDescription:
+        "Agente trilingüe en Cabarete que ayuda a extranjeros a comprar casas, terrenos e inversión en la costa norte dominicana — en español, inglés e italiano.",
       heroEyebrow: "Cabarete · República Dominicana",
       heroHeading: "Compra tu propiedad y construye tu vida en República Dominicana.",
       heroBody:
@@ -597,6 +619,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       whatsappAria: (number) => `Escríbele a Gio por WhatsApp al ${number}`,
     },
     properties: {
+      metaTitle: "Propiedades en venta en Cabarete y Sosúa — Gio In The DR",
+      metaDescription:
+        "Todas las propiedades que Gio publica: apartamentos frente al mar, villas, terrenos y preconstrucción en Cabarete, Sosúa y la costa norte dominicana.",
       heading: "Encuentra tu propiedad",
       intro:
         "Busca apartamentos frente al mar, villas, inversión y preconstrucción en toda la costa norte.",
@@ -712,6 +737,9 @@ export const MESSAGES: Record<Locale, Copy> = {
         "El mapa necesita NEXT_PUBLIC_MAPBOX_TOKEN en .env.local. Los detalles de las zonas funcionan sin él.",
     },
     blog: {
+      metaTitle: "Guías para comprar y vivir en la costa norte — Gio In The DR",
+      metaDescription:
+        "Guías sobre comprar propiedad, residencia, impuestos y la vida en la costa norte de República Dominicana.",
       indexEyebrow: "Guías e historias",
       indexHeading: "Comprar en la costa norte.",
       indexIntro:

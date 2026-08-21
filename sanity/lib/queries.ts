@@ -285,7 +285,7 @@ export const POST_QUERY = defineQuery(`
         alt
       }
     },
-    "related": *[_type == "post" && slug.current != $slug && publishedAt <= now()]
+    "related": *[_type == "post" && slug.current != $slug && language == $language && publishedAt <= now()]
       | order(publishedAt desc)[0...3] {
         ${POST_CARD_FIELDS}
       }

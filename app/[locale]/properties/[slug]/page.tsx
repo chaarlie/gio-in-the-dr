@@ -11,7 +11,13 @@ import { getProperty, getPropertySlugs } from "../../../lib/properties.server";
 import { waLink } from "../../../lib/whatsapp";
 import PropertyGallery from "../../../components/PropertyGallery";
 import PropertyCalculators from "../../../components/PropertyCalculators";
-import { DEFAULT_LOCALE, LOCALES, isLocale } from "../../../lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  isLocale,
+  localeAlternates,
+  propertyPath,
+} from "../../../lib/i18n";
 import { MESSAGES } from "../../../lib/messages";
 
 /*
@@ -52,11 +58,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${property.title} — ${where} | Gio In The DR`,
     description,
-    alternates: { canonical: `/properties/${property.slug}` },
+    // A listing keeps its slug in both languages, so each locale's URL is the
+    // same path under a different prefix.
+    alternates: localeAlternates(locale, (l) => propertyPath(l, property.slug)),
     openGraph: {
       title: property.title,
       description,
       type: "website",
+      locale: locale === "es" ? "es_DO" : "en_US",
+      url: propertyPath(locale, property.slug),
       images: image ? [image] : undefined,
     },
   };

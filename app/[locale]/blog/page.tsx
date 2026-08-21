@@ -5,16 +5,37 @@ import Footer from "../../components/Footer";
 import WhatsAppLauncher from "../../components/WhatsAppLauncher";
 import PostCard from "../../components/PostCard";
 import { getPostsIn } from "../../lib/posts.server";
-import { DEFAULT_LOCALE, isLocale, localePath } from "../../lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  blogPath,
+  isLocale,
+  localeAlternates,
+  localePath,
+} from "../../lib/i18n";
 import { MESSAGES } from "../../lib/messages";
 
-export const metadata: Metadata = {
-  title: "Blog — Gio In The DR",
-  description:
-    "Guides on buying property, residency, taxes and living on the Dominican Republic's north coast.",
-};
+type PageProps = { params: Promise<{ locale: string }> };
 
-export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].blog;
+
+  return {
+    title: t.metaTitle,
+    description: t.metaDescription,
+    alternates: localeAlternates(locale, (l) => blogPath(l)),
+    openGraph: {
+      title: t.metaTitle,
+      description: t.metaDescription,
+      type: "website",
+      locale: locale === "es" ? "es_DO" : "en_US",
+      url: blogPath(locale),
+    },
+  };
+}
+
+export default async function BlogPage({ params }: PageProps) {
   const { locale: raw } = await params;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].blog;
@@ -40,9 +61,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
               : t.indexHeading}
           </h1>
           <p className="text-muted text-lg leading-relaxed mt-5">
-            {posts.length === 0
-              ? "Soon: the 2026 Dominican Republic Buyer's Guide, area guides for Cabarete & Sosúa, and practical notes on residency, taxes and financing — all editable from the backend."
-              : "Real answers to the questions people ask before moving or buying: from neighborhoods and property taxes to the cost of living and what everyday life in Cabarete is really like."}
+            {posts.length === 0 ? t.indexEmptyBody : t.indexIntro}
           </p>
           {posts.length === 0 ? (
             <Link
