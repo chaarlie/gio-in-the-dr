@@ -64,7 +64,12 @@ const propsInReview = properties.filter((p) => !p.translated && p.inDraft);
 
 console.log(`\nSpanish coverage`);
 console.log(`  posts       ${posts.length - untranslatedPosts.length}/${posts.length}`);
-console.log(`  properties  ${properties.length - untranslatedProps.length}/${properties.length}`);
+console.log(
+  `  properties  ${properties.length - untranslatedProps.length - propsInReview.length}/${properties.length}` +
+    // Distinguished on purpose: a translation waiting for Gio is done work,
+    // and reporting it as missing sends someone to redo it.
+    (propsInReview.length ? `  (+${propsInReview.length} awaiting review)` : ""),
+);
 
 if (untranslatedPosts.length) {
   console.log(`\n  no Spanish yet (${untranslatedPosts.length} posts):`);

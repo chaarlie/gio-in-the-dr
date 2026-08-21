@@ -94,6 +94,8 @@ async function translate(strings) {
   });
 
   const message = await stream.finalMessage();
+  spent.input += message.usage.input_tokens ?? 0;
+  spent.output += message.usage.output_tokens ?? 0;
 
   if (message.stop_reason === "refusal") {
     throw new Error(`declined: ${message.stop_details?.category ?? "unknown"}`);
@@ -137,7 +139,15 @@ if (!files.length) {
   process.exit(0);
 }
 
-let spent = { input: 0, output: 0 };
+/*
+  Tokens actually billed, accumulated across the run.
+
+  Worth printing rather than guessing: the estimate that justified this
+  approach was ~$0.25 a property, and an estimate nobody checks is how a cost
+  assumption survives being wrong.
+*/
+const spent = { input: 0, output: 0 };
+const RATE = { input: 5 / 1_000_000, output: 25 / 1_000_000 }; // claude-opus-5, USD/token
 
 for (const file of files) {
   const full = path.join(DIR, file);
@@ -164,6 +174,11 @@ for (const file of files) {
     console.log(`✗ ${error instanceof Error ? error.message.slice(0, 70) : error}`);
   }
 }
+
+const cost = spent.input * RATE.input + spent.output * RATE.output;
+console.log(
+  `\n${spent.input.toLocaleString()} in / ${spent.output.toLocaleString()} out — about $${cost.toFixed(2)}`,
+);
 
 console.log(`\nNow review and apply:`);
 console.log(`  node scripts/i18n/apply${KIND === "properties" ? "-properties" : ""}.mjs <slug>`);

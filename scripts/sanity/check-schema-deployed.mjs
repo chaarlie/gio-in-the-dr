@@ -31,6 +31,14 @@ function token() {
 }
 
 /** Field names per document type, from the schema on disk. */
+/*
+  Everything below can fail for reasons that have nothing to do with the schema:
+  no network, no token, devDependencies pruned, `npx sanity` unavailable. This
+  runs as postbuild, so an uncaught throw here fails `npm run build` and takes a
+  deploy with it — a check whose whole point is that it must never do that.
+
+  So the work is wrapped, and any failure reports itself as a skip.
+*/
 function local() {
   // `sanity schema extract` writes ./schema.json and ignores --path, so the file
   // is produced in the project root and removed again rather than left behind.
@@ -68,11 +76,28 @@ async function deployed() {
   );
 }
 
-const here = local();
-const there = await deployed();
+let here;
+let there;
+try {
+  here = local();
+  there = await deployed();
+} catch (error) {
+  console.warn("\n⚠ Schema check SKIPPED — " + (error instanceof Error ? error.message.split("\n")[0].slice(0, 90) : error));
+  console.warn("  This is not a pass: the Studio may be running a different schema.\n");
+  process.exit(0);
+}
 
 if (!there) {
-  console.log("· schema check skipped — no deployed manifest reachable");
+  /*
+    Loud about being unable to check, because a silent skip reads exactly like a
+    pass. Reading the deployed manifest needs a token, and CI has no `sanity
+    login` to fall back on — so without SANITY_API_WRITE_TOKEN in the deploy
+    environment this check only ever protects a developer's laptop, which is the
+    one place the mistake it catches is easiest to notice anyway.
+  */
+  console.warn("\n⚠ Schema check SKIPPED — could not read the deployed manifest.");
+  console.warn("  Set SANITY_API_WRITE_TOKEN so this runs in CI too.");
+  console.warn("  This is not a pass: the Studio may be running a different schema.\n");
   process.exit(0);
 }
 
