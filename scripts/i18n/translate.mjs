@@ -13,7 +13,9 @@
     node scripts/i18n/translate.mjs properties       all pending properties
     node scripts/i18n/translate.mjs properties <slug>
 
-  Needs ANTHROPIC_API_KEY in the environment — .env.local is gitignored.
+  Needs ANTHROPIC_API_KEY. Run it through the npm script, which passes
+  --env-file-if-exists=.env.local — node does not read .env files on its own, so
+  running this file directly finds no key and fails with an unhelpful 401.
 */
 import fs from "node:fs";
 import path from "node:path";
@@ -66,6 +68,11 @@ RULES
 - Preserve leading and trailing spaces exactly as they appear in the source; they are what keeps the fragments apart.
 - Keep numbers, prices, measurements and dates exactly as they are. Never convert currencies or units.
 - A key whose value is only punctuation or a number comes back unchanged.`;
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("No ANTHROPIC_API_KEY.\n  Put it in .env.local and run: npm run i18n:translate " + KIND);
+  process.exit(1);
+}
 
 const client = new Anthropic();
 
@@ -124,7 +131,20 @@ function restoreWhitespace(src, out) {
   for (const [k, v] of Object.entries(src)) {
     const [, lead, , trail] = v.match(ws);
     const [, , body] = String(out[k] ?? "").match(ws);
-    fixed[k] = `${lead}${body}${trail}`;
+
+    /*
+      One exception to restoring the source's spacing: a fragment that now
+      begins with punctuation.
+
+      Spanish reorders — "This beautifully maintained <b>condo at Ocean One</b>
+      offers…" becomes "Este <b>apartamento en Ocean One</b>, impecablemente
+      mantenido, ofrece…", moving the adjective after the noun and starting the
+      next fragment with a comma. Re-adding the source's leading space there
+      produces "Ocean One , impecablemente", which is wrong in both languages
+      and looks like a typo rather than a tooling artifact.
+    */
+    const startsWithPunctuation = /^[,.;:!?)\]»”]/.test(body);
+    fixed[k] = `${startsWithPunctuation ? "" : lead}${body}${trail}`;
   }
   return fixed;
 }

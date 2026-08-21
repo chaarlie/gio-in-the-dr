@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "schema:check": "node scripts/sanity/check-schema-deployed.mjs",
-    "i18n:status": "node scripts/i18n/status.mjs",
-    "postbuild": "node scripts/sanity/check-schema-deployed.mjs",
-    "i18n:translate": "node scripts/i18n/translate.mjs"
+    "schema:check": "node --env-file-if-exists=.env.local scripts/sanity/check-schema-deployed.mjs",
+    "i18n:status": "node --env-file-if-exists=.env.local scripts/i18n/status.mjs",
+    "postbuild": "node --env-file-if-exists=.env.local scripts/sanity/check-schema-deployed.mjs",
+    "i18n:translate": "node --env-file-if-exists=.env.local scripts/i18n/translate.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
