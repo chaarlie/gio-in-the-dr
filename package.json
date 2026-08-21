@@ -9,9 +9,11 @@
     "lint": "eslint",
     "schema:check": "node scripts/sanity/check-schema-deployed.mjs",
     "i18n:status": "node scripts/i18n/status.mjs",
-    "postbuild": "node scripts/sanity/check-schema-deployed.mjs"
+    "postbuild": "node scripts/sanity/check-schema-deployed.mjs",
+    "i18n:translate": "node scripts/i18n/translate.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.120.0",
     "@sanity/image-url": "^2.1.1",
     "mapbox-gl": "^3.28.1",
     "next": "16.2.10",
