@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import SectionHeading from "./SectionHeading";
 import WhatsAppIcon from "./WhatsAppIcon";
 import { WA, WHATSAPP_DISPLAY } from "../lib/whatsapp";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
-import { MESSAGES } from "../lib/messages";
+import { useMessages } from "./LocaleProvider";
 
 const INTERESTS = [
   "Buying a home",
@@ -31,8 +30,12 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-export default function ContactForm({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
-  const t = MESSAGES[locale].contact;
+/*
+  A client component — it holds form state — so it reads the locale from context
+  rather than next/root-params, whose getters run on the server only.
+*/
+export default function ContactForm() {
+  const t = useMessages().contact;
   const [interest, setInterest] = useState(INTERESTS[0]);
   const [errors, setErrors] = useState<Errors>({});
   const [submitState, setSubmitState] = useState<SubmitState>("idle");

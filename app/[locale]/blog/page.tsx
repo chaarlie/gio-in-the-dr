@@ -22,7 +22,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <Header locale={locale} />
+      <Header />
       <main
         id="main"
         tabIndex={-1}
@@ -62,8 +62,8 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           </div>
         ) : null}
       </main>
-      <Footer locale={locale} />
-      <WhatsAppLauncher locale={locale} />
+      <Footer />
+      <WhatsAppLauncher />
     </>
   );
 }

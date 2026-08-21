@@ -2,8 +2,9 @@ import SectionHeading from "./SectionHeading";
 import AreaExplorer from "./AreaExplorer";
 import { AREA_TONES } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 /*
   Explore by area.
@@ -24,13 +25,18 @@ import { MESSAGES } from "../lib/messages";
   Awaiting a prop keeps this a normal server component — the parent never blocks
   on the promise, it just hands it over.
 */
-export default async function AreaMap({
-  areas: areasPromise,
-  locale = DEFAULT_LOCALE,
-}: {
-  areas: Promise<Area[]>;
-  locale?: Locale;
-}) {
+/*
+  The locale is read, not passed — and this component is why.
+
+  It used to take it as a prop, and the sweep that added `locale={locale}` to
+  every section on the home page matched on `areas=` and skipped this one,
+  because its prop is spelled `areas={areasPromise}`. The heading stayed English
+  on the Spanish page while everything around it translated, and nothing failed.
+  There is no prop to miss now.
+*/
+export default async function AreaMap({ areas: areasPromise }: { areas: Promise<Area[]> }) {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].home;
   const areas = await areasPromise;
 

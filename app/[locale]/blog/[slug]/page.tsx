@@ -86,12 +86,12 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <>
-      <Header locale={locale} />
+      <Header />
       <main id="main" tabIndex={-1} className="flex-1 w-full">
         <PostView post={post} locale={locale} />
       </main>
-      <Footer locale={locale} />
-      <WhatsAppLauncher locale={locale} />
+      <Footer />
+      <WhatsAppLauncher />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

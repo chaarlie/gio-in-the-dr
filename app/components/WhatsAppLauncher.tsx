@@ -1,7 +1,8 @@
 import { WA } from "../lib/whatsapp";
 import WhatsAppIcon from "./WhatsAppIcon";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 // Native <details> popover — zero JS, no motion animation. Maps to a useState toggle later if needed.
 const CHIPS = [
@@ -15,7 +16,9 @@ const CHIPS = [
   as a prop rather than from useMessages, because reading the hook would make
   this a client component and ship a bundle for a widget built to need none.
 */
-export default function WhatsAppLauncher({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default async function WhatsAppLauncher() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale];
   return (
     <details

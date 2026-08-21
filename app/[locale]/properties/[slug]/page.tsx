@@ -115,7 +115,7 @@ export default async function PropertyPage({ params }: PageProps) {
 
   return (
     <>
-      <Header locale={locale} />
+      <Header />
       <main id="main" tabIndex={-1} className="flex-1 max-w-5xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         <Link
           href="/properties"
@@ -236,8 +236,8 @@ export default async function PropertyPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
-      <Footer locale={locale} />
-      <WhatsAppLauncher locale={locale} />
+      <Footer />
+      <WhatsAppLauncher />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

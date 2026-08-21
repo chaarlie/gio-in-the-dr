@@ -109,6 +109,17 @@ export default function LanguageSwitcher({
       <Link
         href={href}
         hrefLang={otherLocale}
+        /*
+          Remember the choice. Without this, a Spanish speaker who clicks EN is
+          sent straight back to /es by Accept-Language negotiation on their next
+          visit to an unprefixed URL — the toggle would appear not to work.
+
+          A year, because a language preference is not a session-scoped thing.
+          SameSite=Lax so it survives arriving from a search result.
+        */
+        onClick={() => {
+          document.cookie = `locale=${otherLocale}; path=/; max-age=31536000; samesite=lax`;
+        }}
         // Named in the reader's language, not its own — the label is a sentence.
         aria-label={MESSAGES[locale].switcher.viewIn(LANGUAGE_NAME_IN[locale][otherLocale])}
         className="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 h-9 text-xs font-semibold text-muted hover:text-ink hover:border-ink/30 transition-colors no-underline"

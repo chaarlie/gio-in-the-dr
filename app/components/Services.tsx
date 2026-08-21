@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { WA } from "../lib/whatsapp";
 import SectionHeading from "./SectionHeading";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 type HomeMessages = (typeof MESSAGES)["en"]["home"];
 
@@ -14,7 +15,9 @@ function services(t: HomeMessages) {
   ];
 }
 
-export default function Services({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default async function Services() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].home;
   const SERVICES = services(t);
   return (

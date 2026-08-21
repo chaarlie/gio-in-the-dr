@@ -1,8 +1,11 @@
 import Image from "next/image";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
-export default function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default async function Hero() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].home;
   return (
     <section className="max-w-7xl mx-auto px-6 md:px-8 pt-6 sm:pt-10 pb-6">

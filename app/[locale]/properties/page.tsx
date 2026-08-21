@@ -110,7 +110,7 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
 
   return (
     <>
-      <Header locale={locale} />
+      <Header />
       <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         <SectionHeading title={t.heading} className="mb-8">
           <p className="text-muted mt-3 max-w-2xl">
@@ -183,8 +183,8 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
           labels={MESSAGES[locale].common}
         />
       </main>
-      <Footer locale={locale} />
-      <WhatsAppLauncher locale={locale} />
+      <Footer />
+      <WhatsAppLauncher />
     </>
   );
 }

@@ -2,8 +2,9 @@ import SectionHeading from "./SectionHeading";
 import CheckItem from "./CheckItem";
 import { GuideCover, GuideButton } from "./Guide";
 import { getGuide, BUYERS_GUIDE_SLUG } from "../lib/guide.server";
-import { DEFAULT_LOCALE, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 const POINTS = [
   "Real rental data from 10+ properties I manage in Cabarete Bay & Sosúa",
@@ -13,7 +14,9 @@ const POINTS = [
   "The unique pros and cons of each neighborhood & condominium",
 ];
 
-export default async function RealEstate360({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default async function RealEstate360() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale].home;
   /*
     Fetched once here and handed to both halves. The cover and the download

@@ -3,8 +3,9 @@ import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
 import NavLink from "./NavLink";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { DEFAULT_LOCALE, localePath, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, localePath, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 /*
   Every nav item lives here, including the highlighted first one.
@@ -29,11 +30,9 @@ const NAV = [
   { key: "contact", href: "/#contact" },
 ] as const;
 
-export default function Header({
-  locale = DEFAULT_LOCALE,
-}: {
-  locale?: Locale;
-}) {
+export default async function Header() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale];
   const items = NAV.map((item) => ({
     label: t.nav[item.key],

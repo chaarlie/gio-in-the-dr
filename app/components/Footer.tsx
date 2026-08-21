@@ -4,10 +4,23 @@ import WhatsAppIcon from "./WhatsAppIcon";
 import { WA } from "../lib/whatsapp";
 import { EMAIL } from "../lib/email";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "../lib/instagram";
-import { DEFAULT_LOCALE, localePath, type Locale } from "../lib/i18n";
+import { DEFAULT_LOCALE, isLocale, localePath, type Locale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
-export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+/*
+  No locale prop. Every route lives under app/[locale], which makes it a *root*
+  parameter — and next/root-params hands any server component the value without
+  it being threaded down through whatever happens to render this.
+
+  That threading is what let AreaMap silently keep English: its prop is named
+  `areas={areasPromise}`, the sweep that added locale everywhere matched on
+  `areas=`, and one heading stayed English while the rest of the page did not.
+  Nothing to miss here.
+*/
+export default async function Footer() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const m = MESSAGES[locale];
   const t = m.footer;
   return (
