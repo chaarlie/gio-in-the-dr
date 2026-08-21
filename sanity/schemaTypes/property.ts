@@ -212,7 +212,7 @@ export const property = defineType({
       lying about money. Blog posts get their own documents because a Spanish
       guide is a different article; a listing is the same listing.
 
-      Only these three fields carry language. Everything else is shared, which
+      Only these two fields carry language. Everything else is shared, which
       means there is exactly one price.
     */
     defineField({
@@ -220,13 +220,6 @@ export const property = defineType({
       title: "Título (español)",
       type: "string",
       group: "es",
-    }),
-    defineField({
-      name: "specEs",
-      title: "Resumen (español)",
-      type: "string",
-      group: "es",
-      description: 'e.g. "2 hab · 2 baños · 108 m²"',
     }),
     defineField({
       name: "bodyEs",

@@ -105,11 +105,13 @@ export function draftId(slug) {
 
   Same flat-string contract as the blog, so the same review step works: extract
   to plain strings, translate those, rebuild the blocks from the original tree.
+
+  The summary line is not here: it is derived from the structured fields at
+  render time, in both languages, so it never needs translating at all.
 */
 export function extractProperty(prop) {
   const out = {};
   if (prop.title) out.title = prop.title;
-  if (prop.spec) out.spec = prop.spec;
   for (const block of prop.body ?? []) {
     if (block._type !== "block" || !block._key) continue;
     (block.children ?? []).forEach((child, i) => {
@@ -136,7 +138,6 @@ export function rebuildProperty(prop, translated) {
 
   return {
     titleEs: translated.title ?? prop.title,
-    specEs: translated.spec ?? prop.spec,
     bodyEs,
   };
 }

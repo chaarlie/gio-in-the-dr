@@ -8,7 +8,7 @@
   assisted copy going live unread on a page quoting prices is the failure the
   whole flow exists to prevent.
 
-  Only titleEs, specEs and bodyEs are written. Price, beds, coordinates and
+  Only titleEs and bodyEs are written. Price, beds, coordinates and
   photos are shared, so there is no second copy of them to drift.
 */
 import fs from "node:fs";
