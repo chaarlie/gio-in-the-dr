@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Source_Serif_4, Hanken_Grotesk } from "next/font/google";
 import "../globals.css";
 import { DEFAULT_LOCALE, HREFLANG, LOCALES, isLocale } from "../lib/i18n";
+import { SITE_URL } from "../lib/site";
 import LocaleProvider from "../components/LocaleProvider";
 import { MESSAGES } from "../lib/messages";
 
@@ -20,16 +21,20 @@ const hanken = Hanken_Grotesk({
 });
 
 /*
-  metadataBase resolves the relative canonical and og:image URLs the property and
-  blog pages set. Without it those stay relative, and a relative og:image is one
-  no crawler or chat app can fetch — the link previews come out blank.
+  metadataBase resolves the relative canonical and og:image URLs the pages below
+  set. Without it those stay relative, and a relative og:image is one no crawler
+  or chat app can fetch — the link previews come out blank.
 
-  Set NEXT_PUBLIC_SITE_URL on the deploy; the localhost default only matters in dev.
+  Set NEXT_PUBLIC_SITE_URL on the deploy; the localhost default only matters in
+  dev. The origin itself now lives in lib/site so the sitemap resolves against
+  the same value these tags do.
+
+  Title and description are defaults only — every page sets its own, in its own
+  language. No `alternates` here on purpose: a canonical on the root layout is
+  inherited by every page beneath it, which would point the whole site at one URL.
 */
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: "Gio In The DR — Buy Property in Cabarete, Dominican Republic",
   description:
     "Trilingual agent in Cabarete helping foreigners buy homes, land & investment property on the DR's north coast — guidance in English, Spanish & Italian.",
@@ -44,8 +49,11 @@ export const viewport: Viewport = {
 
 /*
   The root layout lives under [locale] so <html lang> can be the actual language.
-  There is no app/layout.tsx: with middleware rewriting every unprefixed path to
-  /en, nothing renders outside this tree, so this is the only root there is.
+  There is no app/layout.tsx: rootParams serves the unprefixed path from this
+  same tree, so nothing renders outside it and this is the only root there is.
+
+  (An earlier version of this comment credited middleware for the unprefixed
+  path. There is no middleware.ts in this repo and there never was one here.)
 */
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
