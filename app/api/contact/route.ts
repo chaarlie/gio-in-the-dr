@@ -11,11 +11,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/*
+  The form posts an id, not a label, so that an enquiry from the Spanish site
+  and one from the English site arrive identically. The subject line Gio filters
+  on is written here, in English, whichever language the sender was reading.
+
+  An unrecognised id falls through to itself rather than being dropped: a value
+  in the subject line is always more useful than a blank one.
+*/
+const INTEREST_LABELS: Record<string, string> = {
+  buying: "Buying a home",
+  investment: "Investment property",
+  preConstruction: "Pre-construction",
+  relocation: "Relocation & residency",
+  question: "Just have a question",
+};
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const name = String(body.name ?? "").trim();
   const email = String(body.email ?? "").trim();
-  const interest = String(body.interest ?? "Contact form").trim();
+  const rawInterest = String(body.interest ?? "Contact form").trim();
+  const interest = INTEREST_LABELS[rawInterest] ?? rawInterest;
   const message = String(body.message ?? "").trim();
 
   if (!name || !email || !message) {

@@ -14,7 +14,6 @@ import {
   ALL,
   EMPTY_FILTERS,
   toFilterAmount,
-  countLabel,
   facetOptions,
   filterProperties,
   hasActiveFilters,
@@ -24,6 +23,7 @@ import {
   type Property,
   type SearchOption,
 } from "../lib/properties";
+import { useMessages } from "./LocaleProvider";
 
 /*
   Filter state for the property search, lifted out of the section that renders it so the
@@ -81,6 +81,7 @@ export default function PropertySearchProvider({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useMessages().properties;
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [page, setPageState] = useState(1);
@@ -93,14 +94,14 @@ export default function PropertySearchProvider({
     replaced was avoiding.
   */
   const fields = useMemo<SearchField[]>(() => {
-    const facets = facetOptions(properties);
+    const facets = facetOptions(properties, { anyArea: t.anyLocation, anyCategory: t.anyType });
     return [
-      { key: "area", label: "Location", options: facets.area },
-      { key: "category", label: "Property type", options: facets.category },
-      { key: "rooms", label: "Bedrooms", options: roomOptions() },
-      { key: "maxPrice", label: "Max price", options: priceOptions(properties, "No maximum") },
+      { key: "area", label: t.location, options: facets.area },
+      { key: "category", label: t.propertyType, options: facets.category },
+      { key: "rooms", label: t.bedrooms, options: roomOptions(t.anyBedroomsOption, t.bedroomsPlus) },
+      { key: "maxPrice", label: t.maxPrice, options: priceOptions(properties, t.noMaximum) },
     ];
-  }, [properties]);
+  }, [properties, t]);
 
   /*
     Subscribe to the URL — deliberately not with useSearchParams().
@@ -226,7 +227,7 @@ export default function PropertySearchProvider({
           pageCount,
           fields,
           hasFilters,
-          resultLabel: countLabel(results.length, hasFilters),
+          resultLabel: t.resultCount(results.length, hasFilters),
         },
         actions: {
           setFilter,

@@ -6,13 +6,23 @@ import WhatsAppIcon from "./WhatsAppIcon";
 import { WA, WHATSAPP_DISPLAY } from "../lib/whatsapp";
 import { useMessages } from "./LocaleProvider";
 
+/*
+  Ids, with the labels in the catalogue.
+
+  The id is what gets posted, so a Spanish enquiry arrives in Gio's inbox
+  reading "Buying a home" exactly as an English one does — the alternative was
+  posting whatever string the <option> happened to be showing, which would have
+  changed the shape of her mail the moment the site learned a second language.
+*/
 const INTERESTS = [
-  "Buying a home",
-  "Investment property",
-  "Pre-construction",
-  "Relocation & residency",
-  "Just have a question",
-];
+  "buying",
+  "investment",
+  "preConstruction",
+  "relocation",
+  "question",
+] as const;
+
+type Interest = (typeof INTERESTS)[number];
 
 type Field = "name" | "email";
 type Errors = Partial<Record<Field, string>>;
@@ -36,7 +46,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 */
 export default function ContactForm() {
   const t = useMessages().contact;
-  const [interest, setInterest] = useState(INTERESTS[0]);
+  const [interest, setInterest] = useState<Interest>(INTERESTS[0]);
   const [errors, setErrors] = useState<Errors>({});
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -67,10 +77,10 @@ export default function ContactForm() {
     const message = String(data.get("message") ?? "").trim();
 
     const next: Errors = {};
-    if (!name) next.name = "Add your name so Gio knows who's writing.";
-    if (!email) next.email = "Add an email address so Gio can reply.";
+    if (!name) next.name = t.nameRequired;
+    if (!email) next.email = t.emailRequired;
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-      next.email = "That address looks incomplete — check for a typo.";
+      next.email = t.emailInvalid;
     }
 
     setErrors(next);
@@ -96,18 +106,18 @@ export default function ContactForm() {
 
       if (!response.ok) {
         setSubmitState("error");
-        setStatusMessage(result.error ?? "Something went wrong. Please try again.");
+        setStatusMessage(result.error ?? t.sendFailed);
         return;
       }
 
       setSubmitState("success");
-      setStatusMessage("Message sent — Gio will be in touch soon.");
+      setStatusMessage(t.sent);
       formRef.current?.reset();
       setInterest(INTERESTS[0]);
     } catch (error) {
       console.error("Contact form submit failed", error);
       setSubmitState("error");
-      setStatusMessage("Unable to send your message right now. Please try again later.");
+      setStatusMessage(t.sendUnavailable);
     }
   }
 
@@ -127,7 +137,7 @@ export default function ContactForm() {
             href={WA.general}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`Message Gio on WhatsApp at ${WHATSAPP_DISPLAY}`}
+            aria-label={t.whatsappAria(WHATSAPP_DISPLAY)}
             className="group inline-flex items-center gap-3 mt-6 text-whatsapp no-underline"
           >
             <WhatsAppIcon size={28} className="shrink-0" />
@@ -140,7 +150,7 @@ export default function ContactForm() {
         <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-ink">Name</span>
+              <span className="text-sm font-semibold text-ink">{t.nameLabel}</span>
               <input
                 name="name"
                 type="text"
@@ -154,7 +164,7 @@ export default function ContactForm() {
               <FieldError id="name-error" message={errors.name} />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-ink">Email</span>
+              <span className="text-sm font-semibold text-ink">{t.emailLabel}</span>
               <input
                 name="email"
                 type="email"
@@ -178,13 +188,13 @@ export default function ContactForm() {
                 name="interest"
                 autoComplete="off"
                 value={interest}
-                onChange={(e) => setInterest(e.target.value)}
+                onChange={(e) => setInterest(e.target.value as Interest)}
                 style={{ backgroundColor: "var(--color-cream)", color: "var(--color-ink)" }}
                 className="w-full appearance-none border border-line rounded-xl px-4 pr-9 py-3 text-sm font-medium cursor-pointer outline-none focus:border-ink/40"
               >
                 {INTERESTS.map((i) => (
                   <option key={i} value={i}>
-                    {i}
+                    {t.interests[i]}
                   </option>
                 ))}
               </select>
@@ -214,7 +224,7 @@ export default function ContactForm() {
           <div role="status" aria-live="polite">
             <span className="sr-only">
               {Object.values(errors).filter(Boolean).length > 0
-                ? "The form has errors. Check the highlighted fields."
+                ? t.formHasErrors
                 : ""}
             </span>
             {statusMessage ? (
@@ -235,7 +245,7 @@ export default function ContactForm() {
             disabled={submitState === "sending"}
             className="bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors self-start touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitState === "sending" ? "Sending…" : "Send Message"}
+            {submitState === "sending" ? t.sending : t.send}
           </button>
         </form>
       </div>

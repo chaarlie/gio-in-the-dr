@@ -33,11 +33,18 @@ export const ALL = "All";
 
 const ROOM_STEPS = [1, 2, 3, 4, 5];
 
-/** "Any bedrooms / 1+ bedrooms / …" — a minimum, so it widens rather than excludes. */
-export function roomOptions(): SearchOption[] {
+/*
+  "Any bedrooms / 1+ bedrooms / …" — a minimum, so it widens rather than excludes.
+
+  Labels arrive from the caller rather than being written here. This module is
+  pure and has no locale to read; the plural rule differs per language anyway
+  ("1 habitación" / "2 habitaciones"), so the catalogue owns the wording and
+  this owns the ladder.
+*/
+export function roomOptions(anyLabel: string, label: (n: number) => string): SearchOption[] {
   return [
-    { value: ANY, label: "Any bedrooms" },
-    ...ROOM_STEPS.map((n) => ({ value: String(n), label: `${n}+ ${n === 1 ? "bedroom" : "bedrooms"}` })),
+    { value: ANY, label: anyLabel },
+    ...ROOM_STEPS.map((n) => ({ value: String(n), label: label(n) })),
   ];
 }
 
@@ -115,7 +122,10 @@ export function listOptions(values: string[], allLabel: string): SearchOption[] 
   deploy, and a select that offers "Sosúa" when nothing in Sosúa is for sale sends every
   buyer who picks it straight to an empty grid.
 */
-export function facetOptions(properties: Property[]): {
+export function facetOptions(
+  properties: Property[],
+  labels: { anyArea: string; anyCategory: string },
+): {
   area: SearchOption[];
   category: SearchOption[];
 } {
@@ -125,8 +135,8 @@ export function facetOptions(properties: Property[]): {
     );
 
   return {
-    area: listOptions([ALL, ...unique(properties.map((p) => p.area))], "Any location"),
-    category: listOptions([ALL, ...unique(properties.map((p) => p.category))], "Any type"),
+    area: listOptions([ALL, ...unique(properties.map((p) => p.area))], labels.anyArea),
+    category: listOptions([ALL, ...unique(properties.map((p) => p.category))], labels.anyCategory),
   };
 }
 
@@ -220,12 +230,6 @@ export function hasActiveFilters(filters: Filters): boolean {
     filters.rooms !== null ||
     filters.maxPrice !== null
   );
-}
-
-export function countLabel(count: number, filtered: boolean): string {
-  const noun = count === 1 ? "property" : "properties";
-  if (!filtered) return `${count} ${noun}`;
-  return `${count} ${noun} ${count === 1 ? "matches" : "match"} your search`;
 }
 
 /*
