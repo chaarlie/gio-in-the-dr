@@ -20,8 +20,20 @@ const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
   as "not translated" — the two are very different states, and conflating them
   would send someone to re-translate work already done.
 */
+/*
+  A placeholder is not a token.
+
+  .env.local ships with REPLACE_WITH_… values so the file documents what is
+  needed. Once the scripts started loading that file, they began sending the
+  placeholder as a bearer token, getting a 401, and reporting an empty dataset
+  as "0 of 0 translated" — a wrong answer that looks like a valid one.
+*/
+function usable(value) {
+  return Boolean(value) && !/^REPLACE_WITH/i.test(value);
+}
+
 function token() {
-  if (process.env.SANITY_API_WRITE_TOKEN) return process.env.SANITY_API_WRITE_TOKEN;
+  if (usable(process.env.SANITY_API_WRITE_TOKEN)) return process.env.SANITY_API_WRITE_TOKEN;
   try {
     return execSync("npx sanity debug --secrets 2>/dev/null | grep -i 'Auth token:' | awk '{print $3}'")
       .toString().trim();
@@ -33,10 +45,24 @@ const AUTH = token();
 
 async function q(query) {
   const url = `https://${PROJECT}.api.sanity.io/v2024-10-01/data/query/${DATASET}?query=${encodeURIComponent(query)}`;
-  const { result } = await (await fetch(url, {
-    headers: AUTH ? { Authorization: `Bearer ${AUTH}` } : {},
-  })).json();
-  return result ?? [];
+  const res = await fetch(url, { headers: AUTH ? { Authorization: `Bearer ${AUTH}` } : {} });
+  const body = await res.json();
+
+  /*
+    Stop rather than report an empty dataset.
+
+    A 401 here returns no rows, and "0 of 0 translated" is a plausible-looking
+    answer to the question this script asks — which is exactly how a bad token
+    went unnoticed. Nothing to translate and unable to look are different
+    outcomes and must not print the same.
+  */
+  if (!res.ok || body.error) {
+    const why = body?.message ?? body?.error?.description ?? res.statusText;
+    console.error(`\nCould not read Sanity: ${res.status} ${why}`);
+    console.error("  Check SANITY_API_WRITE_TOKEN in .env.local, or run: npx sanity login\n");
+    process.exit(1);
+  }
+  return body.result ?? [];
 }
 
 /* Posts translate into their own document, so the pair is linked by translationOf. */

@@ -32,8 +32,8 @@ if (empty.length) {
   process.exit(1);
 }
 
-const token = process.env.SANITY_API_WRITE_TOKEN
-  ?? execSync("npx sanity debug --secrets 2>/dev/null | grep -i 'Auth token:' | awk '{print $3}'").toString().trim();
+const token = (usable(process.env.SANITY_API_WRITE_TOKEN) ? process.env.SANITY_API_WRITE_TOKEN : "")
+  || execSync("npx sanity debug --secrets 2>/dev/null | grep -i 'Auth token:' | awk '{print $3}'").toString().trim();
 if (!token) { console.error("no write token"); process.exit(1); }
 
 const q = `*[_id == "${_id}"][0]`;

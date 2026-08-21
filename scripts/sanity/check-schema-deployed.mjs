@@ -20,8 +20,20 @@ import path from "node:path";
 const PROJECT = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "walmnvd1";
 const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 
+/*
+  A placeholder is not a token.
+
+  .env.local ships with REPLACE_WITH_… values so the file documents what is
+  needed. Once the scripts started loading that file, they began sending the
+  placeholder as a bearer token, getting a 401, and reporting an empty dataset
+  as "0 of 0 translated" — a wrong answer that looks like a valid one.
+*/
+function usable(value) {
+  return Boolean(value) && !/^REPLACE_WITH/i.test(value);
+}
+
 function token() {
-  if (process.env.SANITY_API_WRITE_TOKEN) return process.env.SANITY_API_WRITE_TOKEN;
+  if (usable(process.env.SANITY_API_WRITE_TOKEN)) return process.env.SANITY_API_WRITE_TOKEN;
   try {
     return execSync("npx sanity debug --secrets 2>/dev/null | grep -i 'Auth token:' | awk '{print $3}'")
       .toString().trim();

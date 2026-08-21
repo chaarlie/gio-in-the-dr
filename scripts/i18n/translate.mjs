@@ -72,7 +72,7 @@ RULES
 - Keep numbers, prices, measurements and dates exactly as they are. Never convert currencies or units.
 - A key whose value is only punctuation or a number comes back unchanged.`;
 
-if (!process.env.ANTHROPIC_API_KEY) {
+if (!process.env.ANTHROPIC_API_KEY || /^REPLACE_WITH/i.test(process.env.ANTHROPIC_API_KEY)) {
   console.error("No ANTHROPIC_API_KEY.\n  Put it in .env.local and run: npm run i18n:translate " + KIND);
   process.exit(1);
 }
