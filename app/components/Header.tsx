@@ -30,10 +30,28 @@ const NAV = [
   { key: "contact", href: "/#contact" },
 ] as const;
 
-export default async function Header() {
+export default async function Header({
+  /*
+    Where this page lives in the other language, when it is not simply the same
+    path under the other prefix.
+
+    A blog post is the case that needs it: its Spanish slug is
+    "donde-vivir-en-cabarete", not a prefixed copy of the English one, so the
+    switcher's own path-swap builds a URL that 404s. Passing null hides the
+    toggle, which is the right answer for a post with no translation — better
+    than offering a link to a page that does not exist.
+
+    Omitted everywhere else, where swapping the prefix is correct. The locale
+    itself still comes from next/root-params, not a prop.
+  */
+  otherHref,
+}: {
+  otherHref?: string | null;
+} = {}) {
   const raw = await rootLocale();
   const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
   const t = MESSAGES[locale];
+  const other: Locale = locale === "en" ? "es" : "en";
   const items = NAV.map((item) => ({
     label: t.nav[item.key],
     href: localePath(locale, item.href),
@@ -72,19 +90,19 @@ export default async function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* Site-wide language toggle. Every page has a counterpart in the
-              other language, so unlike the per-post switcher this one always
-              has somewhere to go. */}
+          {/* Both toggles take the same href. The mobile one used to omit it and
+              fall back to swapping the path prefix, which is right on every page
+              except the one that needs it most — a post, whose Spanish lives at a
+              Spanish slug. The result was a toggle that worked in the header and
+              404ed in the hamburger. */}
           <LanguageSwitcher
             locale={locale}
-            otherLocale={locale === "en" ? "es" : "en"}
+            otherLocale={other}
+            href={otherHref}
             className="hidden sm:flex"
           />
           <MobileMenu items={items} switcher={
-            <LanguageSwitcher
-              locale={locale}
-              otherLocale={locale === "en" ? "es" : "en"}
-              />
+            <LanguageSwitcher locale={locale} otherLocale={other} href={otherHref} />
           } />
         </div>
       </div>

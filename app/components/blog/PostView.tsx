@@ -3,7 +3,6 @@ import Link from "next/link";
 import PortableBody from "../PortableBody";
 import TableOfContents from "../TableOfContents";
 import PostCard from "../PostCard";
-import LanguageSwitcher from "../LanguageSwitcher";
 import { formatDate, readingTime, type Post } from "../../lib/posts.server";
 import { WA } from "../../lib/whatsapp";
 import { mailtoLink } from "../../lib/email";
@@ -19,7 +18,6 @@ import { MESSAGES } from "../../lib/messages";
 */
 export default function PostView({ post, locale }: { post: Post; locale: Locale }) {
   const t = MESSAGES[locale].blog;
-  const other: Locale = locale === "en" ? "es" : "en";
   const date = formatDate(post.publishedAt, locale);
   const minutesValue = readingTime(post.body);
   const minutes = minutesValue === null ? null : t.minRead(minutesValue);
@@ -28,20 +26,12 @@ export default function PostView({ post, locale }: { post: Post; locale: Locale 
   return (
     <>
         <article className="max-w-3xl mx-auto px-6 md:px-8 py-12 md:py-16">
-          <div className="flex items-center justify-between gap-4">
           <Link
             href={blogPath(locale)}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink no-underline transition-colors"
           >
             {t.allGuides}
           </Link>
-          {/* Only rendered when a translation exists — see LanguageSwitcher. */}
-          <LanguageSwitcher
-            locale={locale}
-            otherLocale={other}
-            href={post.translation ? blogPath(other, post.translation.slug) : null}
-          />
-          </div>
 
           <header className="mt-6">
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted">

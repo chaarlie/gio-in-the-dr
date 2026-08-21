@@ -71,6 +71,8 @@ export default async function PostPage({ params }: PageProps) {
   const post = await getPost(slug, locale);
   if (!post) notFound();
 
+  const other: Locale = locale === "en" ? "es" : "en";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -86,7 +88,14 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <>
-      <Header />
+      {/*
+        The post's own translation, not a prefix swap: a Spanish post has its
+        own slug. Null when there is no translation, which hides the toggle
+        rather than linking to a 404.
+      */}
+      <Header
+        otherHref={post.translation ? blogPath(other, post.translation.slug) : null}
+      />
       <main id="main" tabIndex={-1} className="flex-1 w-full">
         <PostView post={post} locale={locale} />
       </main>
