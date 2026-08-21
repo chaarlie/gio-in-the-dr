@@ -2,6 +2,7 @@ import { cache } from "react";
 import { sanityFetch } from "../../sanity/lib/client";
 import {
   PROPERTIES_QUERY,
+  PROPERTIES_COUNT_QUERY,
   PROPERTIES_PAGE_QUERY,
   PROPERTY_FACETS_QUERY,
   PROPERTY_QUERY,
@@ -243,3 +244,28 @@ export const getPropertyFacets = cache(
       "properties",
     ),
 );
+
+/*
+  How many listings match, without fetching any of them.
+
+  Used to validate a page number before the results stream, because notFound()
+  inside a Suspense boundary arrives too late to set a status code.
+*/
+export async function countProperties(
+  filters: PropertyFilters,
+  language: Locale = "en",
+): Promise<number> {
+  return sanityFetch<number>(
+    PROPERTIES_COUNT_QUERY,
+    {
+      area: filters.area,
+      category: filters.category,
+      minBeds: filters.minBeds,
+      maxPrice: filters.maxPrice,
+      tokens: searchTokens(filters.q),
+      phonetic: [],
+    },
+    0,
+    "properties",
+  );
+}

@@ -134,6 +134,19 @@ const PROPERTY_FILTER = `
       || (count($phonetic) > 0 && searchPhonetic match $phonetic))
 `;
 
+/*
+  Just the total, for validating a page number before anything streams.
+
+  notFound() cannot set a status once streaming has begun — the headers are
+  already sent — so an out-of-range page inside a Suspense boundary renders the
+  404 body with a 200, which is exactly the duplicate content the 404 existed to
+  prevent. Counting first costs one small query, and only when someone asks for
+  a page beyond the first.
+*/
+export const PROPERTIES_COUNT_QUERY = defineQuery(`
+  count(*[${PROPERTY_FILTER}])
+`);
+
 export const PROPERTIES_PAGE_QUERY = defineQuery(`
   {
     "items": *[${PROPERTY_FILTER}] | order(priceUsd desc) [$from...$to] {

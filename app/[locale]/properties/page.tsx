@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,12 +13,14 @@ import { WA } from "../../lib/whatsapp";
 import { DEFAULT_LOCALE, isLocale } from "../../lib/i18n";
 import { MESSAGES } from "../../lib/messages";
 import {
+  countProperties,
   getPropertiesPage,
   getPropertyFacets,
   NO_FILTERS,
   PAGE_SIZE,
   type PropertyFilters,
 } from "../../lib/properties.server";
+import type { Locale } from "../../lib/i18n";
 
 /*
   The property index: filtered and paginated by Sanity, not by the browser.
@@ -81,6 +84,18 @@ function hrefFor(filters: PropertyFilters, page: number): string {
   return qs ? `/properties?${qs}` : "/properties";
 }
 
+/*
+  The shell renders immediately; the two queries stream in behind it.
+
+  This route reads searchParams, so it is dynamic — and with the fetches inline
+  nothing reached the browser until Sanity answered both. Measured at 320-570 ms
+  to first byte against 6-10 ms for the prerendered routes, which is the whole
+  page waiting on data most of it does not need.
+
+  Two boundaries because the two queries are independent: the facets are the
+  same whatever you searched for, and the results are the only part that has to
+  wait for the filter.
+*/
 export default async function PropertiesIndex({ searchParams, params: routeParams }: PageProps) {
   const { locale: raw } = await routeParams;
   const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
@@ -89,11 +104,80 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
   const filters = readFilters(params);
   const page = toInt(params.page) || 1;
 
-  // Facets don't depend on the filters, so both start together rather than
-  // the page waiting on a list of areas it already knows it needs.
-  const facetsPromise = getPropertyFacets();
+  /*
+    Page numbers are validated before anything streams, because notFound()
+    inside a Suspense boundary arrives after the headers and renders a 404 body
+    with a 200 status — which is exactly the duplicate content the 404 exists to
+    prevent.
+
+    Only for page 2 and beyond: page one is always valid, so the common request
+    pays nothing and keeps its ~8 ms to first byte.
+  */
+  if (page > 1) {
+    const total = await countProperties(filters, locale);
+    if (total === 0 || page > Math.ceil(total / PAGE_SIZE)) notFound();
+  }
+
+  return (
+    <>
+      <Header />
+      <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
+        <SectionHeading title={t.heading} className="mb-8">
+          <p className="text-muted mt-3 max-w-2xl">{t.indexIntro}</p>
+        </SectionHeading>
+
+        <Suspense fallback={<FiltersSkeleton />}>
+          <Filters filters={filters} locale={locale} />
+        </Suspense>
+
+        {/*
+          Keyed on the query, so changing a filter shows the skeleton again
+          rather than leaving the previous results on screen looking current.
+        */}
+        <Suspense key={`${JSON.stringify(filters)}:${page}`} fallback={<ResultsSkeleton />}>
+          <Results filters={filters} page={page} locale={locale} />
+        </Suspense>
+      </main>
+      <Footer />
+      <WhatsAppLauncher />
+    </>
+  );
+}
+
+/** Reserves the filter bar's height so the results below do not jump when it lands. */
+function FiltersSkeleton() {
+  return <div className="bg-card border border-line rounded-3xl h-[188px] animate-pulse" />;
+}
+
+function ResultsSkeleton() {
+  return (
+    <>
+      <p className="text-sm text-muted mt-6">&nbsp;</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-3xl bg-card border border-line aspect-[4/3] animate-pulse" />
+        ))}
+      </div>
+    </>
+  );
+}
+
+async function Filters({ filters, locale }: { filters: PropertyFilters; locale: Locale }) {
+  const facets = await getPropertyFacets();
+  return <PropertyFiltersBar facets={facets} filters={filters} locale={locale} />;
+}
+
+async function Results({
+  filters,
+  page,
+  locale,
+}: {
+  filters: PropertyFilters;
+  page: number;
+  locale: Locale;
+}) {
+  const t = MESSAGES[locale].properties;
   const result = await getPropertiesPage(filters, page, locale);
-  const facets = await facetsPromise;
 
   /*
     A page past the end is not a page. Clamping would silently serve page 1 at a
@@ -110,17 +194,6 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
 
   return (
     <>
-      <Header />
-      <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
-        <SectionHeading title={t.heading} className="mb-8">
-          <p className="text-muted mt-3 max-w-2xl">
-            {t.indexIntro}
-            the north coast.
-          </p>
-        </SectionHeading>
-
-        <PropertyFiltersBar facets={facets} filters={filters} locale={locale} />
-
         {/* aria-live so a screen reader hears the count change after a search,
             which is otherwise the one part of the result that is invisible. */}
         <p aria-live="polite" className="text-sm text-muted mt-6 tabular-nums">
@@ -182,9 +255,6 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
           hrefFor={(p) => hrefFor(filters, p)}
           labels={MESSAGES[locale].common}
         />
-      </main>
-      <Footer />
-      <WhatsAppLauncher />
     </>
   );
 }
