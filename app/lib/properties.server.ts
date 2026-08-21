@@ -8,6 +8,7 @@ import {
   PROPERTY_SLUGS_QUERY,
 } from "../../sanity/lib/queries";
 import { formatPrice } from "./format";
+import { formatSpec } from "./spec";
 import { searchTokens, type Property } from "./properties";
 import { phoneticTokens } from "./phonetic";
 import type { PortableBlocks } from "../components/PortableBody";
@@ -29,7 +30,11 @@ type PropertyRow = {
   title: string;
   priceUsd: number | null;
   beds: number | null;
-  spec: string | null;
+  /** Read by formatSpec, not rendered directly. */
+  baths: number | null;
+  areaM2: number | null;
+  hoaAmount: number | null;
+  hoaUnit: string | null;
   category: string | null;
   image: string | null;
   lqip: string | null;
@@ -60,7 +65,7 @@ export type PropertyDetail = {
 };
 
 /** Listings for the search grid, newest asking price first. */
-export async function getProperties(): Promise<Property[]> {
+export async function getProperties(language: Locale = "en"): Promise<Property[]> {
   const rows = await sanityFetch<PropertyRow[]>(PROPERTIES_QUERY, {}, [], "properties");
 
   return rows
@@ -74,7 +79,9 @@ export async function getProperties(): Promise<Property[]> {
       price: formatPrice(r.priceUsd),
       priceUsd: r.priceUsd as number,
       beds: r.beds,
-      spec: r.spec,
+      // Derived, not stored — see lib/spec. The typed field duplicated five
+      // structured values and had already drifted from them.
+      spec: formatSpec(r, language),
       image: r.image,
       lqip: r.lqip,
     }));
@@ -92,8 +99,17 @@ export async function getPropertySlugs(): Promise<string[]> {
   slower layer that still costs a round trip on a miss.
 */
 export const getProperty = cache(
-  async (slug: string, language: Locale = "en"): Promise<PropertyDetail | null> =>
-    sanityFetch<PropertyDetail | null>(PROPERTY_QUERY, { slug, language }, null, "property"),
+  async (slug: string, language: Locale = "en"): Promise<PropertyDetail | null> => {
+    const p = await sanityFetch<PropertyDetail | null>(
+      PROPERTY_QUERY,
+      { slug, language },
+      null,
+      "property",
+    );
+    // Derived here rather than in GROQ: the formatter has to reach the same
+    // monthlyHoa guard the rest of the site uses, and that lives in TypeScript.
+    return p ? { ...p, spec: formatSpec(p, language) } : null;
+  },
 );
 
 /* ── The paginated index ──────────────────────────────────────────────────── */
@@ -147,6 +163,7 @@ export type PropertyFacets = {
 export async function getPropertiesPage(
   filters: PropertyFilters,
   page: number,
+  language: Locale = "en",
 ): Promise<PropertyPage> {
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const from = (safePage - 1) * PAGE_SIZE;
@@ -200,7 +217,9 @@ export async function getPropertiesPage(
       price: formatPrice(r.priceUsd),
       priceUsd: r.priceUsd as number,
       beds: r.beds,
-      spec: r.spec,
+      // Derived, not stored — see lib/spec. The typed field duplicated five
+      // structured values and had already drifted from them.
+      spec: formatSpec(r, language),
       image: r.image,
       lqip: r.lqip,
     }));

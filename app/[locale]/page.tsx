@@ -26,7 +26,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     itself; the areas travel on as a promise for AreaMap to await further down.
   */
   const areasPromise = getAreas();
-  const properties = await getProperties();
+  const properties = await getProperties(locale);
 
   return (
     <>

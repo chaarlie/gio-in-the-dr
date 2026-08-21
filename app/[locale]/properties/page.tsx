@@ -92,7 +92,7 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
   // Facets don't depend on the filters, so both start together rather than
   // the page waiting on a list of areas it already knows it needs.
   const facetsPromise = getPropertyFacets();
-  const result = await getPropertiesPage(filters, page);
+  const result = await getPropertiesPage(filters, page, locale);
   const facets = await facetsPromise;
 
   /*

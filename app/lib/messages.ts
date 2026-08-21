@@ -108,6 +108,11 @@ type Copy = {
     count: (from: number, to: number, total: number) => string;
     /** Facts table + detail page */
     bathrooms: string;
+    bedroom: string;
+    bedroomsShort: string;
+    bathroom: string;
+    bathroomsShort: string;
+    perMonthShort: string;
     interiorArea: string;
     pricePerM2: string;
     hoa: string;
@@ -322,6 +327,11 @@ export const MESSAGES: Record<Locale, Copy> = {
       count: (from, to, total) =>
         `${from}–${to} of ${total} ${total === 1 ? "property" : "properties"}`,
       bathrooms: "Bathrooms",
+      bedroom: "bed",
+      bedroomsShort: "beds",
+      bathroom: "bath",
+      bathroomsShort: "baths",
+      perMonthShort: "/mo",
       interiorArea: "Interior area",
       pricePerM2: "Price per m²",
       hoa: "HOA",
@@ -538,6 +548,11 @@ export const MESSAGES: Record<Locale, Copy> = {
       count: (from, to, total) =>
         `${from}–${to} de ${total} ${total === 1 ? "propiedad" : "propiedades"}`,
       bathrooms: "Baños",
+      bedroom: "hab",
+      bedroomsShort: "hab",
+      bathroom: "baño",
+      bathroomsShort: "baños",
+      perMonthShort: "/mes",
       interiorArea: "Área interior",
       pricePerM2: "Precio por m²",
       hoa: "Mantenimiento",
