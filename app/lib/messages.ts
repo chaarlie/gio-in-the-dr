@@ -83,6 +83,30 @@ type Copy = {
     namePlaceholder: string;
     emailPlaceholder: string;
     messagePlaceholder: string;
+    nameLabel: string;
+    emailLabel: string;
+    /*
+      Keyed rather than a plain array: the value posted to /api/contact stays
+      the English id, so what lands in Gio's inbox does not change shape
+      depending on which language the enquiry came from.
+    */
+    interests: {
+      buying: string;
+      investment: string;
+      preConstruction: string;
+      relocation: string;
+      question: string;
+    };
+    nameRequired: string;
+    emailRequired: string;
+    emailInvalid: string;
+    formHasErrors: string;
+    sending: string;
+    send: string;
+    sent: string;
+    sendFailed: string;
+    sendUnavailable: string;
+    whatsappAria: (number: string) => string;
   };
   properties: {
     heading: string;
@@ -105,6 +129,16 @@ type Copy = {
     allTypes: string;
     anyBedrooms: string;
     noMaximum: string;
+    /*
+      The home search bar phrases its unset options as "Any …" while the
+      /properties filters say "All areas". Same idea, different copy, and
+      collapsing them would be a content change rather than a translation.
+    */
+    anyLocation: string;
+    anyType: string;
+    anyBedroomsOption: string;
+    bedroomsPlus: (n: number) => string;
+    resultCount: (n: number, filtered: boolean) => string;
     count: (from: number, to: number, total: number) => string;
     /** Facts table + detail page */
     bathrooms: string;
@@ -299,6 +333,25 @@ export const MESSAGES: Record<Locale, Copy> = {
       namePlaceholder: "Your name…",
       emailPlaceholder: "you@email.com…",
       messagePlaceholder: "Budget, area, timeline — whatever helps…",
+      nameLabel: "Name",
+      emailLabel: "Email",
+      interests: {
+        buying: "Buying a home",
+        investment: "Investment property",
+        preConstruction: "Pre-construction",
+        relocation: "Relocation & residency",
+        question: "Just have a question",
+      },
+      nameRequired: "Add your name so Gio knows who's writing.",
+      emailRequired: "Add an email address so Gio can reply.",
+      emailInvalid: "That address looks incomplete — check for a typo.",
+      formHasErrors: "The form has errors. Check the highlighted fields.",
+      sending: "Sending…",
+      send: "Send Message",
+      sent: "Message sent — Gio will be in touch soon.",
+      sendFailed: "Something went wrong. Please try again.",
+      sendUnavailable: "Unable to send your message right now. Please try again later.",
+      whatsappAria: (number) => `Message Gio on WhatsApp at ${number}`,
     },
     properties: {
       heading: "Find your property",
@@ -324,6 +377,15 @@ export const MESSAGES: Record<Locale, Copy> = {
       allTypes: "All types",
       anyBedrooms: "Any",
       noMaximum: "No maximum",
+      anyLocation: "Any location",
+      anyType: "Any type",
+      anyBedroomsOption: "Any bedrooms",
+      bedroomsPlus: (n) => `${n}+ ${n === 1 ? "bedroom" : "bedrooms"}`,
+      resultCount: (n, filtered) => {
+        const noun = n === 1 ? "property" : "properties";
+        if (!filtered) return `${n} ${noun}`;
+        return `${n} ${noun} ${n === 1 ? "matches" : "match"} your search`;
+      },
       count: (from, to, total) =>
         `${from}–${to} of ${total} ${total === 1 ? "property" : "properties"}`,
       bathrooms: "Bathrooms",
@@ -520,6 +582,25 @@ export const MESSAGES: Record<Locale, Copy> = {
       namePlaceholder: "Tu nombre…",
       emailPlaceholder: "tu@correo.com…",
       messagePlaceholder: "Presupuesto, zona, plazos — lo que ayude…",
+      nameLabel: "Nombre",
+      emailLabel: "Email",
+      interests: {
+        buying: "Comprar una casa",
+        investment: "Propiedad de inversión",
+        preConstruction: "Preconstrucción",
+        relocation: "Mudanza y residencia",
+        question: "Solo tengo una pregunta",
+      },
+      nameRequired: "Escribe tu nombre para que Gio sepa quién le escribe.",
+      emailRequired: "Escribe un correo para que Gio pueda responderte.",
+      emailInvalid: "Ese correo parece incompleto — revisa que no falte nada.",
+      formHasErrors: "El formulario tiene errores. Revisa los campos marcados.",
+      sending: "Enviando…",
+      send: "Enviar mensaje",
+      sent: "Mensaje enviado — Gio te escribirá pronto.",
+      sendFailed: "Algo salió mal. Inténtalo de nuevo.",
+      sendUnavailable: "No se puede enviar tu mensaje ahora mismo. Inténtalo más tarde.",
+      whatsappAria: (number) => `Escríbele a Gio por WhatsApp al ${number}`,
     },
     properties: {
       heading: "Encuentra tu propiedad",
@@ -545,6 +626,19 @@ export const MESSAGES: Record<Locale, Copy> = {
       allTypes: "Todos los tipos",
       anyBedrooms: "Cualquiera",
       noMaximum: "Sin máximo",
+      anyLocation: "Cualquier zona",
+      anyType: "Cualquier tipo",
+      anyBedroomsOption: "Cualquier número de habitaciones",
+      bedroomsPlus: (n) => `${n}+ ${n === 1 ? "habitación" : "habitaciones"}`,
+      /*
+        Spanish agrees the verb with the count, same as English, but the noun
+        is feminine — "1 propiedad coincide", "3 propiedades coinciden".
+      */
+      resultCount: (n, filtered) => {
+        const noun = n === 1 ? "propiedad" : "propiedades";
+        if (!filtered) return `${n} ${noun}`;
+        return `${n} ${noun} ${n === 1 ? "coincide" : "coinciden"} con tu búsqueda`;
+      },
       count: (from, to, total) =>
         `${from}–${to} de ${total} ${total === 1 ? "propiedad" : "propiedades"}`,
       bathrooms: "Baños",
