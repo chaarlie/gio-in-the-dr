@@ -60,6 +60,9 @@ GLOSSARY (use these consistently)
 - brand new → a estrenar
 - beachfront → frente al mar
 - bedroom → habitación · bathroom → baño
+- convenience → comodidad (never "conveniencia", which is an anglicism here)
+- storage locker → depósito (not "depósito de almacenamiento" — redundant)
+- amenities → amenidades · gated community → comunidad cerrada
 
 RULES
 - Return a JSON object with EXACTLY the same keys you were given, and nothing else.
@@ -74,6 +77,8 @@ if (!process.env.ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
+const MODEL = "claude-sonnet-5";
+
 const client = new Anthropic();
 
 async function translate(strings) {
@@ -81,17 +86,23 @@ async function translate(strings) {
     Streamed because a long post runs to ~8k output tokens, and a non-streaming
     request that size risks the SDK's HTTP timeout.
 
-    Server-side fallbacks are on: if a safety classifier declines the request,
-    the API re-runs it on a fallback model inside the same call rather than
-    handing back a refusal and losing the work.
+    No server-side fallbacks: the API rejects that parameter on Sonnet — it is
+    an Opus and Fable feature. A refusal here therefore ends the document rather
+    than being retried elsewhere, which the stop_reason check below reports
+    instead of writing a half-translated file.
   */
-  const stream = client.beta.messages.stream({
-    model: "claude-opus-5",
+  const stream = client.messages.stream({
+    /*
+      Sonnet rather than Opus, chosen deliberately: at $3/$15 against $5/$25 it
+      is roughly half the cost, and the output here is reviewed before it is
+      published anyway — the pending JSON is plain strings a person can edit,
+      and Gio still reads the draft in the Studio. Two review gates make the
+      marginal quality of a larger model worth less than it usually is.
+    */
+    model: MODEL,
     max_tokens: 32000,
     system: SYSTEM,
     thinking: { type: "adaptive" },
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
     messages: [
       {
         role: "user",
@@ -167,7 +178,18 @@ if (!files.length) {
   assumption survives being wrong.
 */
 const spent = { input: 0, output: 0 };
-const RATE = { input: 5 / 1_000_000, output: 25 / 1_000_000 }; // claude-opus-5, USD/token
+
+/*
+  USD per million tokens, keyed by model so the figure cannot drift from what
+  was actually called — it already did once, reporting Opus prices for a Sonnet
+  run. Standard rates, not the introductory ones, so the number is never
+  optimistic.
+*/
+const PRICING = {
+  "claude-sonnet-5": { input: 3, output: 15 },
+  "claude-opus-5": { input: 5, output: 25 },
+  "claude-haiku-4-5": { input: 1, output: 5 },
+};
 
 for (const file of files) {
   const full = path.join(DIR, file);
@@ -191,13 +213,14 @@ for (const file of files) {
     fs.writeFileSync(full, JSON.stringify(doc, null, 2) + "\n");
     console.log("✓");
   } catch (error) {
-    console.log(`✗ ${error instanceof Error ? error.message.slice(0, 70) : error}`);
+    console.log(`✗ ${error instanceof Error ? error.message.slice(0, 160) : error}`);
   }
 }
 
-const cost = spent.input * RATE.input + spent.output * RATE.output;
+const rate = PRICING[MODEL] ?? { input: 0, output: 0 };
+const cost = (spent.input * rate.input + spent.output * rate.output) / 1_000_000;
 console.log(
-  `\n${spent.input.toLocaleString()} in / ${spent.output.toLocaleString()} out — about $${cost.toFixed(2)}`,
+  `\n${MODEL}: ${spent.input.toLocaleString()} in / ${spent.output.toLocaleString()} out — about $${cost.toFixed(3)}`,
 );
 
 console.log(`\nNow review and apply:`);
