@@ -70,8 +70,6 @@ type Copy = {
     areasEyebrow: string;
     areasHeading: string;
     areasIntro: string;
-    closerToSand: string;
-    furtherInland: string;
     boundariesNote: string;
   };
   contact: {
@@ -319,8 +317,6 @@ export const MESSAGES: Record<Locale, Copy> = {
       areasHeading: "Explore by area",
       areasIntro:
         "Take a closer look at Cabarete and Sosúa. Use the map to understand where each area is, how the neighborhoods connect, and what makes each one unique: from beaches and local life to restaurants, amenities and atmosphere. Especially if it's your first time here, the map gives you an easy feel for the area and helps you discover which neighborhood might be the right fit for you.",
-      closerToSand: "Closer to the sand",
-      furtherInland: "Further inland",
       boundariesNote: "Boundaries approximate.",
     },
     contact: {
@@ -568,8 +564,6 @@ export const MESSAGES: Record<Locale, Copy> = {
       areasHeading: "Explora por zona",
       areasIntro:
         "Conoce Cabarete y Sosúa de cerca. Usa el mapa para entender dónde está cada zona, cómo se conectan los barrios y qué hace única a cada uno: desde las playas y la vida local hasta los restaurantes, los servicios y el ambiente. Sobre todo si es tu primera vez aquí, el mapa te da una idea rápida de la zona y te ayuda a descubrir qué barrio puede encajar contigo.",
-      closerToSand: "Más cerca de la arena",
-      furtherInland: "Más hacia el interior",
       boundariesNote: "Los límites son aproximados.",
     },
     contact: {

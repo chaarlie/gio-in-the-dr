@@ -1,6 +1,5 @@
 import SectionHeading from "./SectionHeading";
 import AreaExplorer from "./AreaExplorer";
-import { AREA_TONES } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
 import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
@@ -57,19 +56,9 @@ export default async function AreaMap({ areas: areasPromise }: { areas: Promise<
 
       <AreaExplorer areas={areas} />
 
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-xs text-muted">
-        <span className="font-semibold uppercase tracking-[0.18em]">{t.closerToSand}</span>
-        <span
-          className="flex rounded-full overflow-hidden border border-line"
-          aria-hidden="true"
-        >
-          {AREA_TONES.map((c) => (
-            <span key={c} className="w-7 h-3" style={{ background: c }} />
-          ))}
-        </span>
-        <span className="font-semibold uppercase tracking-[0.18em]">{t.furtherInland}</span>
-        <span className="ml-auto italic">{t.boundariesNote}</span>
-      </p>
+      {/* The colour-ramp legend that used to sit here is gone. What stays is the
+          one thing it said that the map cannot: that the shapes are indicative. */}
+      <p className="mt-3 text-xs text-muted italic">{t.boundariesNote}</p>
     </section>
   );
 }
