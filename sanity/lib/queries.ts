@@ -188,6 +188,20 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(`
 `);
 
 /*
+  Slugs plus whether each has Spanish copy, for the sitemap.
+
+  A sitemap that lists /es/properties/<slug> is telling Google the page is worth
+  indexing as Spanish. For the nine listings still awaiting translation that is
+  not true, so the sitemap needs to know which is which.
+*/
+export const PROPERTY_SLUGS_I18N_QUERY = defineQuery(`
+  *[_type == "property" && defined(slug.current)]{
+    "slug": slug.current,
+    "hasEs": defined(titleEs) && defined(bodyEs)
+  }
+`);
+
+/*
   A single listing. Images come back with their dimensions and LQIP so next/image
   can reserve the right box and blur into it — asset->url alone gives neither, and
   a gallery that reflows as it loads is the worst possible CLS on the page a buyer
@@ -206,6 +220,17 @@ export const PROPERTY_QUERY = defineQuery(`
   *[_type == "property" && slug.current == $slug][0]{
     "title": select($language == "es" => coalesce(titleEs, title), title),
     "body": select($language == "es" => coalesce(bodyEs, body), body),
+    // Whether the Spanish above is actually Spanish. coalesce falls back to
+    // English silently, which is right for the reader — a listing with no
+    // translation is better than a blank page — but it leaves nothing able to
+    // tell a translation from a fallback. Measured, nine of ten /es/properties
+    // pages were 83-90% identical to their English counterpart while claiming,
+    // through hreflang and the sitemap, to be the Spanish version of it.
+    // Reported the same way whichever language was asked for, because the
+    // English page needs it too: with no Spanish edition, English must not
+    // advertise one through hreflang.
+    // (GROQ has line comments only — a /* */ block here is a syntax error.)
+    "hasEs": defined(titleEs) && defined(bodyEs),
     "slug": slug.current,
     priceUsd, beds, baths, areaM2, category, status,
     hoaAmount, hoaUnit, walkToBeachMin, location, sourceUrl,

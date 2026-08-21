@@ -7,6 +7,7 @@ import {
   PROPERTY_FACETS_QUERY,
   PROPERTY_QUERY,
   PROPERTY_SLUGS_QUERY,
+  PROPERTY_SLUGS_I18N_QUERY,
 } from "../../sanity/lib/queries";
 import { formatPrice } from "./format";
 import { formatSpec } from "./spec";
@@ -60,6 +61,8 @@ export type PropertyDetail = {
   walkToBeachMin: number | null;
   location: { lat: number; lng: number } | null;
   body: PortableBlocks | null;
+  /** Whether a Spanish edition of this listing exists, asked from either locale. */
+  hasEs: boolean;
   sourceUrl: string | null;
   images: PropertyImage[] | null;
   area: { name: string; slug: string; beachPoint: { lat: number; lng: number } | null } | null;
@@ -91,6 +94,18 @@ export async function getProperties(language: Locale = "en"): Promise<Property[]
 /** For generateStaticParams — includes sold and reserved, which keep their pages. */
 export async function getPropertySlugs(): Promise<string[]> {
   return sanityFetch<string[]>(PROPERTY_SLUGS_QUERY, {}, [], "property-slugs");
+}
+
+/** Slugs with their Spanish availability, so the sitemap only lists real pages. */
+export async function getPropertySlugsI18n(): Promise<
+  { slug: string; hasEs: boolean }[]
+> {
+  return sanityFetch<{ slug: string; hasEs: boolean }[]>(
+    PROPERTY_SLUGS_I18N_QUERY,
+    {},
+    [],
+    "property-slugs",
+  );
 }
 
 /*

@@ -14,8 +14,12 @@ import {
   DEFAULT_LOCALE,
   isLocale,
   localeAlternates,
+  localePath,
   propertyPath,
 } from "../../lib/i18n";
+import JsonLd from "../../components/JsonLd";
+import { absoluteUrl } from "../../lib/site";
+import { ORG_ID, breadcrumbSchema, graph } from "../../lib/schema";
 import { MESSAGES } from "../../lib/messages";
 import {
   countProperties,
@@ -142,6 +146,23 @@ export default async function PropertiesIndex({ searchParams, params: routeParam
 
   return (
     <>
+      <JsonLd
+        data={graph(locale, [
+          {
+            "@type": "CollectionPage",
+            "@id": absoluteUrl(propertyPath(locale)),
+            url: absoluteUrl(propertyPath(locale)),
+            name: t.metaTitle,
+            description: t.metaDescription,
+            about: { "@id": ORG_ID },
+            isPartOf: { "@id": absoluteUrl("/#website") },
+          },
+          breadcrumbSchema(locale, [
+            { name: "Gio In The DR", path: localePath(locale, "/") },
+            { name: t.heading, path: propertyPath(locale) },
+          ]),
+        ])}
+      />
       <Header />
       <main id="main" tabIndex={-1} className="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 md:py-14 w-full">
         {/* as="h1": this is a page in its own right, not a section of one, and

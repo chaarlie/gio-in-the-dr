@@ -5,7 +5,17 @@ import Footer from "../../../components/Footer";
 import WhatsAppLauncher from "../../../components/WhatsAppLauncher";
 import PostView from "../../../components/blog/PostView";
 import { getPost, getPostSlugsIn } from "../../../lib/posts.server";
-import { HREFLANG, LOCALES, blogPath, isLocale, type Locale } from "../../../lib/i18n";
+import {
+  HREFLANG,
+  LOCALES,
+  blogPath,
+  isLocale,
+  localePath,
+  type Locale,
+} from "../../../lib/i18n";
+import { MESSAGES } from "../../../lib/messages";
+import { absoluteUrl } from "../../../lib/site";
+import { ORG_ID, PERSON_ID, breadcrumbSchema, graph } from "../../../lib/schema";
 
 /*
   One post, in whichever language the URL asked for.
@@ -73,18 +83,38 @@ export default async function PostPage({ params }: PageProps) {
 
   const other: Locale = locale === "en" ? "es" : "en";
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.excerpt ?? undefined,
-    datePublished: post.publishedAt ?? undefined,
-    inLanguage: HREFLANG[locale],
-    image: post.cover?.url ? [post.cover.url] : undefined,
-    author: { "@type": "Person", name: "Gio" },
-    publisher: { "@type": "Organization", name: "Gio In The DR" },
-    mainEntityOfPage: blogPath(locale, post.slug),
-  };
+  /*
+    author and publisher are references now, not fresh anonymous nodes.
+
+    They used to be an inline Person named "Gio" and an inline Organization
+    named "Gio In The DR" — correct as far as it went, but a different,
+    unidentified pair on every post, so nothing tied the guides to the agent
+    whose expertise is the reason to trust them. Pointing at the @ids the home
+    page defines makes the whole site one author with one body of work, which is
+    the signal E-E-A-T is actually asking for.
+
+    mainEntityOfPage is absolute now: it was a bare path, which resolves against
+    whatever origin the reader happens to be on.
+  */
+  const jsonLd = graph(locale, [
+    {
+      "@type": "BlogPosting",
+      "@id": absoluteUrl(blogPath(locale, post.slug)),
+      headline: post.title,
+      description: post.excerpt ?? undefined,
+      datePublished: post.publishedAt ?? undefined,
+      image: post.cover?.url ? [post.cover.url] : undefined,
+      author: { "@id": PERSON_ID },
+      publisher: { "@id": ORG_ID },
+      isPartOf: { "@id": absoluteUrl(blogPath(locale)) },
+      mainEntityOfPage: absoluteUrl(blogPath(locale, post.slug)),
+    },
+    breadcrumbSchema(locale, [
+      { name: "Gio In The DR", path: localePath(locale, "/") },
+      { name: MESSAGES[locale].blog.indexEyebrow, path: blogPath(locale) },
+      { name: post.title, path: blogPath(locale, post.slug) },
+    ]),
+  ]);
 
   return (
     <>
