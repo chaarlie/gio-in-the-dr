@@ -12,8 +12,8 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import {
   ALL,
-  ANY,
   EMPTY_FILTERS,
+  toFilterAmount,
   countLabel,
   facetOptions,
   filterProperties,
@@ -122,8 +122,9 @@ export default function PropertySearchProvider({
         q: params.get("q") ?? EMPTY_FILTERS.q,
         area: params.get("area") ?? EMPTY_FILTERS.area,
         category: params.get("category") ?? EMPTY_FILTERS.category,
-        rooms: params.get("rooms") ?? EMPTY_FILTERS.rooms,
-        maxPrice: params.get("max") ?? EMPTY_FILTERS.maxPrice,
+        // Parsed here, at the edge, so everything downstream compares numbers.
+        rooms: toFilterAmount(params.get("rooms") ?? ""),
+        maxPrice: toFilterAmount(params.get("max") ?? ""),
       };
       // Bail when nothing changed so this can't cascade renders.
       setFilters((prev) =>
@@ -155,8 +156,8 @@ export default function PropertySearchProvider({
     if (next.q.trim()) params.set("q", next.q.trim());
     if (next.area !== ALL) params.set("area", next.area);
     if (next.category !== ALL) params.set("category", next.category);
-    if (next.rooms !== ANY) params.set("rooms", next.rooms);
-    if (next.maxPrice !== ANY) params.set("max", next.maxPrice);
+    if (next.rooms !== null) params.set("rooms", String(next.rooms));
+    if (next.maxPrice !== null) params.set("max", String(next.maxPrice));
     if (nextPage > 1) params.set("page", String(nextPage));
     const query = params.toString();
     // Stay on the current path rather than hardcoding "/", so this can't bounce anyone
@@ -170,8 +171,14 @@ export default function PropertySearchProvider({
     });
   }
 
+  /*
+    Takes the raw select value — a string, because that is all a <select> can
+    give — and parses the numeric fields once, here. Every reader downstream
+    sees a number or null and never has to know about the "Any" sentinel.
+  */
   function setFilter(key: keyof Filters, value: string) {
-    const next = { ...filters, [key]: value };
+    const parsed = key === "rooms" || key === "maxPrice" ? toFilterAmount(value) : value;
+    const next = { ...filters, [key]: parsed };
     setFilters(next);
     // Back to page one whenever the set changes, or narrowing a filter strands
     // you on a page that no longer exists.

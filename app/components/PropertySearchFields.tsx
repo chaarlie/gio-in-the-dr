@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { useMessages } from "./LocaleProvider";
+import { ANY } from "../lib/properties";
 
 // Hoisted: these re-render on every keystroke, and there's no React Compiler here.
 const SEARCH_ICON = (
@@ -96,7 +97,14 @@ export function SearchFieldGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-y border-line">
       {state.fields.map((field) => {
-        const value = state.filters[field.key];
+        /*
+          Back to a string for the DOM. The filter state holds numbers now, but
+          a <select> compares its value to its options as strings, so null has
+          to become the ANY sentinel here — the one place that still has to know
+          about it.
+        */
+        const raw = state.filters[field.key];
+        const value = raw === null ? ANY : String(raw);
         /*
           The options come from the listings, so a shared link can name one that
           no longer exists — ?max=750000 after the ladder shifted, or an area
