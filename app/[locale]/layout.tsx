@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
 
 import { Source_Serif_4, Hanken_Grotesk } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
+import { DEFAULT_LOCALE, HREFLANG, LOCALES, isLocale } from "../lib/i18n";
+import LocaleProvider from "../components/LocaleProvider";
+import { MESSAGES } from "../lib/messages";
 
 // Heading serif — simpler / lower-contrast than Playfair ("menos fairy, mas simple").
 const heading = Source_Serif_4({
@@ -39,14 +42,27 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({
+/*
+  The root layout lives under [locale] so <html lang> can be the actual language.
+  There is no app/layout.tsx: with middleware rewriting every unprefixed path to
+  /en, nothing renders outside this tree, so this is the only root there is.
+*/
+export function generateStaticParams() {
+  return LOCALES.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }>) {
+  const { locale } = await params;
+  const lang = isLocale(locale) ? HREFLANG[locale] : HREFLANG[DEFAULT_LOCALE];
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${heading.variable} ${hanken.variable} h-full antialiased`}
     >
       <head>
@@ -54,15 +70,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="" />
       </head>
       <body className="min-h-full flex flex-col bg-cream text-ink font-body">
+        {/* Every client component below reads its strings from here. */}
+        <LocaleProvider locale={isLocale(locale) ? locale : DEFAULT_LOCALE}>
         {/* Skip link: first thing in the tab order, invisible until focused, so
             keyboard users aren't dragged through the whole header on every page. */}
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:z-[300] focus:top-3 focus:left-3 focus:rounded-full focus:bg-accent focus:px-5 focus:py-3 focus:text-sm focus:font-semibold focus:text-cream focus:no-underline"
         >
-          Skip to content
+          {MESSAGES[isLocale(locale) ? locale : DEFAULT_LOCALE].common.skipToContent}
         </a>
         {children}
+        </LocaleProvider>
       </body>
     </html>
   );

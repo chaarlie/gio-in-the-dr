@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import AreaMapbox from "../AreaMapbox";
 import type { Area } from "../../lib/areas";
+import { useMessages } from "../LocaleProvider";
 
 /*
   The real map, full screen, on small screens only.
@@ -27,6 +28,7 @@ export default function FullScreenMap({
   onOpenListing: (slug: string) => void;
   onClose: () => void;
 }) {
+  const t = useMessages();
   const closeRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<Element | null>(null);
 
@@ -60,7 +62,7 @@ export default function FullScreenMap({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Map of Cabarete neighbourhoods"
+      aria-label={t.map.mapAria}
       className="fixed inset-0 z-[200] bg-cream flex flex-col overscroll-contain"
     >
       <div
@@ -68,13 +70,13 @@ export default function FullScreenMap({
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
         <p className="font-semibold text-ink truncate min-w-0">
-          {areas.find((a) => a.slug === selected)?.name ?? "Explore by area"}
+          {areas.find((a) => a.slug === selected)?.name ?? t.home.areasHeading}
         </p>
         <button
           ref={closeRef}
           type="button"
           onClick={onClose}
-          aria-label="Close the map"
+          aria-label={t.map.closeMap}
           className="shrink-0 w-11 h-11 -mr-1 rounded-full flex items-center justify-center text-ink hover:bg-ink/5 transition-colors"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">

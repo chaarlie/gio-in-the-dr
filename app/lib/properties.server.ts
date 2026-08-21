@@ -2,16 +2,19 @@ import { cache } from "react";
 import { sanityFetch } from "../../sanity/lib/client";
 import {
   PROPERTIES_QUERY,
+  PROPERTIES_COUNT_QUERY,
   PROPERTIES_PAGE_QUERY,
   PROPERTY_FACETS_QUERY,
   PROPERTY_QUERY,
   PROPERTY_SLUGS_QUERY,
 } from "../../sanity/lib/queries";
 import { formatPrice } from "./format";
+import { formatSpec } from "./spec";
 import { searchTokens, type Property } from "./properties";
 import { phoneticTokens } from "./phonetic";
 import type { PortableBlocks } from "../components/PortableBody";
 import type { GalleryImage } from "./sanity-image";
+import type { Locale } from "./i18n";
 
 /*
   Every read of the listings. Server-only by construction — it imports the Sanity
@@ -28,7 +31,11 @@ type PropertyRow = {
   title: string;
   priceUsd: number | null;
   beds: number | null;
-  spec: string | null;
+  /** Read by formatSpec, not rendered directly. */
+  baths: number | null;
+  areaM2: number | null;
+  hoaAmount: number | null;
+  hoaUnit: string | null;
   category: string | null;
   image: string | null;
   lqip: string | null;
@@ -59,7 +66,7 @@ export type PropertyDetail = {
 };
 
 /** Listings for the search grid, newest asking price first. */
-export async function getProperties(): Promise<Property[]> {
+export async function getProperties(language: Locale = "en"): Promise<Property[]> {
   const rows = await sanityFetch<PropertyRow[]>(PROPERTIES_QUERY, {}, [], "properties");
 
   return rows
@@ -73,7 +80,9 @@ export async function getProperties(): Promise<Property[]> {
       price: formatPrice(r.priceUsd),
       priceUsd: r.priceUsd as number,
       beds: r.beds,
-      spec: r.spec,
+      // Derived, not stored — see lib/spec. The typed field duplicated five
+      // structured values and had already drifted from them.
+      spec: formatSpec(r, language),
       image: r.image,
       lqip: r.lqip,
     }));
@@ -91,8 +100,17 @@ export async function getPropertySlugs(): Promise<string[]> {
   slower layer that still costs a round trip on a miss.
 */
 export const getProperty = cache(
-  async (slug: string): Promise<PropertyDetail | null> =>
-    sanityFetch<PropertyDetail | null>(PROPERTY_QUERY, { slug }, null, "property"),
+  async (slug: string, language: Locale = "en"): Promise<PropertyDetail | null> => {
+    const p = await sanityFetch<PropertyDetail | null>(
+      PROPERTY_QUERY,
+      { slug, language },
+      null,
+      "property",
+    );
+    // Derived here rather than in GROQ: the formatter has to reach the same
+    // monthlyHoa guard the rest of the site uses, and that lives in TypeScript.
+    return p ? { ...p, spec: formatSpec(p, language) } : null;
+  },
 );
 
 /* ── The paginated index ──────────────────────────────────────────────────── */
@@ -146,6 +164,7 @@ export type PropertyFacets = {
 export async function getPropertiesPage(
   filters: PropertyFilters,
   page: number,
+  language: Locale = "en",
 ): Promise<PropertyPage> {
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const from = (safePage - 1) * PAGE_SIZE;
@@ -199,7 +218,9 @@ export async function getPropertiesPage(
       price: formatPrice(r.priceUsd),
       priceUsd: r.priceUsd as number,
       beds: r.beds,
-      spec: r.spec,
+      // Derived, not stored — see lib/spec. The typed field duplicated five
+      // structured values and had already drifted from them.
+      spec: formatSpec(r, language),
       image: r.image,
       lqip: r.lqip,
     }));
@@ -223,3 +244,30 @@ export const getPropertyFacets = cache(
       "properties",
     ),
 );
+
+/*
+  How many listings match, without fetching any of them.
+
+  Used to validate a page number before the results stream, because notFound()
+  inside a Suspense boundary arrives too late to set a status code.
+*/
+/*
+  No language parameter, deliberately: the page query does not filter by locale
+  either — a listing exists in both languages — so the count is the same number
+  whichever language asked. Taking one would imply otherwise.
+*/
+export async function countProperties(filters: PropertyFilters): Promise<number> {
+  return sanityFetch<number>(
+    PROPERTIES_COUNT_QUERY,
+    {
+      area: filters.area,
+      category: filters.category,
+      minBeds: filters.minBeds,
+      maxPrice: filters.maxPrice,
+      tokens: searchTokens(filters.q),
+      phonetic: [],
+    },
+    0,
+    "properties",
+  );
+}

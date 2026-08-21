@@ -165,27 +165,39 @@ export type Filters = {
   /** Neighbourhood name, labelled "Location" in the UI. ALL = unset. */
   area: string;
   category: string;
-  /** Minimum bedrooms. Kept a string so it shares the select plumbing. ANY = unset. */
-  rooms: string;
-  maxPrice: string;
+  /*
+    Numbers as numbers.
+
+    These were strings carrying either a number or the literal word "Any", so
+    every read had to know the sentinel before it could compare, and
+    Number("Any") is NaN for anyone who forgot. A <select> can only ever hand
+    back a string — that is the platform, not a choice — so the parse happens
+    once where the value enters, and everything downstream sees a number or
+    null.
+  */
+  rooms: number | null;
+  maxPrice: number | null;
 };
 
 export const EMPTY_FILTERS: Filters = {
   q: "",
   area: ALL,
   category: ALL,
-  rooms: ANY,
-  maxPrice: ANY,
+  rooms: null,
+  maxPrice: null,
 };
 
-function toAmount(value: string): number | null {
-  return value === ANY ? null : Number(value);
+/** A select's value to a filter value. Empty or the ANY sentinel means unset. */
+export function toFilterAmount(value: string): number | null {
+  if (!value || value === ANY) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 export function filterProperties(properties: Property[], filters: Filters): Property[] {
   const query = fold(filters.q.trim());
-  const minRooms = toAmount(filters.rooms);
-  const max = toAmount(filters.maxPrice);
+  const minRooms = filters.rooms;
+  const max = filters.maxPrice;
   const index = query === "" ? null : searchIndex(properties);
 
   return properties.filter((p) => {
@@ -205,8 +217,8 @@ export function hasActiveFilters(filters: Filters): boolean {
     filters.q.trim() !== "" ||
     filters.area !== ALL ||
     filters.category !== ALL ||
-    filters.rooms !== ANY ||
-    filters.maxPrice !== ANY
+    filters.rooms !== null ||
+    filters.maxPrice !== null
   );
 }
 

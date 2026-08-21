@@ -2,6 +2,7 @@ import { sanityFetch } from "../../sanity/lib/client";
 import { polygonRings } from "../../sanity/lib/geojson";
 import { AREAS_QUERY } from "../../sanity/lib/queries";
 import { AREA_TONES } from "./neighborhoods";
+import { formatSpec } from "./spec";
 import type { GalleryImage } from "./sanity-image";
 
 /*
@@ -157,6 +158,9 @@ export async function getAreas(): Promise<Area[]> {
       // its area's, rather than throwing while the map builds its markers.
       listings: (r.listings ?? []).map((l) => ({
         ...l,
+        // Same derivation as the property pages — one definition of the summary
+        // line, so the explorer and the listing page cannot disagree.
+        spec: formatSpec(l),
         location: validPoint(l.location, `listing "${l.title}"`),
         beachPoint: validPoint(l.beachPoint, `beach access near "${l.title}"`),
       })),

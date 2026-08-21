@@ -2,10 +2,11 @@
 
 import SectionHeading from "./SectionHeading";
 import PropertyCard from "./PropertyCard";
-import Pagination from "../properties/Pagination";
+import Pagination from "./properties/Pagination";
 import { usePropertySearch } from "./PropertySearchProvider";
 import { SearchFieldGrid, SearchQueryRow, SearchActionsRow } from "./PropertySearchFields";
 import { WA } from "../lib/whatsapp";
+import { useMessages } from "./LocaleProvider";
 
 /*
   The in-page search, over whatever is published in Sanity.
@@ -16,6 +17,7 @@ import { WA } from "../lib/whatsapp";
   "clear your filters" to someone who never set one is the version that reads broken.
 */
 export default function Properties() {
+  const t = useMessages();
   const { state, actions } = usePropertySearch();
 
   function scrollToResults() {
@@ -27,15 +29,15 @@ export default function Properties() {
 
   return (
     <section id="properties" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4">
-      <SectionHeading align="center" title="Find your property" className="mb-8">
+      <SectionHeading align="center" title={t.properties.heading} className="mb-8">
         <p className="text-muted mt-3">
-          Search beachfront condos, villas, investment and pre-construction across the north coast.
+          {t.properties.intro}
         </p>
       </SectionHeading>
 
       <form
         role="search"
-        aria-label="Filter properties"
+        aria-label={t.properties.heading}
         onSubmit={(e) => {
           e.preventDefault();
           scrollToResults();
@@ -55,9 +57,7 @@ export default function Properties() {
       <div className="min-h-[420px] sm:min-h-[520px]">
       {state.all.length === 0 ? (
         <div className="min-h-[420px] sm:min-h-[520px] flex flex-col items-center justify-center text-center text-muted">
-          <p className="max-w-sm">
-            Nothing is listed publicly right now — a lot of what Gio sells never gets that
-            far. Message her and she&apos;ll tell you what&apos;s actually available.
+          <p className="max-w-sm"> {t.properties.nothingListed}
           </p>
           <a
             href={WA.general}
@@ -65,18 +65,18 @@ export default function Properties() {
             rel="noopener noreferrer"
             className="mt-5 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-3.5 rounded-full transition-colors no-underline"
           >
-            Ask Gio what&apos;s available
+            {t.properties.askAvailable}
           </a>
         </div>
       ) : state.results.length === 0 ? (
         <div className="min-h-[420px] sm:min-h-[520px] flex flex-col items-center justify-center text-center text-muted">
-          <p>No properties match your search.</p>
+          <p>{t.properties.noMatch}</p>
           <button
             type="button"
             onClick={actions.reset}
             className="mt-4 border border-line rounded-full px-5 py-2.5 text-sm font-semibold text-ink hover:bg-ink/5 transition-colors"
           >
-            Clear filters
+            {t.properties.clearFilters}
           </button>
         </div>
       ) : (
@@ -100,6 +100,7 @@ export default function Properties() {
             page={state.page}
             pageCount={state.pageCount}
             hrefFor={(p) => `?page=${p}`}
+            labels={t.common}
             onSelect={(p) => {
               actions.setPage(p);
               scrollToResults();

@@ -17,6 +17,51 @@ export const post = defineType({
   title: "Blog post",
   type: "document",
   fields: [
+    /*
+      Translation. A Spanish post is its own document, not a second set of
+      fields on the English one — a Spanish guide is a different article, not a
+      field-by-field mirror, and it needs its own slug. "donde-vivir-en-cabarete"
+      is what Spanish readers search for, and a shared slug throws that away.
+    */
+    defineField({
+      name: "language",
+      title: "Language",
+      type: "string",
+      options: {
+        list: [
+          { title: "English", value: "en" },
+          { title: "Español", value: "es" },
+        ],
+        layout: "radio",
+        direction: "horizontal",
+      },
+      initialValue: "en",
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "translationOf",
+      title: "Translation of",
+      type: "reference",
+      to: [{ type: "post" }],
+      description: "The English post this was translated from.",
+      // Only meaningful on a translation; the English original has nothing above it.
+      hidden: ({ document }) => document?.language === "en" || !document?.language,
+    }),
+    /*
+      The revision of the English post this was translated from.
+
+      Written by the translation script, never by hand. The site does not read it;
+      it exists so the Studio can say "the English has changed since this was
+      translated" — which is the one failure mode of keeping two documents in step.
+      Without it a stale translation looks exactly like a current one.
+    */
+    defineField({
+      name: "sourceRev",
+      title: "Translated from revision",
+      type: "string",
+      hidden: true,
+      readOnly: true,
+    }),
     defineField({
       name: "title",
       type: "string",

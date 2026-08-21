@@ -46,3 +46,7 @@ next-env.d.ts
 
 # Claude Code local machine settings
 .claude/settings.local.json
+
+# Working files for the blog translation scripts — the translation itself
+# lands in Sanity, which is the source of truth once applied.
+scripts/i18n/pending/

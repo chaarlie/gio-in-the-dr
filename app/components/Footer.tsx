@@ -4,18 +4,35 @@ import WhatsAppIcon from "./WhatsAppIcon";
 import { WA } from "../lib/whatsapp";
 import { EMAIL } from "../lib/email";
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from "../lib/instagram";
+import { DEFAULT_LOCALE, isLocale, localePath, type Locale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
-export default function Footer() {
+/*
+  No locale prop. Every route lives under app/[locale], which makes it a *root*
+  parameter — and next/root-params hands any server component the value without
+  it being threaded down through whatever happens to render this.
+
+  That threading is what let AreaMap silently keep English: its prop is named
+  `areas={areasPromise}`, the sweep that added locale everywhere matched on
+  `areas=`, and one heading stayed English while the rest of the page did not.
+  Nothing to miss here.
+*/
+export default async function Footer() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const m = MESSAGES[locale];
+  const t = m.footer;
   return (
     <footer className="mt-20 bg-accent text-cream">
       <div className="max-w-7xl mx-auto px-6 md:px-8 pt-20 pb-10">
         <div className="grid md:grid-cols-[1.3fr_1fr] gap-10 items-end pb-14 border-b border-cream/15">
           <div>
             <p className="text-xs font-semibold tracking-[0.22em] uppercase text-cream/60 mb-4">
-              Let&apos;s talk
+              {t.eyebrow}
             </p>
             <h2 className="font-display font-bold text-4xl md:text-6xl leading-[1.02] max-w-xl text-balance">
-              Find your place in the Dominican Republic.
+              {t.heading}
             </h2>
           </div>
           <div className="flex flex-col gap-4 items-start">
@@ -26,7 +43,7 @@ export default function Footer() {
               className="inline-flex items-center gap-2.5 bg-cream text-ink text-[15px] font-bold px-7 py-4 rounded-full no-underline hover:bg-white transition-colors"
             >
               <WhatsAppIcon size={20} className="text-whatsapp" />
-              Chat on WhatsApp
+              {t.chat}
             </a>
             {/* Email and Instagram share the underlined-text treatment so the
                 column reads as one primary action with two quieter ways to
@@ -61,38 +78,38 @@ export default function Footer() {
           </div>
           <nav className="flex gap-6 flex-wrap">
             <Link
-              href="/properties"
+              href={localePath(locale, "/properties")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Properties
+              {m.nav.properties}
             </Link>
             <Link
-              href="/blog"
+              href={localePath(locale, "/blog")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Blog
+              {m.nav.blog}
             </Link>
             <Link
-              href="/#services"
+              href={localePath(locale, "/#services")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Services
+              {m.nav.services}
             </Link>
             <Link
-              href="/#about"
+              href={localePath(locale, "/#about")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              About
+              {m.nav.about}
             </Link>
             <Link
-              href="/#contact"
+              href={localePath(locale, "/#contact")}
               className="text-cream/75 text-sm font-medium no-underline hover:text-cream transition-colors"
             >
-              Contact
+              {m.nav.contact}
             </Link>
           </nav>
           <div className="text-cream/50 text-sm">
-            © 2026 Gio In The DR. All rights reserved.
+            {t.rights}
           </div>
         </div>
       </div>

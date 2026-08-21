@@ -42,7 +42,6 @@ export const AREAS_QUERY = defineQuery(`
         beds,
         baths,
         areaM2,
-        spec,
         category,
         location,
         sourceUrl,
@@ -85,7 +84,10 @@ export const PROPERTIES_QUERY = defineQuery(`
       beds,
       baths,
       areaM2,
-      spec,
+      baths,
+      areaM2,
+      hoaAmount,
+      hoaUnit,
       category,
       "image": images[0].asset->url,
       "lqip": images[0].asset->metadata.lqip,
@@ -132,6 +134,19 @@ const PROPERTY_FILTER = `
       || (count($phonetic) > 0 && searchPhonetic match $phonetic))
 `;
 
+/*
+  Just the total, for validating a page number before anything streams.
+
+  notFound() cannot set a status once streaming has begun — the headers are
+  already sent — so an out-of-range page inside a Suspense boundary renders the
+  404 body with a 200, which is exactly the duplicate content the 404 existed to
+  prevent. Counting first costs one small query, and only when someone asks for
+  a page beyond the first.
+*/
+export const PROPERTIES_COUNT_QUERY = defineQuery(`
+  count(*[${PROPERTY_FILTER}])
+`);
+
 export const PROPERTIES_PAGE_QUERY = defineQuery(`
   {
     "items": *[${PROPERTY_FILTER}] | order(priceUsd desc) [$from...$to] {
@@ -141,7 +156,10 @@ export const PROPERTIES_PAGE_QUERY = defineQuery(`
       beds,
       baths,
       areaM2,
-      spec,
+      baths,
+      areaM2,
+      hoaAmount,
+      hoaUnit,
       category,
       "image": images[0].asset->url,
       "lqip": images[0].asset->metadata.lqip,
@@ -175,11 +193,22 @@ export const PROPERTY_SLUGS_QUERY = defineQuery(`
   a gallery that reflows as it loads is the worst possible CLS on the page a buyer
   actually reads.
 */
+/*
+  A listing, in the requested language.
+
+  coalesce rather than a second document: a property is mostly language-neutral,
+  so price, beds, coordinates and photos have exactly one copy and cannot drift
+  between languages. Only the three text fields are per-language, and an
+  untranslated one falls back to English rather than rendering blank — a Spanish
+  page with an English paragraph is worse than nothing only if it is unexpected.
+*/
 export const PROPERTY_QUERY = defineQuery(`
   *[_type == "property" && slug.current == $slug][0]{
+    "title": select($language == "es" => coalesce(titleEs, title), title),
+    "body": select($language == "es" => coalesce(bodyEs, body), body),
     "slug": slug.current,
-    title, priceUsd, beds, baths, areaM2, spec, category, status,
-    hoaAmount, hoaUnit, walkToBeachMin, location, body, sourceUrl,
+    priceUsd, beds, baths, areaM2, category, status,
+    hoaAmount, hoaUnit, walkToBeachMin, location, sourceUrl,
     "images": images[]{
       "key": _key,
       "url": asset->url,
@@ -213,19 +242,39 @@ const POST_CARD_FIELDS = `
   }
 `;
 
+/*
+  English only, until the site actually routes by locale.
+
+  A translated post is its own document, so without this filter the Spanish
+  version of a guide appears on /blog next to the English one the moment Gio
+  publishes it — same index, same list, two languages. `language != "es"` rather
+  than `== "en"` so posts written before the field existed still show.
+*/
 export const POSTS_QUERY = defineQuery(`
-  *[_type == "post" && defined(slug.current) && publishedAt <= now()]
+  *[_type == "post" && defined(slug.current) && publishedAt <= now() && language != "es"]
     | order(publishedAt desc) {
       ${POST_CARD_FIELDS}
     }
 `);
 
 export const POST_SLUGS_QUERY = defineQuery(`
-  *[_type == "post" && defined(slug.current)].slug.current
+  *[_type == "post" && defined(slug.current) && language != "es"].slug.current
 `);
 
+/*
+  A post in one language, with the slug of its counterpart in the other.
+
+  Looked up both ways because the link between the two only points one way: the
+  Spanish document carries translationOf, the English knows nothing about it. So
+  from Spanish it is a dereference, and from English it is a reverse lookup.
+  Returning null here is what hides the flag toggle — see LanguageSwitcher.
+*/
 export const POST_QUERY = defineQuery(`
-  *[_type == "post" && slug.current == $slug][0]{
+  *[_type == "post" && slug.current == $slug && language == $language][0]{
+    "translation": select(
+      language == "es" => translationOf->{ "slug": slug.current, language },
+      *[_type == "post" && language == "es" && translationOf._ref == ^._id][0]{ "slug": slug.current, language }
+    ),
     ${POST_CARD_FIELDS},
     body[]{
       ...,
@@ -308,4 +357,16 @@ export const LISTING_IMAGES_QUERY = defineQuery(`
     "aspectRatio": asset->metadata.dimensions.aspectRatio,
     alt
   }
+`);
+
+/** One language's index. The English index keeps POSTS_QUERY's language != "es" guard. */
+export const POSTS_IN_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && publishedAt <= now() && language == $language]
+    | order(publishedAt desc) {
+      ${POST_CARD_FIELDS}
+    }
+`);
+
+export const POST_SLUGS_IN_QUERY = defineQuery(`
+  *[_type == "post" && defined(slug.current) && language == $language].slug.current
 `);

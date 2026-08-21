@@ -1,19 +1,22 @@
-import Header from "./components/Header";
-import Hero from "./components/Hero";
-import Stats from "./components/Stats";
-import RealEstate360 from "./components/RealEstate360";
-import AreaMap from "./components/AreaMap";
-import Services from "./components/Services";
-import Properties from "./components/Properties";
-import PropertySearchProvider from "./components/PropertySearchProvider";
-import About from "./components/About";
-import ContactForm from "./components/ContactForm";
-import Footer from "./components/Footer";
-import WhatsAppLauncher from "./components/WhatsAppLauncher";
-import { getAreas } from "./lib/areas";
-import { getProperties } from "./lib/properties.server";
+import Header from "../components/Header";
+import Hero from "../components/Hero";
+import Stats from "../components/Stats";
+import RealEstate360 from "../components/RealEstate360";
+import AreaMap from "../components/AreaMap";
+import Services from "../components/Services";
+import Properties from "../components/Properties";
+import PropertySearchProvider from "../components/PropertySearchProvider";
+import About from "../components/About";
+import ContactForm from "../components/ContactForm";
+import Footer from "../components/Footer";
+import WhatsAppLauncher from "../components/WhatsAppLauncher";
+import { getAreas } from "../lib/areas";
+import { getProperties } from "../lib/properties.server";
+import { DEFAULT_LOCALE, isLocale } from "../lib/i18n";
 
-export default async function Home() {
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
   /*
     Both Sanity queries start before either is awaited. Fetching the listings and
     then letting <AreaMap> fetch the areas ran them back to back — two round trips
@@ -23,7 +26,7 @@ export default async function Home() {
     itself; the areas travel on as a promise for AreaMap to await further down.
   */
   const areasPromise = getAreas();
-  const properties = await getProperties();
+  const properties = await getProperties(locale);
 
   return (
     <>

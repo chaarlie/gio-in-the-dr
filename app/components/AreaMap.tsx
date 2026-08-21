@@ -2,6 +2,9 @@ import SectionHeading from "./SectionHeading";
 import AreaExplorer from "./AreaExplorer";
 import { AREA_TONES } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
 /*
   Explore by area.
@@ -22,11 +25,19 @@ import type { Area } from "../lib/areas";
   Awaiting a prop keeps this a normal server component — the parent never blocks
   on the promise, it just hands it over.
 */
-export default async function AreaMap({
-  areas: areasPromise,
-}: {
-  areas: Promise<Area[]>;
-}) {
+/*
+  The locale is read, not passed — and this component is why.
+
+  It used to take it as a prop, and the sweep that added `locale={locale}` to
+  every section on the home page matched on `areas=` and skipped this one,
+  because its prop is spelled `areas={areasPromise}`. The heading stayed English
+  on the Spanish page while everything around it translated, and nothing failed.
+  There is no prop to miss now.
+*/
+export default async function AreaMap({ areas: areasPromise }: { areas: Promise<Area[]> }) {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].home;
   const areas = await areasPromise;
 
   return (
@@ -36,26 +47,18 @@ export default async function AreaMap({
     >
       <SectionHeading
         align="center"
-        eyebrow="North coast"
-        title="Explore by area"
+        eyebrow={t.areasEyebrow}
+        title={t.areasHeading}
         className="mb-8"
       >
-        <p className="text-muted mt-3 max-w-2xl mx-auto">
-          Take a closer look at Cabarete and Sosúa. Use the map to understand
-          where each area is, how the neighborhoods connect, and what makes each
-          one unique: from beaches and local life to restaurants, amenities and
-          atmosphere. Especially if it’s your first time here, the map gives you
-          an easy feel for the area and helps you discover which neighborhood
-          might be the right fit for you.
-        </p>
+        <p className="text-muted mt-3 max-w-2xl mx-auto"> {t.areasIntro}
+          </p>
       </SectionHeading>
 
       <AreaExplorer areas={areas} />
 
       <p className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-3 text-xs text-muted">
-        <span className="font-semibold uppercase tracking-[0.18em]">
-          Closer to the sand
-        </span>
+        <span className="font-semibold uppercase tracking-[0.18em]">{t.closerToSand}</span>
         <span
           className="flex rounded-full overflow-hidden border border-line"
           aria-hidden="true"
@@ -64,10 +67,8 @@ export default async function AreaMap({
             <span key={c} className="w-7 h-3" style={{ background: c }} />
           ))}
         </span>
-        <span className="font-semibold uppercase tracking-[0.18em]">
-          Further inland
-        </span>
-        <span className="ml-auto italic">Boundaries approximate.</span>
+        <span className="font-semibold uppercase tracking-[0.18em]">{t.furtherInland}</span>
+        <span className="ml-auto italic">{t.boundariesNote}</span>
       </p>
     </section>
   );

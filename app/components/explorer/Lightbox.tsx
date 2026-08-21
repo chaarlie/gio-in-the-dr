@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { sizedImage, sizedSrcSet } from "../../lib/sanity-image";
 import type { ListingImage } from "../../lib/areas";
+import { useMessages } from "../LocaleProvider";
 
 /*
   Full-bleed photo viewer.
@@ -28,6 +29,7 @@ export default function Lightbox({
   title: string;
   onClose: () => void;
 }) {
+  const t = useMessages();
   const [index, setIndex] = useState(startIndex);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -146,7 +148,7 @@ export default function Lightbox({
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Close photo viewer"
+            aria-label={t.gallery.closeViewer}
             className="rounded-full w-10 h-10 flex items-center justify-center bg-cream/10 hover:bg-cream/20 transition-colors text-lg"
           >
             ✕
@@ -158,7 +160,7 @@ export default function Lightbox({
           clicking the photo itself doesn't dismiss what you're looking at. */}
       <button
         type="button"
-        aria-label="Close photo viewer"
+        aria-label={t.gallery.closeViewer}
         tabIndex={-1}
         onClick={onClose}
         className="absolute inset-0 cursor-zoom-out"
@@ -204,7 +206,7 @@ export default function Lightbox({
           <button
             type="button"
             onClick={() => go(-1)}
-            aria-label="Previous photo"
+            aria-label={t.gallery.previousPhoto}
             className="absolute z-10 left-2 sm:left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
           >
             ‹
@@ -212,7 +214,7 @@ export default function Lightbox({
           <button
             type="button"
             onClick={() => go(1)}
-            aria-label="Next photo"
+            aria-label={t.gallery.nextPhoto}
             className="absolute z-10 right-2 sm:right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xl flex items-center justify-center transition-colors"
           >
             ›

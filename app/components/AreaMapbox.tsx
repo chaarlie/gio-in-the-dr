@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { formatPrice } from "../lib/format";
 import { MAP_FRAME_OUTLIERS } from "../lib/neighborhoods";
 import type { Area } from "../lib/areas";
+import { useMessages } from "./LocaleProvider";
 
 /*
   Real Mapbox map with the six areas drawn on it.
@@ -162,6 +163,7 @@ export default function AreaMapbox({
    */
   fullscreen?: boolean;
 }) {
+  const t = useMessages();
   const mapRef = useRef<MapboxMap | null>(null);
   const holder = useRef<HTMLDivElement>(null);
   const made = useRef(false);
@@ -618,9 +620,7 @@ export default function AreaMapbox({
   if (!TOKEN) {
     return (
       <div className={`${box} bg-surface flex items-center justify-center p-8 text-center`}>
-        <p className="text-muted text-sm max-w-sm leading-relaxed">
-          Map needs <code className="text-ink">NEXT_PUBLIC_MAPBOX_TOKEN</code> in{" "}
-          <code className="text-ink">.env.local</code>. The area details below work without it.
+        <p className="text-muted text-sm max-w-sm leading-relaxed"> {t.map.tokenMissing}
         </p>
       </div>
     );

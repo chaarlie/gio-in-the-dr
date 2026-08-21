@@ -1,37 +1,33 @@
 import Link from "next/link";
 import { WA } from "../lib/whatsapp";
 import SectionHeading from "./SectionHeading";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
-const SERVICES = [
-  {
-    title: "Property Listings",
-    body: "Curated homes, land and commercial spaces around Cabarete and the north coast — vetted before you ever see them.",
-    href: "#properties",
-    dark: false,
-  },
-  {
-    title: "Your Guide in Cabarete",
-    body: "Think of me as your local guide. I'll share honest advice, local insights, and help you navigate the market with confidence from day one.",
-    href: WA.invest,
-    dark: true,
-  },
-  {
-    title: "Relocation Support",
-    body: "Residency, the buying process, taxes and financing — explained clearly in your language so you can settle with ease.",
-    href: WA.relocate,
-    dark: false,
-  },
-];
+type HomeMessages = (typeof MESSAGES)["en"]["home"];
 
-export default function Services() {
+function services(t: HomeMessages) {
+  return [
+    { title: t.serviceListingsTitle, body: t.serviceListingsBody, href: "#properties", dark: false },
+    { title: t.serviceGuideTitle, body: t.serviceGuideBody, href: WA.invest, dark: true },
+    { title: t.serviceRelocationTitle, body: t.serviceRelocationBody, href: WA.relocate, dark: false },
+  ];
+}
+
+export default async function Services() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].home;
+  const SERVICES = services(t);
   return (
     <section
       id="services"
       className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-12 sm:pt-16 pb-4"
     >
-      <SectionHeading align="center" title="Services" className="mb-11">
+      <SectionHeading align="center" title={t.servicesEyebrow} className="mb-11">
         <p className="text-muted mt-3">
-          How I help you buy — and settle into — life in the DR.
+          {t.servicesHeading}
         </p>
       </SectionHeading>
       <div className="grid md:grid-cols-3 gap-5">
@@ -59,14 +55,14 @@ export default function Services() {
                     s.dark ? "text-cream" : "text-ink"
                   }`}
                 >
-                  Explore more →
+                  {t.servicesMore}
                 </a>
               ) : (
                 <Link
                   href={s.href}
                   className="inline-block mt-6 text-sm font-semibold text-ink no-underline"
                 >
-                  Explore more →
+                  {t.servicesMore}
                 </Link>
               )}
             </div>

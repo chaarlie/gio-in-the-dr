@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import SectionHeading from "./SectionHeading";
 import WhatsAppIcon from "./WhatsAppIcon";
 import { WA, WHATSAPP_DISPLAY } from "../lib/whatsapp";
+import { useMessages } from "./LocaleProvider";
 
 const INTERESTS = [
   "Buying a home",
@@ -29,7 +30,12 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+/*
+  A client component — it holds form state — so it reads the locale from context
+  rather than next/root-params, whose getters run on the server only.
+*/
 export default function ContactForm() {
+  const t = useMessages().contact;
   const [interest, setInterest] = useState(INTERESTS[0]);
   const [errors, setErrors] = useState<Errors>({});
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
@@ -112,10 +118,9 @@ export default function ContactForm() {
   return (
     <section id="contact" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-16 pb-4">
       <div className="grid lg:grid-cols-2 gap-10 items-start bg-card border border-line rounded-3xl p-8 md:p-12">
-        <SectionHeading eyebrow="Get in touch" title="Tell me what you're looking for.">
+        <SectionHeading eyebrow={t.eyebrow} title={t.heading}>
           <p className="text-muted text-lg leading-relaxed max-w-md mt-5">
-            Share a few details and I&apos;ll get back to you — in English, Spanish or
-            Italian. Prefer to chat now? Message me on WhatsApp any time.
+            {t.intro}
           </p>
 
           <a
@@ -140,7 +145,7 @@ export default function ContactForm() {
                 name="name"
                 type="text"
                 autoComplete="name"
-                placeholder="Your name…"
+                placeholder={t.namePlaceholder}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "name-error" : undefined}
                 onInput={() => clear("name")}
@@ -156,7 +161,7 @@ export default function ContactForm() {
                 inputMode="email"
                 autoComplete="email"
                 spellCheck={false}
-                placeholder="you@email.com…"
+                placeholder={t.emailPlaceholder}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
                 onInput={() => clear("email")}
@@ -167,7 +172,7 @@ export default function ContactForm() {
           </div>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">I&apos;m interested in</span>
+            <span className="text-sm font-semibold text-ink">{t.interestedIn}</span>
             <div className="relative">
               <select
                 name="interest"
@@ -193,12 +198,12 @@ export default function ContactForm() {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-ink">Message</span>
+            <span className="text-sm font-semibold text-ink">{t.message}</span>
             <textarea
               name="message"
               rows={4}
               autoComplete="off"
-              placeholder="Budget, area, timeline — whatever helps…"
+              placeholder={t.messagePlaceholder}
               className={`${INPUT_CLASS} resize-y`}
             />
           </label>

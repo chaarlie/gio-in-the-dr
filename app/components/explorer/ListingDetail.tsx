@@ -7,6 +7,7 @@ import PropertyCalculators from "../PropertyCalculators";
 import { formatExactPrice } from "../../lib/format";
 import { waLink } from "../../lib/whatsapp";
 import type { AreaListing } from "../../lib/areas";
+import { useMessages } from "../LocaleProvider";
 
 /*
   One listing's full details, inside the explorer panel.
@@ -42,6 +43,8 @@ export default function ListingDetail({
   areaName: string;
   onBack: () => void;
 }) {
+  const m = useMessages();
+  const t = m.properties;
 
   /*
     The list ships one thumbnail per listing; the rest arrive when a listing is
@@ -119,12 +122,12 @@ export default function ListingDetail({
           onClick={onBack}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink transition-colors touch-manipulation"
         >
-          ← Back to list
+          {m.map.backToList}
         </button>
         <button
           type="button"
           onClick={onBack}
-          aria-label={`Close ${listing.title}`}
+          aria-label={m.map.closeListing(listing.title)}
           className="shrink-0 -mr-1 w-11 h-11 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-ink/5 transition-colors touch-manipulation"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -170,12 +173,12 @@ export default function ListingDetail({
 
       <div className="mt-3 -mx-1 px-1 overflow-x-auto">
         <table className="w-full text-sm border-collapse">
-          <caption className="sr-only">Key facts for {listing.title}</caption>
+          <caption className="sr-only">{t.keyFacts} {listing.title}</caption>
           <tbody>
-            <Fact label="Bedrooms" value={listing.beds !== null ? String(listing.beds) : null} />
-            <Fact label="Bathrooms" value={listing.baths !== null ? String(listing.baths) : null} />
-            <Fact label="Interior area" value={listing.areaM2 ? `${listing.areaM2} m²` : null} />
-            <Fact label="Price per m²" value={perM2} />
+            <Fact label={t.bedrooms} value={listing.beds !== null ? String(listing.beds) : null} />
+            <Fact label={t.bathrooms} value={listing.baths !== null ? String(listing.baths) : null} />
+            <Fact label={t.interiorArea} value={listing.areaM2 ? `${listing.areaM2} m²` : null} />
+            <Fact label={t.pricePerM2} value={perM2} />
           </tbody>
         </table>
       </div>
@@ -200,14 +203,14 @@ export default function ListingDetail({
           rel="noopener noreferrer"
           className="text-center bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-6 py-3.5 rounded-full transition-colors no-underline"
         >
-          Ask Gio about this
+          {t.askAboutThis}
         </a>
         {listing.slug ? (
           <Link
             href={`/properties/${listing.slug}`}
             className="text-center border border-ink/20 hover:border-ink text-ink text-sm font-semibold px-6 py-3.5 rounded-full transition-colors no-underline"
           >
-            Full details page
+            {t.fullDetails}
           </Link>
         ) : null}
         {listing.sourceUrl ? (
@@ -217,7 +220,7 @@ export default function ListingDetail({
             rel="noopener noreferrer"
             className="text-center text-xs font-semibold text-muted hover:text-ink transition-colors mt-1"
           >
-            Listing on the brokerage site ↗
+            {t.brokerageListing}
           </a>
         ) : null}
       </div>

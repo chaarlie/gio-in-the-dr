@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { preload } from "react-dom";
 import Image from "next/image";
 import Lightbox from "./explorer/Lightbox";
+import { useMessages } from "./LocaleProvider";
 import {
   sanityLoader,
   sizedImage,
@@ -64,6 +65,7 @@ export default function PropertyGallery({
   fallbackColor?: string;
   className?: string;
 }) {
+  const t = useMessages();
   const photos = (images ?? []).filter((i) => i.url);
   const count = photos.length;
 
@@ -154,7 +156,7 @@ export default function PropertyGallery({
               key={photo.key ?? `${photo.url}-${i}`}
               type="button"
               onClick={() => setLightboxAt(i)}
-              aria-label={`View photo ${i + 1} of ${count} of ${title} full screen`}
+              aria-label={t.gallery.viewPhoto(i + 1, count, title)}
               className={`relative ${aspect} w-full shrink-0 snap-start bg-accent cursor-zoom-in`}
             >
               <Image
@@ -182,7 +184,7 @@ export default function PropertyGallery({
               type="button"
               onClick={() => goTo(index - 1)}
               disabled={index === 0}
-              aria-label="Previous photo"
+              aria-label={t.gallery.previousPhoto}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-cream/90 text-ink flex items-center justify-center shadow-md transition-opacity disabled:opacity-0 hover:bg-cream"
             >
               <Chevron back />
@@ -191,7 +193,7 @@ export default function PropertyGallery({
               type="button"
               onClick={() => goTo(index + 1)}
               disabled={index === count - 1}
-              aria-label="Next photo"
+              aria-label={t.gallery.nextPhoto}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-cream/90 text-ink flex items-center justify-center shadow-md transition-opacity disabled:opacity-0 hover:bg-cream"
             >
               <Chevron />
@@ -215,7 +217,7 @@ export default function PropertyGallery({
               key={photo.key ?? `${photo.url}-${i}`}
               type="button"
               onClick={() => goTo(i)}
-              aria-label={`Go to photo ${i + 1}`}
+              aria-label={t.gallery.goToPhoto(i + 1)}
               aria-current={i === index}
               className={`relative w-20 h-16 shrink-0 rounded-xl overflow-hidden bg-accent transition-opacity ${
                 i === index ? "opacity-100 ring-2 ring-ink" : "opacity-60 hover:opacity-100"

@@ -1,14 +1,25 @@
 import Image from "next/image";
 import { WA } from "../lib/whatsapp";
 import SectionHeading from "./SectionHeading";
+import { DEFAULT_LOCALE, type Locale, isLocale } from "../lib/i18n";
+import { MESSAGES } from "../lib/messages";
+import { locale as rootLocale } from "next/root-params";
 
-const STATS = [
-  { big: "4+", label: "Years in DR real estate" },
-  { big: "3", label: "Languages — EN · ES · IT" },
-  { big: "1:1", label: "Personal service, start to finish" },
-];
+type HomeMessages = (typeof MESSAGES)["en"]["home"];
 
-export default function About() {
+function stats(t: HomeMessages) {
+  return [
+    { big: "4+", label: t.aboutStatYears },
+    { big: "3", label: t.aboutStatLanguages },
+    { big: "1:1", label: t.aboutStatService },
+  ];
+}
+
+export default async function About() {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = MESSAGES[locale].home;
+  const STATS = stats(t);
   return (
     <section id="about" className="scroll-mt-24 max-w-7xl mx-auto px-6 md:px-8 pt-14 sm:pt-20 pb-4">
       <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-10 items-center">
@@ -17,7 +28,7 @@ export default function About() {
               two sections don't repeat the same image. */}
           <Image
             src="/gio-headshot.jpg"
-            alt="Gio, real estate agent in Cabarete, Dominican Republic"
+            alt={t.aboutAlt}
             fill
             sizes="(max-width: 768px) 100vw, 40vw"
             className="object-cover object-[center_30%]"
@@ -25,19 +36,11 @@ export default function About() {
         </div>
         <div>
           <SectionHeading
-            eyebrow="About Gio"
-            title="An Italian who chose the Dominican Republic."
+            eyebrow={t.aboutEyebrow}
+            title={t.aboutHeading}
           />
-          <p className="text-muted text-lg leading-relaxed max-w-xl mt-5">
-            I moved to the Dominican Republic from Italy and made Cabarete home. For the
-            past four years I&apos;ve helped foreigners buy property here — from first
-            questions to the day they get the keys.
-          </p>
-          <p className="text-muted text-lg leading-relaxed max-w-xl mt-4">
-            Because I speak English, Spanish and Italian — and made the move myself — I
-            understand exactly what you&apos;re navigating, from choosing the right area to
-            residency and closing.
-          </p>
+          <p className="text-muted text-lg leading-relaxed max-w-xl mt-5"> {t.aboutBody1}</p>
+          <p className="text-muted text-lg leading-relaxed max-w-xl mt-4"> {t.aboutBody2}</p>
           <div className="flex flex-wrap gap-10 mt-8">
             {STATS.map((s) => (
               <div key={s.big}>
@@ -52,7 +55,7 @@ export default function About() {
             rel="noopener"
             className="inline-block mt-9 bg-accent hover:bg-accent-soft text-cream text-sm font-semibold px-7 py-4 rounded-full transition-colors no-underline"
           >
-            Work with Gio
+            {t.aboutCta}
           </a>
         </div>
       </div>

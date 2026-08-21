@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { usePropertySearch } from "./PropertySearchProvider";
+import { useMessages } from "./LocaleProvider";
+import { ANY } from "../lib/properties";
 
 // Hoisted: these re-render on every keystroke, and there's no React Compiler here.
 const SEARCH_ICON = (
@@ -29,6 +31,7 @@ const FIELD_CARET = (
 
 /** Free-text row, with "/" as a page-wide shortcut that jumps here and focuses it. */
 export function SearchQueryRow() {
+  const t = useMessages();
   const { state, actions } = usePropertySearch();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,8 +70,8 @@ export function SearchQueryRow() {
         type="search"
         name="q"
         spellCheck={false}
-        aria-label="Search by name, area or keyword"
-        placeholder="Search by name, area or keyword…"
+        aria-label={t.properties.searchAria}
+        placeholder={`${t.properties.searchAria}…`}
         className="flex-1 bg-transparent py-1.5 text-base text-ink outline-none placeholder:text-muted min-w-0"
       />
       {/* Advertises the shortcut. Hidden on touch, where there's no physical "/" key. */}
@@ -94,7 +97,14 @@ export function SearchFieldGrid() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line border-y border-line">
       {state.fields.map((field) => {
-        const value = state.filters[field.key];
+        /*
+          Back to a string for the DOM. The filter state holds numbers now, but
+          a <select> compares its value to its options as strings, so null has
+          to become the ANY sentinel here — the one place that still has to know
+          about it.
+        */
+        const raw = state.filters[field.key];
+        const value = raw === null ? ANY : String(raw);
         /*
           The options come from the listings, so a shared link can name one that
           no longer exists — ?max=750000 after the ladder shifted, or an area
@@ -132,6 +142,7 @@ export function SearchFieldGrid() {
 
 /** Result count on the left, Clear all / Search on the right. */
 export function SearchActionsRow({ onSubmit }: { onSubmit?: () => void }) {
+  const t = useMessages();
   const { state, actions } = usePropertySearch();
   return (
     <div className="flex flex-wrap items-center gap-3 px-5 sm:px-6 py-4">
@@ -145,16 +156,14 @@ export function SearchActionsRow({ onSubmit }: { onSubmit?: () => void }) {
             onClick={actions.reset}
             className="rounded-full border border-ink/20 px-5 py-3.5 text-sm font-semibold text-ink hover:border-ink transition-colors"
           >
-            Clear all ✕
+            {t.common.clearAll}
           </button>
         ) : null}
         {onSubmit ? (
           <button
             type="submit"
             className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-cream hover:bg-accent-soft transition-colors"
-          >
-            Search
-          </button>
+          >{t.common.search}</button>
         ) : null}
       </div>
     </div>
