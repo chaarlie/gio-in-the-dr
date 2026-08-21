@@ -1,19 +1,29 @@
 import Image from "next/image";
 import Link from "next/link";
+import { locale as rootLocale } from "next/root-params";
 import { formatDate, type PostCard as Post } from "../lib/posts.server";
+import { DEFAULT_LOCALE, blogPath, isLocale, type Locale } from "../lib/i18n";
 
 /*
   A post on the index. Cover image when there is one, a tinted band in the accent
   colour when there isn't — same call as the property cards, so a post published
   before Gio has a photo still looks finished.
+
+  The locale comes from next/root-params rather than a prop, for the reason
+  Header gives: a prop is something a caller can forget, and both callers did.
+  The href was a hardcoded "/blog/<slug>", so every card on /es/blog pointed at
+  an English URL that does not exist — a Spanish index where every link 404s —
+  and the date rendered "17 August 2026" under a Spanish headline.
 */
-export default function PostCard({ post }: { post: Post }) {
-  const date = formatDate(post.publishedAt);
+export default async function PostCard({ post }: { post: Post }) {
+  const raw = await rootLocale();
+  const locale: Locale = raw && isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const date = formatDate(post.publishedAt, locale);
 
   return (
     <article>
       <Link
-        href={`/blog/${post.slug}`}
+        href={blogPath(locale, post.slug)}
         className="group block no-underline h-full bg-card border border-line rounded-3xl overflow-hidden hover:border-ink/20 transition-colors"
       >
         <div className="relative aspect-[16/10] bg-accent overflow-hidden">

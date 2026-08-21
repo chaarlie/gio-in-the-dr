@@ -36,6 +36,23 @@ function buildComponents(ids: Map<string, string>): Components {
       <p className="text-ink/85 leading-relaxed mt-4 first:mt-0">{children}</p>
     ),
     /*
+      An h1 in the body renders as an h2.
+
+      The page already has its h1 — the property title, the post title — and a
+      second one underneath it is a second answer to "what is this page about".
+      Two listings whose Sanity body opened with an h1 were shipping exactly
+      that. Demoting rather than dropping keeps whatever Gio wrote visible and
+      correctly ranked; it just stops competing with the title above it.
+    */
+    h1: ({ children, value }) => (
+      <h2
+        id={ids.get((value as { _key?: string })._key ?? "")}
+        className="font-display font-bold text-ink text-2xl md:text-3xl mt-10 mb-3 text-balance scroll-mt-28"
+      >
+        {children}
+      </h2>
+    ),
+    /*
       Headings carry an id so the contents list at the top of a guide has
       somewhere to point, and scroll-mt so the sticky header does not sit on top
       of the section you just jumped to — the anchor lands at y=0, which is
