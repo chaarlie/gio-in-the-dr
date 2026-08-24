@@ -16,8 +16,11 @@ import {
   LOCALES,
   isLocale,
   localeAlternates,
+  localePath,
   propertyPath,
 } from "../../../lib/i18n";
+import { absoluteUrl } from "../../../lib/site";
+import { ORG_ID, breadcrumbSchema, graph } from "../../../lib/schema";
 import { MESSAGES } from "../../../lib/messages";
 
 /*
@@ -55,12 +58,36 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `${property.category ?? "Property"} for sale in ${where}${price ? ` — ${price}` : ""}.`;
   const image = property.images?.[0]?.url;
 
+  /*
+    A Spanish page that is still showing English copy does not get to compete.
+
+    Nine of ten /es/properties pages measured 83-90% identical to their English
+    counterpart, because the GROQ coalesces to the English fields when no
+    translation exists. Left alone, each was a near-duplicate claiming through
+    hreflang to be the Spanish edition of the page it duplicates — two URLs
+    splitting one page's signals, and Google picking which to drop.
+
+    noindex, not a redirect and not a 404: a Spanish speaker following a link
+    from the Spanish index should still read the listing. follow stays on so
+    the links out of it still count. Every one of these clears the moment Gio
+    publishes the translation — nothing here needs undoing later.
+  */
+  const untranslatedEs = locale === "es" && !property.hasEs;
+
   return {
     title: `${property.title} — ${where} | Gio In The DR`,
     description,
-    // A listing keeps its slug in both languages, so each locale's URL is the
-    // same path under a different prefix.
-    alternates: localeAlternates(locale, (l) => propertyPath(l, property.slug)),
+    robots: untranslatedEs ? { index: false, follow: true } : undefined,
+    /*
+      A listing keeps its slug in both languages, so each locale's URL is the
+      same path under a different prefix — but only a listing that exists in
+      both gets alternates. hreflang asserts equivalence, so the English page
+      must stay quiet about a Spanish edition that hasn't been written, exactly
+      as the Spanish page stays quiet about being one.
+    */
+    alternates: property.hasEs
+      ? localeAlternates(locale, (l) => propertyPath(l, property.slug))
+      : { canonical: propertyPath(locale, property.slug) },
     openGraph: {
       title: property.title,
       description,
@@ -100,28 +127,96 @@ export default async function PropertyPage({ params }: PageProps) {
   }${price ? ` (${price})` : ""}.`;
 
   /*
-    Product/Offer rather than a real-estate-specific type: this is the vocabulary Google
-    actually reads prices out of, and these are the pages meant to rank.
+    The listing, and enough of where it is to be worth reading.
+
+    It was a bare Product: a name, a price and a photo, with no url, no address,
+    no coordinates and an anonymous seller. For real estate that omits the field
+    the query is actually about — nobody searches for a condo without searching
+    for a place — and left the offer belonging to nobody in particular.
+
+    Product rather than a Residence type because `offers` with a price is what
+    makes this eligible for anything, and Residence does not take it. The
+    physical facts ride along on additionalProperty, and RealEstateListing
+    carries the address and geo beside it.
   */
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: property.title,
-    description: property.spec ?? undefined,
-    image: image ? [image] : undefined,
-    category: property.category ?? undefined,
-    offers: property.priceUsd
+  const url = absoluteUrl(propertyPath(locale, property.slug));
+  const facts: { name: string; value: number }[] = [
+    property.beds ? { name: "Bedrooms", value: property.beds } : null,
+    property.baths ? { name: "Bathrooms", value: property.baths } : null,
+    property.areaM2 ? { name: "Interior area (m²)", value: property.areaM2 } : null,
+  ].filter((f): f is { name: string; value: number } => f !== null);
+
+  const place = {
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: property.area?.name ?? "Cabarete",
+      addressRegion: "Puerto Plata",
+      addressCountry: "DO",
+    },
+    /*
+      Only coordinates that are actually coordinates. Two listings in the
+      dataset carry decimal points that went missing on the way in — one reads
+      lat 194544.7 — and AreaMap already drops them with a build warning. The
+      map can ignore a bad pin; structured data cannot, because publishing
+      194544.7 as a latitude is publishing something false about where a house
+      is. Same rule, applied where the consequence is worse.
+    */
+    ...(property.location &&
+    Math.abs(property.location.lat) <= 90 &&
+    Math.abs(property.location.lng) <= 180
       ? {
-          "@type": "Offer",
-          price: property.priceUsd,
-          priceCurrency: "USD",
-          availability:
-            property.status === "sold"
-              ? "https://schema.org/SoldOut"
-              : "https://schema.org/InStock",
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: property.location.lat,
+            longitude: property.location.lng,
+          },
         }
-      : undefined,
+      : {}),
   };
+
+  const jsonLd = graph(locale, [
+    {
+      "@type": ["Product", "RealEstateListing"],
+      "@id": url,
+      url,
+      name: property.title,
+      description: property.spec ?? undefined,
+      image: image ? [image] : undefined,
+      category: property.category ?? undefined,
+      ...place,
+      numberOfRooms: property.beds ?? undefined,
+      floorSize: property.areaM2
+        ? { "@type": "QuantitativeValue", value: property.areaM2, unitCode: "MTK" }
+        : undefined,
+      additionalProperty: facts.length
+        ? facts.map((f) => ({
+            "@type": "PropertyValue",
+            name: f.name,
+            value: f.value,
+          }))
+        : undefined,
+      offers: property.priceUsd
+        ? {
+            "@type": "Offer",
+            url,
+            price: property.priceUsd,
+            priceCurrency: "USD",
+            seller: { "@id": ORG_ID },
+            availability:
+              property.status === "sold"
+                ? "https://schema.org/SoldOut"
+                : property.status === "reserved"
+                  ? "https://schema.org/PreOrder"
+                  : "https://schema.org/InStock",
+          }
+        : undefined,
+    },
+    breadcrumbSchema(locale, [
+      { name: "Gio In The DR", path: localePath(locale, "/") },
+      { name: MESSAGES[locale].properties.heading, path: propertyPath(locale) },
+      { name: property.title, path: propertyPath(locale, property.slug) },
+    ]),
+  ]);
 
   return (
     <>

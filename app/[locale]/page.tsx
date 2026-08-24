@@ -21,6 +21,9 @@ import {
   localePath,
 } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
+import JsonLd from "../components/JsonLd";
+import { absoluteUrl } from "../lib/site";
+import { ORG_ID, graph, organizationSchema, personSchema } from "../lib/schema";
 
 /*
   The home page had no canonical and no hreflang at all, so "/" and "/es" were
@@ -85,6 +88,23 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 
   return (
     <>
+      {/*
+        Who this is. The home page carried no structured data at all, so nothing
+        in the markup said there was a named agent behind it — see lib/schema.
+      */}
+      <JsonLd
+        data={graph(locale, [
+          organizationSchema(locale),
+          personSchema(locale),
+          {
+            "@type": "WebSite",
+            "@id": absoluteUrl("/#website"),
+            url: absoluteUrl(localePath(locale, "/")),
+            name: "Gio In The DR",
+            publisher: { "@id": ORG_ID },
+          },
+        ])}
+      />
       <Header />
       <main id="main" tabIndex={-1} className="flex-1">
         <Hero />

@@ -12,6 +12,9 @@ import {
   localeAlternates,
   localePath,
 } from "../../lib/i18n";
+import JsonLd from "../../components/JsonLd";
+import { absoluteUrl } from "../../lib/site";
+import { ORG_ID, PERSON_ID, breadcrumbSchema, graph } from "../../lib/schema";
 import { MESSAGES } from "../../lib/messages";
 
 type PageProps = { params: Promise<{ locale: string }> };
@@ -43,6 +46,29 @@ export default async function BlogPage({ params }: PageProps) {
 
   return (
     <>
+      <JsonLd
+        data={graph(locale, [
+          {
+            "@type": "Blog",
+            "@id": absoluteUrl(blogPath(locale)),
+            url: absoluteUrl(blogPath(locale)),
+            name: t.metaTitle,
+            description: t.metaDescription,
+            author: { "@id": PERSON_ID },
+            publisher: { "@id": ORG_ID },
+            blogPost: posts.map((post) => ({
+              "@type": "BlogPosting",
+              "@id": absoluteUrl(blogPath(locale, post.slug)),
+              headline: post.title,
+              datePublished: post.publishedAt ?? undefined,
+            })),
+          },
+          breadcrumbSchema(locale, [
+            { name: "Gio In The DR", path: localePath(locale, "/") },
+            { name: t.indexEyebrow, path: blogPath(locale) },
+          ]),
+        ])}
+      />
       <Header />
       <main
         id="main"

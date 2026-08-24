@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getPropertySlugs } from "./lib/properties.server";
+import { getPropertySlugsI18n } from "./lib/properties.server";
 import { getPostsIn } from "./lib/posts.server";
 import {
   DEFAULT_LOCALE,
@@ -43,8 +43,8 @@ function everywhere(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, ...postsByLocale] = await Promise.all([
-    getPropertySlugs(),
+  const [listings, ...postsByLocale] = await Promise.all([
+    getPropertySlugsI18n(),
     ...LOCALES.map((locale) => getPostsIn(locale)),
   ]);
 
@@ -73,12 +73,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
-    ...slugs.flatMap((slug) =>
-      everywhere((l) => propertyPath(l, slug)).map((e) => ({
-        ...e,
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      })),
+    /*
+      A listing with no Spanish copy appears once, in English, with no
+      alternates. Listing /es/properties/<slug> would be submitting a page that
+      is 83-90% identical to the English one and now carries noindex — asking
+      Google to index a page the page itself declines.
+    */
+    ...listings.flatMap(({ slug, hasEs }) =>
+      hasEs
+        ? everywhere((l) => propertyPath(l, slug)).map((e) => ({
+            ...e,
+            changeFrequency: "weekly" as const,
+            priority: 0.8,
+          }))
+        : [
+            {
+              url: absoluteUrl(propertyPath(DEFAULT_LOCALE, slug)),
+              changeFrequency: "weekly" as const,
+              priority: 0.8,
+            },
+          ],
     ),
     ...posts,
   ];
