@@ -108,6 +108,24 @@ type Copy = {
     sendUnavailable: string;
     whatsappAria: (number: string) => string;
   };
+  guide: {
+    /* The gated buyer's-guide download dialog. */
+    title: string;
+    intro: string;
+    nameLabel: string;
+    namePlaceholder: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    nameRequired: string;
+    emailRequired: string;
+    emailInvalid: string;
+    consent: string;
+    download: string;
+    preparing: string;
+    error: string;
+    close: string;
+    openAria: (title: string) => string;
+  };
   properties: {
     /* <title> and <meta description> for /properties. Separate from `heading`
        and `indexIntro`: a SERP snippet is not a page headline, and the index
@@ -361,6 +379,25 @@ export const MESSAGES: Record<Locale, Copy> = {
       sendFailed: "Something went wrong. Please try again.",
       sendUnavailable: "Unable to send your message right now. Please try again later.",
       whatsappAria: (number) => `Message Gio on WhatsApp at ${number}`,
+    },
+    guide: {
+      title: "Get the free buyer's guide",
+      intro:
+        "Real rental data, ownership costs and neighborhood notes — the numbers I share before anyone commits. Tell me where to send it.",
+      nameLabel: "Name",
+      namePlaceholder: "Your name",
+      emailLabel: "Email",
+      emailPlaceholder: "you@email.com",
+      nameRequired: "Please enter your name.",
+      emailRequired: "Please enter your email.",
+      emailInvalid: "Please provide a valid email address.",
+      consent:
+        "By pressing Download you agree to receive occasional promotional emails from giointhedr.com. Unsubscribe anytime.",
+      download: "Download the guide",
+      preparing: "Preparing your download…",
+      error: "Something went wrong. Please try again.",
+      close: "Close",
+      openAria: (title) => `Download ${title}`,
     },
     properties: {
       metaTitle: "Property for sale in Cabarete & Sosúa — Gio In The DR",
@@ -617,6 +654,25 @@ export const MESSAGES: Record<Locale, Copy> = {
       sendFailed: "Algo salió mal. Inténtalo de nuevo.",
       sendUnavailable: "No se puede enviar tu mensaje ahora mismo. Inténtalo más tarde.",
       whatsappAria: (number) => `Escríbele a Gio por WhatsApp al ${number}`,
+    },
+    guide: {
+      title: "Descarga la guía del comprador",
+      intro:
+        "Datos reales de alquiler, costos de propiedad y notas de cada zona — las cifras que comparto antes de que alguien decida. Dime a dónde enviarla.",
+      nameLabel: "Nombre",
+      namePlaceholder: "Tu nombre",
+      emailLabel: "Correo",
+      emailPlaceholder: "tu@correo.com",
+      nameRequired: "Escribe tu nombre.",
+      emailRequired: "Escribe tu correo.",
+      emailInvalid: "Escribe un correo electrónico válido.",
+      consent:
+        "Al pulsar Descargar aceptas recibir correos promocionales ocasionales de giointhedr.com. Puedes darte de baja cuando quieras.",
+      download: "Descargar la guía",
+      preparing: "Preparando tu descarga…",
+      error: "Algo salió mal. Inténtalo de nuevo.",
+      close: "Cerrar",
+      openAria: (title) => `Descargar ${title}`,
     },
     properties: {
       metaTitle: "Propiedades en venta en Cabarete y Sosúa — Gio In The DR",
