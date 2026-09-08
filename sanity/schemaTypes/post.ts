@@ -101,6 +101,7 @@ export const post = defineType({
           "Residency & taxes",
           "Investment",
           "Living here",
+          "Travel guides",
         ],
       },
       validation: (Rule) => Rule.required(),

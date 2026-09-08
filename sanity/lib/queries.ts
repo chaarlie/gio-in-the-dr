@@ -395,3 +395,42 @@ export const POSTS_IN_QUERY = defineQuery(`
 export const POST_SLUGS_IN_QUERY = defineQuery(`
   *[_type == "post" && defined(slug.current) && language == $language].slug.current
 `);
+
+/* ── The paginated / category-filtered index ──────────────────────────────── */
+
+/*
+  One predicate, shared by the page and the count so they can never disagree
+  about what "a match" is — the same reason properties.server keeps a single
+  PROPERTY_FILTER. $topic is the empty string for the unfiltered index; a real
+  topic label narrows to that category. Filtering happens before the slice, so
+  the total is a count of matches, not of what landed on this page.
+*/
+const POST_FILTER = `_type == "post" && defined(slug.current) && publishedAt <= now() && language == $language && ($topic == "" || topic == $topic)`;
+
+export const POSTS_PAGE_QUERY = defineQuery(`
+  {
+    "items": *[${POST_FILTER}] | order(publishedAt desc) [$from...$to] {
+      ${POST_CARD_FIELDS}
+    },
+    "total": count(*[${POST_FILTER}])
+  }
+`);
+
+export const POSTS_COUNT_QUERY = defineQuery(`
+  count(*[${POST_FILTER}])
+`);
+
+/*
+  The categories that actually have live posts in this language, newest first.
+
+  array::unique keeps first-occurrence order, and the input is ordered by date,
+  so a topic sorts by its most recent post — the same order the tabs and the
+  archive links appear in. Counted against the same published/in-language guard
+  as the index, so a tab can never lead to an empty archive.
+*/
+export const POST_TOPICS_QUERY = defineQuery(`
+  array::unique(
+    *[_type == "post" && defined(slug.current) && publishedAt <= now() && language == $language && defined(topic)]
+      | order(publishedAt desc).topic
+  )
+`);

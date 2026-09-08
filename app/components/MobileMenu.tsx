@@ -1,7 +1,7 @@
 "use client";
 
 import NavLink from "./NavLink";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 /*
   The small-screen nav.
@@ -15,11 +15,13 @@ import { useEffect, useRef, useState } from "react";
   choosing an item, Escape, and a tap outside. The cost is one small client
   component; the header around it stays a server component.
 */
+type Item = { label: string; href: string; children?: { label: string; href: string }[] };
+
 export default function MobileMenu({
   items,
   switcher,
 }: {
-  items: { label: string; href: string }[];
+  items: Item[];
   /** The language toggle, shown inside the panel where the desktop one is hidden. */
   switcher?: React.ReactNode;
 }) {
@@ -98,20 +100,90 @@ export default function MobileMenu({
           */
           className="absolute inset-x-0 top-full max-h-[calc(100svh-5rem)] overflow-y-auto overscroll-contain bg-card border-b border-line shadow-lg flex flex-col pb-[env(safe-area-inset-bottom)]"
         >
-          {items.map((item) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              onNavigate={() => setOpen(false)}
-              className="flex items-center min-h-14 px-6 border-b border-line last:border-0 text-lg font-medium text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {items.map((item) =>
+            item.children ? (
+              <MobileGroup key={item.href} item={item} onNavigate={() => setOpen(false)} />
+            ) : (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                onNavigate={() => setOpen(false)}
+                className="flex items-center min-h-14 px-6 border-b border-line last:border-0 text-lg font-medium text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
+              >
+                {item.label}
+              </NavLink>
+            ),
+          )}
           {/* The desktop toggle is hidden below sm, so the panel carries its own —
               otherwise a phone has no way to change language at all. */}
           {switcher ? <div className="px-6 py-4">{switcher}</div> : null}
         </nav>
+      ) : null}
+    </div>
+  );
+}
+
+/*
+  A nav row that expands to show its sub-pages — Blog and its categories.
+
+  Deliberately plainer than the desktop dropdown: no hover, no sliding underline,
+  just a caret that toggles the list open. The label still navigates (tapping
+  "Blog" goes to /blog and closes the menu); the separate caret button, sized to
+  the row so it's an easy target, does the expanding.
+*/
+function MobileGroup({
+  item,
+  onNavigate,
+}: {
+  item: Item;
+  onNavigate: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const listId = useId();
+
+  return (
+    <div className="border-b border-line last:border-0">
+      <div className="flex items-center">
+        <NavLink
+          href={item.href}
+          onNavigate={onNavigate}
+          className="flex-1 flex items-center min-h-14 px-6 text-lg font-medium text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
+        >
+          {item.label}
+        </NavLink>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          aria-label={`${item.label} categories`}
+          onClick={() => setExpanded((v) => !v)}
+          className="w-14 min-h-14 flex items-center justify-center text-ink hover:bg-ink/5 active:bg-ink/10"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`origin-center transition-transform ${expanded ? "rotate-180" : ""}`}
+            />
+          </svg>
+        </button>
+      </div>
+      {expanded ? (
+        <div id={listId}>
+          {item.children?.map((child) => (
+            <NavLink
+              key={child.href}
+              href={child.href}
+              onNavigate={onNavigate}
+              className="flex items-center min-h-12 pl-10 pr-6 text-base font-medium text-muted hover:text-ink hover:bg-ink/5 active:bg-ink/10 no-underline"
+            >
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
       ) : null}
     </div>
   );
