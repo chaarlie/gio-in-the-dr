@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getPropertySlugsI18n } from "./lib/properties.server";
-import { getPostsIn } from "./lib/posts.server";
+import { getPostsIn, getBlogTopics } from "./lib/posts.server";
+import { topicSlug } from "./lib/topics";
 import {
   DEFAULT_LOCALE,
   HREFLANG,
   LOCALES,
   blogPath,
+  blogTopicPath,
   localePath,
   propertyPath,
   type Locale,
@@ -43,9 +45,10 @@ function everywhere(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [listings, ...postsByLocale] = await Promise.all([
+  const [listings, postsByLocale, topicsByLocale] = await Promise.all([
     getPropertySlugsI18n(),
-    ...LOCALES.map((locale) => getPostsIn(locale)),
+    Promise.all(LOCALES.map((locale) => getPostsIn(locale))),
+    Promise.all(LOCALES.map((locale) => getBlogTopics(locale))),
   ]);
 
   const posts = LOCALES.flatMap((locale, i) =>
@@ -53,6 +56,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: absoluteUrl(blogPath(locale, post.slug)),
       lastModified: post.publishedAt ? new Date(post.publishedAt) : undefined,
       changeFrequency: "yearly" as const,
+      priority: 0.6,
+    })),
+  );
+
+  /*
+    One entry per category archive that has posts in that locale. No alternates:
+    a topic can exist in one language and not the other (its posts are separate
+    documents), so cross-linking would claim an archive that 404s — the same
+    reason an untranslated listing is left unpaired below.
+  */
+  const archives = LOCALES.flatMap((locale, i) =>
+    (topicsByLocale[i] ?? []).map((label) => ({
+      url: absoluteUrl(blogTopicPath(locale, topicSlug(label))),
+      changeFrequency: "weekly" as const,
       priority: 0.6,
     })),
   );
@@ -73,6 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
+    ...archives,
     /*
       A listing with no Spanish copy appears once, in English, with no
       alternates. Listing /es/properties/<slug> would be submitting a page that

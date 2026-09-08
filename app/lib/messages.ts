@@ -33,7 +33,17 @@ type Copy = {
     homeAria: string;
     pagination: string;
   };
-  nav: Record<"properties" | "map" | "services" | "blog" | "about" | "contact", string>;
+  nav: Record<
+    | "properties"
+    | "map"
+    | "services"
+    | "blog"
+    | "blogAll"
+    | "travelGuides"
+    | "about"
+    | "contact",
+    string
+  >;
   home: {
     metaTitle: string;
     metaDescription: string;
@@ -226,7 +236,10 @@ type Copy = {
     indexIntro: string;
     indexEmpty: string;
     indexEmptyBody: string;
+    emptyTopic: string;
     getNotified: string;
+    allTopics: string;
+    filterLabel: string;
     allGuides: string;
     inThisGuide: string;
     keepReading: string;
@@ -278,6 +291,8 @@ export const MESSAGES: Record<Locale, Copy> = {
       map: "Map",
       services: "Services",
       blog: "Blog",
+      blogAll: "All posts",
+      travelGuides: "Travel guides",
       about: "About",
       contact: "Contact",
     },
@@ -486,6 +501,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       indexEmptyBody:
         "Soon: the 2026 Dominican Republic Buyer's Guide, area guides for Cabarete & Sosúa, and practical notes on residency, taxes and financing — all editable from the backend.",
       getNotified: "Get notified",
+      emptyTopic: "No guides in this category yet — they're on the way. Check back soon.",
+      allTopics: "All",
+      filterLabel: "Filter posts by topic",
       allGuides: "← All guides",
       inThisGuide: "In this guide",
       keepReading: "Keep reading",
@@ -534,6 +552,8 @@ export const MESSAGES: Record<Locale, Copy> = {
       map: "Mapa",
       services: "Servicios",
       blog: "Blog",
+      blogAll: "Todas las publicaciones",
+      travelGuides: "Guías de viaje",
       about: "Sobre mí",
       contact: "Contacto",
     },
@@ -748,6 +768,9 @@ export const MESSAGES: Record<Locale, Copy> = {
       indexEmptyBody:
         "Pronto: la Guía del Comprador 2026 para República Dominicana, guías de zona de Cabarete y Sosúa, y notas prácticas sobre residencia, impuestos y financiamiento.",
       getNotified: "Avísame",
+      emptyTopic: "Aún no hay guías en esta categoría — están en camino. Vuelve pronto.",
+      allTopics: "Todas",
+      filterLabel: "Filtrar publicaciones por tema",
       allGuides: "← Todas las guías",
       inThisGuide: "En esta guía",
       keepReading: "Sigue leyendo",

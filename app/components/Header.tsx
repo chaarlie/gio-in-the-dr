@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "./Logo";
 import MobileMenu from "./MobileMenu";
 import NavLink from "./NavLink";
+import NavDropdown from "./NavDropdown";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { DEFAULT_LOCALE, localePath, type Locale, isLocale } from "../lib/i18n";
 import { MESSAGES } from "../lib/messages";
@@ -25,7 +26,16 @@ const NAV = [
   { key: "properties", href: "/properties", primary: true },
   { key: "map", href: "/#areas" },
   { key: "services", href: "/#services" },
-  { key: "blog", href: "/blog" },
+  {
+    // Blog carries a dropdown rather than the categories sitting in the top bar.
+    // Each category is its own archive at /blog/topic/<slug> (see BlogIndex).
+    key: "blog",
+    href: "/blog",
+    children: [
+      { key: "blogAll", href: "/blog" },
+      { key: "travelGuides", href: "/blog/topic/travel-guides" },
+    ],
+  },
   { key: "about", href: "/#about" },
   { key: "contact", href: "/#contact" },
 ] as const;
@@ -56,6 +66,13 @@ export default async function Header({
     label: t.nav[item.key],
     href: localePath(locale, item.href),
     primary: "primary" in item ? item.primary : undefined,
+    children:
+      "children" in item
+        ? item.children.map((c) => ({
+            label: t.nav[c.key],
+            href: localePath(locale, c.href),
+          }))
+        : undefined,
   }));
   // `relative` so the mobile menu can anchor to the header's full width rather
   // than to the padded max-w-7xl row inside it — a menu that stops short of the
@@ -74,19 +91,28 @@ export default async function Header({
         {/* Desktop nav. The logo is already the way home, so the first slot
             carries the listings rather than a second link to "/". */}
         <nav className="hidden md:flex items-center gap-1">
-          {items.map((item) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              className={
-                item.primary
-                  ? "text-sm font-semibold px-4 py-2 rounded-full bg-accent hover:bg-accent-soft text-cream no-underline transition-colors"
-                  : "text-sm font-medium px-4 py-2 rounded-full text-ink hover:bg-ink/5 transition-colors no-underline"
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+          {items.map((item) =>
+            item.children ? (
+              <NavDropdown
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                items={item.children}
+              />
+            ) : (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                className={
+                  item.primary
+                    ? "text-sm font-semibold px-4 py-2 rounded-full bg-accent hover:bg-accent-soft text-cream no-underline transition-colors"
+                    : "text-sm font-medium px-4 py-2 rounded-full text-ink hover:bg-ink/5 transition-colors no-underline"
+                }
+              >
+                {item.label}
+              </NavLink>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-2">

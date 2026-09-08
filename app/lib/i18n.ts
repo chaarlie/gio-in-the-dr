@@ -38,6 +38,15 @@ export function blogPath(locale: Locale, slug?: string): string {
   return localePath(locale, slug ? `/blog/${slug}` : "/blog");
 }
 
+/*
+  A category archive: /blog/topic/<slug>. The "topic" segment keeps these clear
+  of a post at /blog/<slug> — the only collision would be a post whose own slug
+  is literally "topic", which Gio controls.
+*/
+export function blogTopicPath(locale: Locale, slug: string): string {
+  return localePath(locale, `/blog/topic/${slug}`);
+}
+
 export function propertyPath(locale: Locale, slug?: string): string {
   return localePath(locale, slug ? `/properties/${slug}` : "/properties");
 }
