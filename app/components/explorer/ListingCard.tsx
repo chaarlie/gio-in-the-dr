@@ -1,4 +1,4 @@
-import Image from "next/image";
+import SanityImage from "../SanityImage";
 import { formatPrice } from "../../lib/format";
 import type { AreaListing } from "../../lib/areas";
 
@@ -7,7 +7,7 @@ function ListingThumb({ listing, color }: { listing: AreaListing; color: string 
   const thumb = listing.images?.find((i) => i.url);
   if (thumb?.url) {
     return (
-      <Image
+      <SanityImage
         src={thumb.url}
         alt=""
         width={48}
