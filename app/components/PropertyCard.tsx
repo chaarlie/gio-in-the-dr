@@ -1,4 +1,4 @@
-import Image from "next/image";
+import SanityImage from "./SanityImage";
 import Link from "next/link";
 import Badge from "./Badge";
 import type { Property } from "../lib/properties";
@@ -23,7 +23,7 @@ export default function PropertyCard({ property }: { property: Property }) {
       {/* The glyph is the normal case, not the edge case — most listings have no photo
           yet, and a tinted tile reads better than a broken frame. */}
       {property.image ? (
-        <Image
+        <SanityImage
           src={property.image}
           alt=""
           fill
